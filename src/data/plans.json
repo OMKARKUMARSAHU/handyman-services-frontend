@@ -1,0 +1,73 @@
+[
+  {
+    "id": "silver",
+    "name": "Silver",
+    "price": 1499,
+    "currency": "INR",
+    "billingPeriod": "year",
+    "description": "A simple starting plan for one appliance that needs regular care.",
+    "visits": 2,
+    "applianceCount": 1,
+    "applianceIds": "all",
+    "features": [
+      "1 appliance covered",
+      "2 scheduled visits per year",
+      "Certified technician",
+      "WhatsApp visit reports",
+      "Emergency call-out (chargeable)"
+    ],
+    "badge": null,
+    "ctaText": "Choose Silver",
+    "available": true,
+    "sortOrder": 1,
+    "priceConfirmed": false
+  },
+  {
+    "id": "gold",
+    "name": "Gold",
+    "price": 3499,
+    "currency": "INR",
+    "billingPeriod": "year",
+    "description": "Our most popular plan — covers the appliances most homes rely on every day.",
+    "visits": 4,
+    "applianceCount": 4,
+    "applianceIds": "all",
+    "features": [
+      "Up to 4 appliances covered",
+      "4 scheduled visits per year",
+      "Certified technician",
+      "Priority scheduling",
+      "WhatsApp visit reports",
+      "Emergency call-out (chargeable)"
+    ],
+    "badge": "Most Popular",
+    "ctaText": "Choose Gold",
+    "available": true,
+    "sortOrder": 2,
+    "priceConfirmed": false
+  },
+  {
+    "id": "platinum",
+    "name": "Platinum",
+    "price": 6999,
+    "currency": "INR",
+    "billingPeriod": "year",
+    "description": "Whole-home coverage with priority support and no hidden charges.",
+    "visits": 6,
+    "applianceCount": "all",
+    "applianceIds": "all",
+    "features": [
+      "All appliances covered",
+      "6 scheduled visits + 1 emergency call-out included per year",
+      "Certified technician",
+      "Priority support",
+      "WhatsApp visit reports",
+      "No hidden charges"
+    ],
+    "badge": null,
+    "ctaText": "Choose Platinum",
+    "available": true,
+    "sortOrder": 3,
+    "priceConfirmed": false
+  }
+]

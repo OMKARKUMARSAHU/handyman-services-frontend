@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/*
+ * Handyman Services design system tokens.
+ * See PHASE_2_UI_UX_DESIGN.md §5 for the full rationale. These are a
+ * starting, original palette — distinct from any reference site — meant to
+ * be refined by the client/designer, not a final brand decision.
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #101828;
+
+  /* Brand — deep teal, chosen for a trustworthy, professional feel */
+  --color-brand-50: #eefaf8;
+  --color-brand-100: #d3f1ec;
+  --color-brand-200: #a8e2d8;
+  --color-brand-300: #74cbbc;
+  --color-brand-400: #45ac9c;
+  --color-brand-500: #2a8d7e;
+  --color-brand-600: #1f7267;
+  --color-brand-700: #1c5b53;
+  --color-brand-800: #1a4944;
+  --color-brand-900: #173d39;
+
+  /* Accent — used sparingly for highlight moments (e.g. "Most Popular") */
+  --color-accent-100: #fef3e2;
+  --color-accent-400: #f8b95c;
+  --color-accent-500: #f2a03a;
+  --color-accent-600: #d9821c;
+
+  /* Neutrals for text/borders/surfaces */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  --color-brand-50: var(--color-brand-50);
+  --color-brand-100: var(--color-brand-100);
+  --color-brand-200: var(--color-brand-200);
+  --color-brand-300: var(--color-brand-300);
+  --color-brand-400: var(--color-brand-400);
+  --color-brand-500: var(--color-brand-500);
+  --color-brand-600: var(--color-brand-600);
+  --color-brand-700: var(--color-brand-700);
+  --color-brand-800: var(--color-brand-800);
+  --color-brand-900: var(--color-brand-900);
+
+  --color-accent-100: var(--color-accent-100);
+  --color-accent-400: var(--color-accent-400);
+  --color-accent-500: var(--color-accent-500);
+  --color-accent-600: var(--color-accent-600);
+
+  --color-neutral-50: var(--color-neutral-50);
+  --color-neutral-100: var(--color-neutral-100);
+  --color-neutral-200: var(--color-neutral-200);
+  --color-neutral-300: var(--color-neutral-300);
+  --color-neutral-500: var(--color-neutral-500);
+  --color-neutral-600: var(--color-neutral-600);
+  --color-neutral-700: var(--color-neutral-700);
+  --color-neutral-800: var(--color-neutral-800);
+  --color-neutral-900: var(--color-neutral-900);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Visible focus states for keyboard users (Phase 2 accessibility requirement) */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

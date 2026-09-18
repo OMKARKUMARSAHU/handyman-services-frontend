@@ -1,0 +1,71 @@
+[
+  {
+    "key": "hero",
+    "heading": "Your home appliances, always running.",
+    "subheading": "One plan covers all your appliances. Vetted, certified technicians on call.",
+    "body": null,
+    "ctaText": "Explore Plans",
+    "ctaLink": "/plans",
+    "items": [
+      { "label": "secondaryCtaText", "value": "Explore Services" },
+      { "label": "secondaryCtaLink", "value": "/services" }
+    ],
+    "sortOrder": 1,
+    "image": null,
+    "imageAlt": "A certified technician servicing a home appliance"
+  },
+  {
+    "key": "trustStats",
+    "heading": "Trusted by homes across India",
+    "subheading": null,
+    "body": null,
+    "ctaText": null,
+    "ctaLink": null,
+    "items": [
+      { "label": "Happy Homes", "value": "500+" },
+      { "label": "Response Time", "value": "48hr" },
+      { "label": "Avg. Rating", "value": "4.8★" }
+    ],
+    "sortOrder": 2
+  },
+  {
+    "key": "howItWorks",
+    "heading": "How It Works",
+    "subheading": "From sign-up to service, in four simple steps.",
+    "body": null,
+    "ctaText": null,
+    "ctaLink": null,
+    "items": [
+      { "number": 1, "title": "Choose Your Plan", "description": "Pick the plan that covers the appliances you care about most." },
+      { "number": 2, "title": "We Match a Partner", "description": "A local certified technician is matched to your home." },
+      { "number": 3, "title": "Scheduled Visits", "description": "Your technician books a convenient time for each visit." },
+      { "number": 4, "title": "Track Everything", "description": "Get a WhatsApp summary after every visit." }
+    ],
+    "sortOrder": 3
+  },
+  {
+    "key": "whyChooseUs",
+    "heading": "Why Choose Handyman Services",
+    "subheading": null,
+    "body": null,
+    "ctaText": null,
+    "ctaLink": null,
+    "items": [
+      { "icon": "badge-check", "title": "Certified Technicians", "description": "Every visit is carried out by a vetted, certified technician partner." },
+      { "icon": "message-circle", "title": "WhatsApp Service Reports", "description": "A summary lands in your WhatsApp after every visit." },
+      { "icon": "shield-check", "title": "No Hidden Charges", "description": "Transparent plan pricing with no surprise add-ons." },
+      { "icon": "alarm-clock", "title": "Emergency Call-out", "description": "Support when something breaks outside your scheduled visits." }
+    ],
+    "sortOrder": 4
+  },
+  {
+    "key": "finalCta",
+    "heading": "Ready to stop worrying about appliance breakdowns?",
+    "subheading": "Pick a plan today and get your first visit scheduled.",
+    "body": null,
+    "ctaText": "Request a Service",
+    "ctaLink": "/contact",
+    "items": null,
+    "sortOrder": 5
+  }
+]

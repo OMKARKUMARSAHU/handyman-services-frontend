@@ -1,0 +1,35 @@
+[
+  {
+    "id": "t1",
+    "name": "Rekha Sharma",
+    "city": "Hyderabad",
+    "planId": "platinum",
+    "rating": 5,
+    "quote": "Technician arrived within 24 hours and serviced both our AC and washing machine. Smooth experience end to end.",
+    "photo": null,
+    "approved": true,
+    "sortOrder": 1
+  },
+  {
+    "id": "t2",
+    "name": "Vijay Menon",
+    "city": "Pune",
+    "planId": "gold",
+    "rating": 5,
+    "quote": "Fridge diagnosis took just 20 minutes and saved us about ₹8,000 in unnecessary repairs.",
+    "photo": null,
+    "approved": true,
+    "sortOrder": 2
+  },
+  {
+    "id": "t3",
+    "name": "Anita Kulkarni",
+    "city": "Bangalore",
+    "planId": "gold",
+    "rating": 5,
+    "quote": "Booking was simple, the service was thorough, and the visit reports gave us real confidence in the work.",
+    "photo": null,
+    "approved": true,
+    "sortOrder": 3
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "f1",
+    "question": "Who are the technicians?",
+    "answer": "All visits are carried out by certified, vetted technician partners in our network.",
+    "sortOrder": 1,
+    "category": null,
+    "answerConfirmed": false
+  },
+  {
+    "id": "f2",
+    "question": "What if I'm unsatisfied with a visit?",
+    "answer": "If you're not fully satisfied with a visit, reach out to us via WhatsApp or phone and we'll make it right.",
+    "sortOrder": 2,
+    "category": null,
+    "answerConfirmed": false
+  },
+  {
+    "id": "f3",
+    "question": "Are spare parts included?",
+    "answer": "Spare parts availability and any additional cost depend on the specific repair — your technician will always confirm this with you before proceeding.",
+    "sortOrder": 3,
+    "category": null,
+    "answerConfirmed": false
+  },
+  {
+    "id": "f4",
+    "question": "Can I upgrade my plan mid-year?",
+    "answer": "Yes — you can upgrade your plan at any time. Contact us and we'll help you move to a higher coverage tier.",
+    "sortOrder": 4,
+    "category": null,
+    "answerConfirmed": false
+  },
+  {
+    "id": "f5",
+    "question": "Which cities are serviceable?",
+    "answer": "We're expanding city by city. Contact us via WhatsApp or phone to check availability in your area.",
+    "sortOrder": 5,
+    "category": null,
+    "answerConfirmed": false
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "cooling",
+    "name": "Cooling",
+    "description": "Keep your air conditioners and fans running efficiently through every season.",
+    "icon": "snowflake",
+    "image": null,
+    "applianceIds": ["air-conditioner", "ceiling-fan"],
+    "sortOrder": 1
+  },
+  {
+    "id": "kitchen-appliances",
+    "name": "Kitchen Appliances",
+    "description": "From refrigerators to chimneys, keep the heart of your home working smoothly.",
+    "icon": "chef-hat",
+    "image": null,
+    "applianceIds": ["refrigerator", "microwave-oven", "built-in-hob", "kitchen-chimney", "dishwasher", "cooking-range"],
+    "sortOrder": 2
+  },
+  {
+    "id": "water-heating",
+    "name": "Water & Heating",
+    "description": "Reliable water purification and hot water, all year round.",
+    "icon": "droplet",
+    "image": null,
+    "applianceIds": ["water-purifier", "geyser"],
+    "sortOrder": 3
+  },
+  {
+    "id": "laundry",
+    "name": "Laundry",
+    "description": "Washing machine servicing to keep laundry day hassle-free.",
+    "icon": "washing-machine",
+    "image": null,
+    "applianceIds": ["washing-machine"],
+    "sortOrder": 4
+  },
+  {
+    "id": "entertainment",
+    "name": "Entertainment",
+    "description": "Television servicing and maintenance for your home entertainment setup.",
+    "icon": "tv",
+    "image": null,
+    "applianceIds": ["television"],
+    "sortOrder": 5
+  }
+]

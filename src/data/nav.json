@@ -1,0 +1,20 @@
+{
+  "primary": [
+    { "label": "Home", "href": "/" },
+    { "label": "Services", "href": "/services" },
+    { "label": "Plans", "href": "/plans" },
+    { "label": "Contact", "href": "/contact" }
+  ],
+  "footer": [
+    { "label": "Home", "href": "/" },
+    { "label": "Services", "href": "/services" },
+    { "label": "Plans", "href": "/plans" },
+    { "label": "About", "href": "/about" },
+    { "label": "FAQ", "href": "/faq" },
+    { "label": "Contact", "href": "/contact" }
+  ],
+  "footerLegal": [
+    { "label": "Privacy Policy", "href": "/privacy" },
+    { "label": "Terms & Conditions", "href": "/terms" }
+  ]
+}
