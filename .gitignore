@@ -43,3 +43,17 @@ next-env.d.ts
 # Internal project documentation
 PROJECT_DOCUMENTATION/
 
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+
+# logs
+*.log
+
+# local scratch / QA output (screenshots, ad-hoc reports) — never intended for the repo
+/Claude outputs/

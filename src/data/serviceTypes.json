@@ -1,0 +1,30 @@
+[
+  {
+    "id": "installation",
+    "key": "installation",
+    "label": "Installation",
+    "sortOrder": 1,
+    "active": true
+  },
+  {
+    "id": "service",
+    "key": "service",
+    "label": "Service",
+    "sortOrder": 2,
+    "active": true
+  },
+  {
+    "id": "repair",
+    "key": "repair",
+    "label": "Repair",
+    "sortOrder": 3,
+    "active": true
+  },
+  {
+    "id": "amc",
+    "key": "amc",
+    "label": "AMC",
+    "sortOrder": 4,
+    "active": true
+  }
+]

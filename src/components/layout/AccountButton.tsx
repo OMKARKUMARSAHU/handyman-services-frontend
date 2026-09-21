@@ -1,13 +1,17 @@
-"use client";
-
-import { useState } from "react";
-import { HeaderActionButton, HeaderModal } from "./HeaderActionModal";
-import { getTelLink, getWhatsAppLink } from "@/lib/data";
+import Link from "next/link";
+import { Icon } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 
 /**
- * Frontend-only account placeholder (Phase 4 frontend-polish scope).
- * No authentication exists yet — this is intentionally an honest
- * "coming soon" state rather than a fake sign-in form.
+ * Restructured per PHASE_2_COMPONENT_ARCHITECTURE.md §3: the previous
+ * "coming soon" inline modal becomes a real navigation entry point to
+ * /login, since login is now a full flow (not a one-off placeholder
+ * message). /login itself still shows an honest "method not yet decided"
+ * state — no method is invented here (Phase 1 §19, still TBD).
+ *
+ * Rendered as a Link (not HeaderActionButton's <button>) since a button
+ * nested inside an anchor is invalid HTML — same icon-button visual
+ * language, applied directly here.
  */
 export function AccountButton({
   className,
@@ -16,38 +20,19 @@ export function AccountButton({
   className?: string;
   showLabel?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <>
-      <HeaderActionButton
-        icon="user"
-        label="Account"
-        className={className}
-        showLabel={showLabel}
-        onClick={() => setOpen(true)}
-      />
-      <HeaderModal open={open} onClose={() => setOpen(false)} title="Account">
-        <p className="text-sm text-neutral-600">Sign-in is coming soon.</p>
-        <p className="mt-3 text-sm text-neutral-600">
-          In the meantime, you can reach us directly:
-        </p>
-        <div className="mt-3 flex flex-col gap-2">
-          <a
-            href={getTelLink()}
-            className="rounded-lg border border-neutral-300 px-3.5 py-2.5 text-center text-sm font-semibold text-neutral-800 hover:border-brand-500 hover:text-brand-700"
-          >
-            Call us
-          </a>
-          <a
-            href={getWhatsAppLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg bg-green-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white hover:bg-green-700"
-          >
-            Chat on WhatsApp
-          </a>
-        </div>
-      </HeaderModal>
-    </>
+    <Link
+      href="/login"
+      aria-label={showLabel ? undefined : "Account"}
+      title={showLabel ? undefined : "Account"}
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-lg text-neutral-700 hover:bg-neutral-100",
+        showLabel ? "gap-1.5 px-3 py-2 text-sm font-medium" : "h-9 w-9",
+        className
+      )}
+    >
+      <Icon name="user" className="h-5 w-5 shrink-0" />
+      {showLabel && <span>Account</span>}
+    </Link>
   );
 }

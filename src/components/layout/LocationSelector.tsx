@@ -1,81 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { HeaderActionButton, HeaderModal } from "./HeaderActionModal";
-
-const STORAGE_KEY = "handyman:selectedLocation";
+import { useParams } from "next/navigation";
+import { useLocation } from "@/lib/state/LocationProvider";
+import { getCityBySlugSync } from "@/lib/data/cities";
+import { Icon } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 
 /**
- * Frontend-only location selector (Phase 4 frontend-polish scope). No
- * service-area data exists yet (REQUIREMENTS_ANALYSIS.md §7 lists
- * service-area cities as missing), so this is a free-text field rather
- * than a fabricated city list, per the explicit "Enter your location"
- * fallback. Selection is stored only in the browser (localStorage) —
- * there is no backend.
+ * Header location control (Phase 3 header/footer revision §5) — now a
+ * first-class `[pin] City ▾` pill rather than an icon-only button, shown at
+ * every breakpoint (desktop center row and the mobile header's second row).
+ * Opens the existing shared CitySelectorModal via LocationProvider; the
+ * city shown comes from the current URL segment first (the real source of
+ * truth, PHASE_2_SYSTEM_ARCHITECTURE.md §4), falling back to the
+ * last-selected-city convenience value, then a neutral prompt. No second
+ * city state is created here.
  */
 export function LocationSelector({ className }: { className?: string }) {
-  const [open, setOpen] = useState(false);
-  const [location, setLocation] = useState("");
-  const [draft, setDraft] = useState("");
+  const params = useParams<{ city?: string }>();
+  const { lastCitySlug, openCitySelector } = useLocation();
 
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      // One-time hydration of client-only browser storage into state on mount;
-      // there is no external subscription to synchronize (localStorage has none),
-      // so this intentionally runs once rather than modeling a subscription.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (saved) setLocation(saved);
-    } catch {
-      // localStorage unavailable (private browsing, etc.) — feature just degrades silently
-    }
-  }, []);
-
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = draft.trim();
-    if (!trimmed) return;
-    setLocation(trimmed);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, trimmed);
-    } catch {
-      // ignore
-    }
-    setOpen(false);
-  }
+  const urlCitySlug = typeof params?.city === "string" ? params.city : undefined;
+  const activeSlug = urlCitySlug ?? lastCitySlug ?? undefined;
+  const activeCity = activeSlug ? getCityBySlugSync(activeSlug) : undefined;
+  const label = activeCity ? `Location: ${activeCity.name}. Change city` : "Select your city";
 
   return (
-    <>
-      <HeaderActionButton
-        icon="map-pin"
-        label={location ? `Location: ${location}` : "Select your location"}
-        className={className}
-        onClick={() => {
-          setDraft(location);
-          setOpen(true);
-        }}
-      />
-      <HeaderModal open={open} onClose={() => setOpen(false)} title="Select your location">
-        <form onSubmit={handleSave}>
-          <label htmlFor="location-input" className="mb-1.5 block text-sm font-medium text-neutral-800">
-            Enter your location
-          </label>
-          <input
-            id="location-input"
-            type="text"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="e.g. your city or area"
-            className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-sm text-neutral-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
-          <button
-            type="submit"
-            className="mt-4 w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
-          >
-            Save location
-          </button>
-        </form>
-      </HeaderModal>
-    </>
+    <button
+      type="button"
+      onClick={() => openCitySelector()}
+      aria-label={label}
+      title={label}
+      className={cn(
+        "flex min-w-0 shrink-0 items-center gap-1.5 rounded-lg border border-neutral-200 px-2.5 py-2 text-sm font-medium text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50",
+        className
+      )}
+    >
+      <Icon name="map-pin" className="h-4 w-4 shrink-0 text-brand-600" />
+      <span className="min-w-0 truncate">{activeCity ? activeCity.name : "Select city"}</span>
+      <Icon name="chevron-down" className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+    </button>
   );
 }

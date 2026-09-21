@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="Refrigerator">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#eef2f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <circle cx="320" cy="240" r="132" fill="#1f7267" opacity="0.08"/>
+  <circle cx="320" cy="240" r="96" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(258,178) scale(4.4)" fill="none" stroke="#1f7267" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 6a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6Z"></path><path d="M5 10h14"></path><path d="M15 7v6"></path>
+  </g>
+</svg>

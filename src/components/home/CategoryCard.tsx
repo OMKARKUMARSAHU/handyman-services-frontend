@@ -1,13 +1,27 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Category } from "@/types";
 import { Icon } from "@/lib/icons";
+import { useLocation } from "@/lib/state/LocationProvider";
 
-export function CategoryCard({ category }: { category: Category }) {
-  return (
-    <Link
-      href={`/services/${category.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-md"
-    >
+/**
+ * When a citySlug is already known (city homepage, or the convenience
+ * "last selected city" value), this is a plain link into
+ * /[city]/[category] — the URL-based source of truth
+ * (PHASE_2_SYSTEM_ARCHITECTURE.md §4). On the city-agnostic homepage with
+ * no city known yet, clicking opens the shared city selector instead of
+ * navigating to a route that doesn't resolve — the "scope, not gate"
+ * default from PHASE_2_SYSTEM_ARCHITECTURE.md §4 / PHASE_2_PAGE_STRUCTURE.md §2.
+ */
+export function CategoryCard({ category, citySlug }: { category: Category; citySlug?: string }) {
+  const router = useRouter();
+  const { lastCitySlug, openCitySelector } = useLocation();
+  const effectiveCitySlug = citySlug ?? lastCitySlug ?? undefined;
+
+  const content = (
+    <>
       {category.image ? (
         // eslint-disable-next-line @next/next/no-img-element -- business photo, optimized separately per PHASE_4_FRONTEND_POLISH_REPORT.md
         <img
@@ -35,6 +49,29 @@ export function CategoryCard({ category }: { category: Category }) {
           </svg>
         </span>
       </div>
-    </Link>
+    </>
+  );
+
+  const className =
+    "group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left shadow-sm transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-md";
+
+  if (effectiveCitySlug) {
+    return (
+      <Link href={`/${effectiveCitySlug}/${category.id}`} className={className}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => openCitySelector((selectedCitySlug) => {
+        router.push(`/${selectedCitySlug}/${category.id}`);
+      })}
+      className={className}
+    >
+      {content}
+    </button>
   );
 }

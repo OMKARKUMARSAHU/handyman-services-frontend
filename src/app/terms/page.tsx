@@ -19,8 +19,8 @@ export default function TermsPage() {
               <p className="mt-2">
                 By booking a service or plan through Handyman Services, you agree to
                 provide accurate contact and address details so a technician can be
-                scheduled correctly. Service visits are carried out by certified
-                technician partners in our network.
+                scheduled correctly. Service visits are carried out by technician
+                partners in our network.
               </p>
             </section>
             <section>

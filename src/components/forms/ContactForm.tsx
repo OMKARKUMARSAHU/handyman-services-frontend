@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { Plan, Appliance, LeadPayload } from "@/types";
 import { submitLead } from "@/lib/data";
@@ -220,13 +221,13 @@ export function ContactForm({
           className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-brand-600 focus:ring-brand-500"
         />
         I agree to the{" "}
-        <a href="/terms" className="text-brand-700 underline">
+        <Link href="/terms" className="text-brand-700 underline">
           Terms &amp; Conditions
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a href="/privacy" className="text-brand-700 underline">
+        <Link href="/privacy" className="text-brand-700 underline">
           Privacy Policy
-        </a>
+        </Link>
         . *
       </label>
 

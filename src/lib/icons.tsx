@@ -20,6 +20,18 @@ import {
   ShoppingCart,
   X,
   Wrench,
+  AirVent,
+  Filter,
+  CookingPot,
+  Zap,
+  Star,
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+  LayoutGrid,
+  Play,
+  Film,
+  Globe,
 } from "lucide-react";
 
 export type IconKey =
@@ -44,7 +56,19 @@ export type IconKey =
   | "user"
   | "shopping-cart"
   | "x"
-  | "wrench";
+  | "wrench"
+  | "air-vent"
+  | "filter"
+  | "cooking-pot"
+  | "zap"
+  | "star"
+  | "chevron-right"
+  | "chevron-left"
+  | "chevron-down"
+  | "layout-grid"
+  | "play"
+  | "film"
+  | "globe";
 
 /**
  * A single, consistent icon set (lucide-react) resolved from the string
@@ -104,6 +128,30 @@ export function Icon({
       return <X {...props} />;
     case "wrench":
       return <Wrench {...props} />;
+    case "air-vent":
+      return <AirVent {...props} />;
+    case "filter":
+      return <Filter {...props} />;
+    case "cooking-pot":
+      return <CookingPot {...props} />;
+    case "zap":
+      return <Zap {...props} />;
+    case "star":
+      return <Star {...props} />;
+    case "chevron-right":
+      return <ChevronRight {...props} />;
+    case "chevron-left":
+      return <ChevronLeft {...props} />;
+    case "chevron-down":
+      return <ChevronDown {...props} />;
+    case "layout-grid":
+      return <LayoutGrid {...props} />;
+    case "play":
+      return <Play {...props} />;
+    case "film":
+      return <Film {...props} />;
+    case "globe":
+      return <Globe {...props} />;
     case "shield-check":
     default:
       return <ShieldCheck {...props} />;

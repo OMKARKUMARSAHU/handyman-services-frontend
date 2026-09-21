@@ -80,6 +80,27 @@ body {
   font-family: var(--font-sans);
 }
 
+/*
+ * Phase 3 final visual-audit pass: the header is `position: sticky`, so an
+ * in-page anchor jump (Hero's "See How It Works" -> #how-it-works, the FAQ
+ * section's own #faq) would otherwise land the target flush under it,
+ * hiding the heading. `scroll-padding-top` offsets every scroll-into-view
+ * in the document by the sticky header's height, so anchored content
+ * always lands fully below it. The header is two rows on mobile (the
+ * main row plus the Location/Search row added in the header/footer
+ * revision) and taller than the single-row desktop header, so the offset
+ * is responsive rather than one fixed value.
+ */
+html {
+  scroll-padding-top: 4.5rem;
+}
+
+@media (max-width: 767px) {
+  html {
+    scroll-padding-top: 8rem;
+  }
+}
+
 /* Visible focus states for keyboard users (Phase 2 accessibility requirement) */
 :focus-visible {
   outline: 2px solid var(--color-brand-500);

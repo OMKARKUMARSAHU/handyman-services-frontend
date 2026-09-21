@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Technician servicing a kitchen appliance">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4f1ea"/>
+      <stop offset="100%" stop-color="#e7e2d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="640" fill="url(#bg)"/>
+  <circle cx="150" cy="120" r="180" fill="#ffffff" opacity="0.35"/>
+  <circle cx="500" cy="520" r="220" fill="#1f7267" opacity="0.07"/>
+  <g transform="translate(240,430) scale(2.3)" fill="none" stroke="#3a4441" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    
+  <circle cx="0" cy="-58" r="17" />
+  <path d="M -22 30 C -22 -6 -16 -24 0 -24 C 16 -24 22 -6 22 30 L 22 62 L -22 62 Z" />
+  <path d="M 16 -14 L 34 -30" />
+
+  </g>
+  <g transform="translate(300,150) scale(7.5)" fill="none" stroke="#1f7267" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"></path><path d="M6 17h12"></path>
+  </g>
+</svg>

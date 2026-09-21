@@ -5,11 +5,23 @@ import { cn } from "@/lib/utils";
  * Click-to-chat WhatsApp action. An original chat-bubble glyph is used
  * rather than a third-party brand mark, per the "no proprietary assets"
  * rule that applies to every reference site, not only Urban Company.
+ *
+ * The `floating` variant is now the site's *only* WhatsApp entry point at
+ * every breakpoint ("FINAL HOMEPAGE / UX CORRECTION" item 13 — see
+ * layout.tsx's doc comment for why the old full-width mobile bar is gone).
+ * It was already exactly the small-circular-fixed-bottom-right treatment
+ * the client asked for; the only change here is making it render on mobile
+ * too (it used to be `hidden md:flex` from the call site, with the old
+ * `StickyMobileCTA` bar covering mobile instead) and adding safe-area
+ * inset support so it never sits under a phone's home-indicator/gesture
+ * area. It never pushes page content (its own `fixed` positioning takes it
+ * out of the document flow entirely) and never spans full width at any
+ * screen size.
  */
 export function WhatsAppButton({
   className,
   label = "Chat on WhatsApp",
-  presetMessage = "Hi! I'd like to know more about your appliance plans.",
+  presetMessage = "Hi! I'd like help with an appliance service.",
   variant = "default",
 }: {
   className?: string;
@@ -27,9 +39,13 @@ export function WhatsAppButton({
         rel="noopener noreferrer"
         aria-label={label}
         className={cn(
-          "fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-white shadow-lg transition-transform hover:scale-105 md:bottom-6",
+          "fixed z-40 flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-white shadow-lg transition-transform hover:scale-105",
           className
         )}
+        style={{
+          right: "max(1rem, env(safe-area-inset-right))",
+          bottom: "max(1rem, calc(env(safe-area-inset-bottom) + 1rem))",
+        }}
       >
         <ChatGlyph />
       </a>
@@ -42,7 +58,7 @@ export function WhatsAppButton({
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700",
+        "inline-flex items-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800",
         className
       )}
     >

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ranchi",
+    "name": "Ranchi",
+    "state": "Jharkhand",
+    "slug": "ranchi",
+    "isPopular": true,
+    "active": true,
+    "sortOrder": 1
+  },
+  {
+    "id": "delhi",
+    "name": "Delhi",
+    "state": "Delhi",
+    "slug": "delhi",
+    "isPopular": true,
+    "active": true,
+    "sortOrder": 2
+  },
+  {
+    "id": "mumbai",
+    "name": "Mumbai",
+    "state": "Maharashtra",
+    "slug": "mumbai",
+    "isPopular": true,
+    "active": true,
+    "sortOrder": 3
+  },
+  {
+    "id": "bengaluru",
+    "name": "Bengaluru",
+    "state": "Karnataka",
+    "slug": "bengaluru",
+    "isPopular": true,
+    "active": true,
+    "sortOrder": 4
+  },
+  {
+    "id": "jamshedpur",
+    "name": "Jamshedpur",
+    "state": "Jharkhand",
+    "slug": "jamshedpur",
+    "isPopular": false,
+    "active": true,
+    "sortOrder": 5
+  },
+  {
+    "id": "patna",
+    "name": "Patna",
+    "state": "Bihar",
+    "slug": "patna",
+    "isPopular": false,
+    "active": true,
+    "sortOrder": 6
+  },
+  {
+    "id": "pune",
+    "name": "Pune",
+    "state": "Maharashtra",
+    "slug": "pune",
+    "isPopular": false,
+    "active": true,
+    "sortOrder": 7
+  },
+  {
+    "id": "kolkata",
+    "name": "Kolkata",
+    "state": "West Bengal",
+    "slug": "kolkata",
+    "isPopular": false,
+    "active": true,
+    "sortOrder": 8
+  }
+]

@@ -1,47 +1,43 @@
 [
   {
-    "id": "cooling",
-    "name": "Cooling",
-    "description": "Keep your air conditioners and fans running efficiently through every season.",
-    "icon": "snowflake",
+    "id": "consumer-durables",
+    "name": "Consumer Durables",
+    "description": "Installation, service, repair and AMC for the appliances you rely on every day — AC, washing machine, refrigerator, TV and microwave.",
+    "icon": "air-vent",
     "image": null,
-    "applianceIds": ["air-conditioner", "ceiling-fan"],
+    "applianceIds": [
+      "air-conditioner",
+      "washing-machine",
+      "refrigerator",
+      "led-tv",
+      "microwave-oven"
+    ],
     "sortOrder": 1
   },
   {
     "id": "kitchen-appliances",
     "name": "Kitchen Appliances",
-    "description": "From refrigerators to chimneys, keep the heart of your home working smoothly.",
+    "description": "From built-in hobs to chimneys, keep the heart of your kitchen working smoothly.",
     "icon": "chef-hat",
     "image": null,
-    "applianceIds": ["refrigerator", "microwave-oven", "built-in-hob", "kitchen-chimney", "dishwasher", "cooking-range"],
+    "applianceIds": [
+      "hob",
+      "gas-stove",
+      "chimney",
+      "dishwasher"
+    ],
     "sortOrder": 2
   },
   {
-    "id": "water-heating",
-    "name": "Water & Heating",
-    "description": "Reliable water purification and hot water, all year round.",
-    "icon": "droplet",
+    "id": "water-air-purifiers",
+    "name": "Water & Air Purifiers",
+    "description": "Installation and servicing for RO water purifiers and room air purifiers.",
+    "icon": "filter",
     "image": null,
-    "applianceIds": ["water-purifier", "geyser"],
+    "applianceIds": [
+      "ro",
+      "air-purifier"
+    ],
     "sortOrder": 3
-  },
-  {
-    "id": "laundry",
-    "name": "Laundry",
-    "description": "Washing machine servicing to keep laundry day hassle-free.",
-    "icon": "washing-machine",
-    "image": null,
-    "applianceIds": ["washing-machine"],
-    "sortOrder": 4
-  },
-  {
-    "id": "entertainment",
-    "name": "Entertainment",
-    "description": "Television servicing and maintenance for your home entertainment setup.",
-    "icon": "tv",
-    "image": null,
-    "applianceIds": ["television"],
-    "sortOrder": 5
   }
 ]

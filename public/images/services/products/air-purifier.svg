@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="Air Purifier">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#eef2f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <circle cx="320" cy="240" r="132" fill="#1f7267" opacity="0.08"/>
+  <circle cx="320" cy="240" r="96" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(258,178) scale(4.4)" fill="none" stroke="#1f7267" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"></path><path d="M12 12v.01"></path>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="Dishwasher">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#eef2f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <circle cx="320" cy="240" r="132" fill="#1f7267" opacity="0.08"/>
+  <circle cx="320" cy="240" r="96" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(258,178) scale(4.4)" fill="none" stroke="#1f7267" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 6h3"></path><path d="M17 6h.01"></path><rect width="18" height="20" x="3" y="2" rx="2"></rect><circle cx="12" cy="13" r="5"></circle><path d="M12 18a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 1 0-5"></path>
+  </g>
+</svg>

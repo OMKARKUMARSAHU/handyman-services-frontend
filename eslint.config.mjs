@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Dev-only data-generation / verification scripts — not part of the
+    // shipped Next.js app (see scripts/README-ish comments in each file).
+    "scripts/**",
   ]),
 ]);
 

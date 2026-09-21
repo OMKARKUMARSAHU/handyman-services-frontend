@@ -10,7 +10,12 @@ import { TestimonialCard } from "./TestimonialCard";
 export function TestimonialCarousel({ testimonials }: { testimonials: Testimonial[] }) {
   return (
     <Container>
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-3">
+      <div
+        role="region"
+        aria-label="Customer testimonials — scrollable list"
+        tabIndex={0}
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-3"
+      >
         {testimonials.map((t) => (
           <div key={t.id} className="w-[85%] shrink-0 snap-center sm:w-auto">
             <TestimonialCard testimonial={t} />

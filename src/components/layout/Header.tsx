@@ -1,76 +1,110 @@
 import Link from "next/link";
-import { getPrimaryNav, getContactInfo, getTelLink } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
-import { Button } from "@/components/ui/Button";
 import { MobileMenu } from "./MobileMenu";
 import { SearchBox } from "./SearchBox";
 import { LocationSelector } from "./LocationSelector";
 import { AccountButton } from "./AccountButton";
 import { CartButton } from "./CartButton";
 
+/**
+ * Global marketplace header (Phase 3 header/footer revision).
+ *
+ * Replaces the earlier brochure-site header (Home/Services/Contact nav,
+ * visible phone number, "Request a Service" CTA) with the
+ * Location → Search → Cart → Account information architecture the
+ * City → Category → Product → Service Type → Service → Cart → Checkout
+ * → Order product model needs. Urban Company's header
+ * (urbancompany.com/ranchi) was used only as a UX/IA reference for this
+ * layout — no Urban Company branding, copy, or assets are used, and the
+ * logo/colors/icon set here are the existing Handyman ones.
+ *
+ * Location, Search, Cart, and Account are the same components as before,
+ * restyled — none of their underlying state or data logic changed:
+ * Location still reads/writes LocationProvider, Search still runs through
+ * the existing SearchBox DAL-backed filter + results modal, Cart still
+ * reads CartProvider, and Account still links to the existing /login shell.
+ *
+ * Layout: a single row at `md` and up (logo left; Location + Search
+ * centered; Cart/Account/mobile-menu right). Below `md`, Location and
+ * Search move to a second full-width row so the icon cluster in row one
+ * never has to shrink — verified clean at 360–390px.
+ *
+ * "FINAL UX + CART FUNCTIONALITY CORRECTION" item 2: below `md` the
+ * standalone Account icon is hidden — the hamburger is mobile's one
+ * primary-navigation entry point (it has its own "Login" item), so the
+ * icon row there is just [Cart] [Hamburger]. Desktop keeps Cart + Account
+ * + (hidden) hamburger, unchanged.
+ */
 export function Header() {
-  const navItems = getPrimaryNav();
-  const contact = getContactInfo();
-
   return (
     <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
-      <Container className="flex h-16 items-center justify-between gap-2">
+      <Container className="flex h-16 items-center gap-3">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2 text-lg font-extrabold tracking-tight text-neutral-900"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-sm font-black text-white">
-            HS
+          {/*
+            "FINAL HOMEPAGE / UX CORRECTION" item 11: the official supplied
+            Handyman Services logo replaces the old text-based "HS" square.
+            The row this sits in is a fixed 64px-tall sticky bar, so there
+            isn't vertical room to show the full mascot+wordmark lockup
+            legibly here — the badge shows just the mascot portion (a CSS
+            crop via object-top/object-cover on the untouched source image,
+            not a separately pre-cropped asset) and the real "Handyman
+            Services" text stays live, accessible HTML next to it, same as
+            before. The full lockup (mascot + "HANDYMAN SERVICES" wordmark
+            baked into the image) is used at the footer's brand block
+            instead, where there's room for it — see Footer.tsx.
+          */}
+          <span className="flex h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-neutral-950">
+            {/*
+              alt is the real "Handyman Services" name, not empty — the
+              adjacent text span is `hidden` (display:none) below the `sm`
+              breakpoint, and hidden text doesn't contribute to a link's
+              accessible name, so the link needs its name from the image
+              itself at every viewport (axe's link-name rule caught this
+              with an empty alt during the mobile QA pass).
+            */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- small fixed badge crop of the official brand asset; next/image's fixed sizing isn't needed here */}
+            <img
+              src="/images/brand/handyman-logo.jpg"
+              alt="Handyman Services"
+              className="h-full w-full object-cover object-top"
+            />
           </span>
-          <span className="hidden sm:inline">Handyman Services</span>
+          <span className="hidden sm:inline" aria-hidden="true">
+            Handyman Services
+          </span>
         </Link>
 
-        <nav aria-label="Primary" className="hidden lg:block">
-          <ul className="flex items-center gap-6 xl:gap-8">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="text-sm font-medium text-neutral-700 transition-colors hover:text-brand-700"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="flex items-center gap-0.5 sm:gap-1">
-          <SearchBox />
-          <LocationSelector />
-          <AccountButton />
-          <CartButton className="hidden lg:flex" />
-          <a
-            href={getTelLink()}
-            className="hidden pl-1 text-sm font-semibold text-brand-700 hover:text-brand-800 xl:block"
-            aria-label={`Call ${contact.phone}`}
-          >
-            {contact.phone}
-          </a>
-          {/*
-            Wrapped in a span rather than passing "hidden lg:inline-flex"
-            straight to Button's className: Button's own base classes always
-            start with the unprefixed utility "inline-flex", and cn() (plain
-            clsx, no tailwind-merge) does not dedupe/override conflicting
-            unprefixed utilities — the winner then depends on Tailwind's
-            internal generation order for that pair of class names rather
-            than source order, which combined "hidden" + "inline-flex" the
-            wrong way and left this button visible on mobile. A wrapper
-            element with no competing base "inline-flex"/"flex" class of its
-            own can safely carry the responsive hide/show classes instead.
-          */}
-          <span className="ml-1 hidden lg:inline-flex">
-            <Button href="/contact" size="md">
-              Request a Service
-            </Button>
-          </span>
-          <MobileMenu items={navItems} />
+        <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
+          <LocationSelector className="max-w-[180px]" />
+          <SearchBox className="w-full max-w-sm lg:max-w-md" />
         </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <CartButton />
+          {/*
+            "FINAL UX + CART FUNCTIONALITY CORRECTION" item 2: the mobile
+            header keeps only [Logo] [Cart] [Hamburger] — the standalone
+            account/person icon is desktop-only now. The hamburger drawer is
+            mobile's primary navigation entry point and already includes a
+            "Login" item (see MobileMenu.tsx), so the account icon isn't lost,
+            just no longer duplicated as a second icon in the same row.
+            `hidden md:block` on the wrapper (not a class appended to
+            AccountButton itself) so a parent `display:none` reliably hides
+            it below `md` regardless of AccountButton's own `flex` class.
+          */}
+          <div className="hidden md:block">
+            <AccountButton />
+          </div>
+          <MobileMenu />
+        </div>
+      </Container>
+
+      <Container className="flex items-center gap-2 border-t border-neutral-100 py-2 md:hidden">
+        <LocationSelector className="max-w-[40%]" />
+        <SearchBox className="min-w-0 flex-1" />
       </Container>
     </header>
   );

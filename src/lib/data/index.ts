@@ -15,3 +15,15 @@ export * from "./contact";
 export * from "./homepageSections";
 export * from "./nav";
 export * from "./leads";
+
+// Marketplace entities (PHASE_2_API_CONTRACT.md). appliances.ts/categories.ts
+// above stay as-is and keep backing the legacy /services/[category] route;
+// these are the new City → Category → Product → ServiceType → Service reads.
+export * from "./cities";
+export * from "./products";
+export * from "./serviceTypes";
+export * from "./services";
+export * from "./offers";
+export * from "./search";
+export * from "./orders";
+export * from "./videoCurations";

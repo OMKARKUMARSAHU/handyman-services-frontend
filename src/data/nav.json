@@ -1,17 +1,15 @@
 {
-  "primary": [
-    { "label": "Home", "href": "/" },
-    { "label": "Services", "href": "/services" },
-    { "label": "Plans", "href": "/plans" },
-    { "label": "Contact", "href": "/contact" }
+  "footerCompany": [
+    { "label": "About Us", "href": "/about" },
+    { "label": "Contact Us", "href": "/contact" },
+    { "label": "FAQ", "href": "/faq" }
   ],
-  "footer": [
-    { "label": "Home", "href": "/" },
-    { "label": "Services", "href": "/services" },
-    { "label": "Plans", "href": "/plans" },
-    { "label": "About", "href": "/about" },
-    { "label": "FAQ", "href": "/faq" },
-    { "label": "Contact", "href": "/contact" }
+  "footerCustomer": [
+    { "label": "Login", "href": "/login" },
+    { "label": "My Account", "href": "/account" },
+    { "label": "My Orders", "href": "/account/orders" },
+    { "label": "Addresses", "href": "/account/addresses" },
+    { "label": "Cart", "href": "/cart" }
   ],
   "footerLegal": [
     { "label": "Privacy Policy", "href": "/privacy" },

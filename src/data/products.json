@@ -1,0 +1,123 @@
+[
+  {
+    "id": "air-conditioner",
+    "slug": "air-conditioner",
+    "name": "Air Conditioner",
+    "description": "Installation, servicing, gas top-up and repair for split and window air conditioners.",
+    "icon": "air-vent",
+    "image": null,
+    "categoryId": "consumer-durables",
+    "sortOrder": 1,
+    "active": true
+  },
+  {
+    "id": "washing-machine",
+    "slug": "washing-machine",
+    "name": "Washing Machine",
+    "description": "Installation, repair and maintenance for front-load and top-load washing machines.",
+    "icon": "washing-machine",
+    "image": null,
+    "categoryId": "consumer-durables",
+    "sortOrder": 2,
+    "active": true
+  },
+  {
+    "id": "refrigerator",
+    "slug": "refrigerator",
+    "name": "Refrigerator",
+    "description": "Installation, cooling issues, noise and general refrigerator maintenance.",
+    "icon": "refrigerator",
+    "image": null,
+    "categoryId": "consumer-durables",
+    "sortOrder": 3,
+    "active": true
+  },
+  {
+    "id": "led-tv",
+    "slug": "led-tv",
+    "name": "LED TV",
+    "description": "Installation, wall-mounting and repair for LED and Smart TVs.",
+    "icon": "tv",
+    "image": null,
+    "categoryId": "consumer-durables",
+    "sortOrder": 4,
+    "active": true
+  },
+  {
+    "id": "microwave-oven",
+    "slug": "microwave-oven",
+    "name": "Microwave Oven",
+    "description": "Installation and repair for microwave ovens, OTGs and built-in ovens.",
+    "icon": "microwave",
+    "image": null,
+    "categoryId": "consumer-durables",
+    "sortOrder": 5,
+    "active": true
+  },
+  {
+    "id": "hob",
+    "slug": "hob",
+    "name": "Hob",
+    "description": "Installation and servicing for built-in gas and induction hobs.",
+    "icon": "cooking-pot",
+    "image": null,
+    "categoryId": "kitchen-appliances",
+    "sortOrder": 6,
+    "active": true
+  },
+  {
+    "id": "gas-stove",
+    "slug": "gas-stove",
+    "name": "Gas Stove",
+    "description": "Installation and servicing for gas stoves and cooktops.",
+    "icon": "flame",
+    "image": null,
+    "categoryId": "kitchen-appliances",
+    "sortOrder": 7,
+    "active": true
+  },
+  {
+    "id": "chimney",
+    "slug": "chimney",
+    "name": "Chimney",
+    "description": "Installation and deep cleaning for kitchen chimneys.",
+    "icon": "wind",
+    "image": null,
+    "categoryId": "kitchen-appliances",
+    "sortOrder": 8,
+    "active": true
+  },
+  {
+    "id": "dishwasher",
+    "slug": "dishwasher",
+    "name": "Dishwasher",
+    "description": "Installation, maintenance and repair for built-in and freestanding dishwashers.",
+    "icon": "dishwasher",
+    "image": null,
+    "categoryId": "kitchen-appliances",
+    "sortOrder": 9,
+    "active": true
+  },
+  {
+    "id": "ro",
+    "slug": "ro",
+    "name": "RO Water Purifier",
+    "description": "Installation, filter changes and servicing for RO/UV water purifiers.",
+    "icon": "droplet",
+    "image": null,
+    "categoryId": "water-air-purifiers",
+    "sortOrder": 10,
+    "active": true
+  },
+  {
+    "id": "air-purifier",
+    "slug": "air-purifier",
+    "name": "Air Purifier",
+    "description": "Installation, filter replacement and servicing for room air purifiers.",
+    "icon": "fan",
+    "image": null,
+    "categoryId": "water-air-purifiers",
+    "sortOrder": 11,
+    "active": true
+  }
+]

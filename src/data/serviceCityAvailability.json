@@ -1,0 +1,2114 @@
+[
+  {
+    "id": "avail-1",
+    "serviceId": "air-conditioner-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-2",
+    "serviceId": "air-conditioner-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-3",
+    "serviceId": "air-conditioner-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-4",
+    "serviceId": "air-conditioner-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-5",
+    "serviceId": "air-conditioner-installation",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-6",
+    "serviceId": "air-conditioner-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-7",
+    "serviceId": "air-conditioner-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-8",
+    "serviceId": "air-conditioner-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-9",
+    "serviceId": "air-conditioner-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-10",
+    "serviceId": "air-conditioner-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-11",
+    "serviceId": "air-conditioner-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-12",
+    "serviceId": "air-conditioner-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-13",
+    "serviceId": "air-conditioner-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-14",
+    "serviceId": "air-conditioner-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-15",
+    "serviceId": "air-conditioner-service",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-16",
+    "serviceId": "air-conditioner-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-17",
+    "serviceId": "air-conditioner-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-18",
+    "serviceId": "air-conditioner-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-19",
+    "serviceId": "air-conditioner-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-20",
+    "serviceId": "air-conditioner-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-21",
+    "serviceId": "air-conditioner-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-22",
+    "serviceId": "air-conditioner-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-23",
+    "serviceId": "air-conditioner-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-24",
+    "serviceId": "air-conditioner-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-25",
+    "serviceId": "air-conditioner-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-26",
+    "serviceId": "air-conditioner-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-27",
+    "serviceId": "air-conditioner-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-28",
+    "serviceId": "air-conditioner-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-29",
+    "serviceId": "air-conditioner-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-30",
+    "serviceId": "air-conditioner-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-31",
+    "serviceId": "air-conditioner-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-32",
+    "serviceId": "air-conditioner-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-33",
+    "serviceId": "washing-machine-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-34",
+    "serviceId": "washing-machine-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-35",
+    "serviceId": "washing-machine-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-36",
+    "serviceId": "washing-machine-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-37",
+    "serviceId": "washing-machine-installation",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-38",
+    "serviceId": "washing-machine-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-39",
+    "serviceId": "washing-machine-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-40",
+    "serviceId": "washing-machine-installation",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-41",
+    "serviceId": "washing-machine-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-42",
+    "serviceId": "washing-machine-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-43",
+    "serviceId": "washing-machine-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-44",
+    "serviceId": "washing-machine-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-45",
+    "serviceId": "washing-machine-service",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-46",
+    "serviceId": "washing-machine-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-47",
+    "serviceId": "washing-machine-service",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-48",
+    "serviceId": "washing-machine-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-49",
+    "serviceId": "washing-machine-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-50",
+    "serviceId": "washing-machine-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-51",
+    "serviceId": "washing-machine-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-52",
+    "serviceId": "washing-machine-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-53",
+    "serviceId": "washing-machine-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-54",
+    "serviceId": "washing-machine-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-55",
+    "serviceId": "washing-machine-repair",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-56",
+    "serviceId": "washing-machine-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-57",
+    "serviceId": "washing-machine-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-58",
+    "serviceId": "washing-machine-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-59",
+    "serviceId": "washing-machine-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-60",
+    "serviceId": "washing-machine-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-61",
+    "serviceId": "washing-machine-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-62",
+    "serviceId": "washing-machine-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-63",
+    "serviceId": "washing-machine-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-64",
+    "serviceId": "washing-machine-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-65",
+    "serviceId": "refrigerator-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-66",
+    "serviceId": "refrigerator-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-67",
+    "serviceId": "refrigerator-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-68",
+    "serviceId": "refrigerator-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-69",
+    "serviceId": "refrigerator-installation",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-70",
+    "serviceId": "refrigerator-installation",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-71",
+    "serviceId": "refrigerator-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-72",
+    "serviceId": "refrigerator-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-73",
+    "serviceId": "refrigerator-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-74",
+    "serviceId": "refrigerator-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-75",
+    "serviceId": "refrigerator-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-76",
+    "serviceId": "refrigerator-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-77",
+    "serviceId": "refrigerator-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-78",
+    "serviceId": "refrigerator-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-79",
+    "serviceId": "refrigerator-service",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-80",
+    "serviceId": "refrigerator-service",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-81",
+    "serviceId": "refrigerator-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-82",
+    "serviceId": "refrigerator-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-83",
+    "serviceId": "refrigerator-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-84",
+    "serviceId": "refrigerator-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-85",
+    "serviceId": "refrigerator-repair",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-86",
+    "serviceId": "refrigerator-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-87",
+    "serviceId": "refrigerator-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-88",
+    "serviceId": "refrigerator-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-89",
+    "serviceId": "refrigerator-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-90",
+    "serviceId": "refrigerator-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-91",
+    "serviceId": "refrigerator-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-92",
+    "serviceId": "refrigerator-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-93",
+    "serviceId": "refrigerator-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-94",
+    "serviceId": "refrigerator-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-95",
+    "serviceId": "refrigerator-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-96",
+    "serviceId": "refrigerator-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-97",
+    "serviceId": "led-tv-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-98",
+    "serviceId": "led-tv-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-99",
+    "serviceId": "led-tv-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-100",
+    "serviceId": "led-tv-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-101",
+    "serviceId": "led-tv-installation",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-102",
+    "serviceId": "led-tv-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-103",
+    "serviceId": "led-tv-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-104",
+    "serviceId": "led-tv-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-105",
+    "serviceId": "led-tv-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-106",
+    "serviceId": "led-tv-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-107",
+    "serviceId": "led-tv-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-108",
+    "serviceId": "led-tv-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-109",
+    "serviceId": "led-tv-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-110",
+    "serviceId": "led-tv-service",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-111",
+    "serviceId": "led-tv-service",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-112",
+    "serviceId": "led-tv-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-113",
+    "serviceId": "led-tv-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-114",
+    "serviceId": "led-tv-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-115",
+    "serviceId": "led-tv-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-116",
+    "serviceId": "led-tv-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-117",
+    "serviceId": "led-tv-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-118",
+    "serviceId": "led-tv-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-119",
+    "serviceId": "led-tv-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-120",
+    "serviceId": "led-tv-repair",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-121",
+    "serviceId": "led-tv-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-122",
+    "serviceId": "led-tv-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-123",
+    "serviceId": "led-tv-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-124",
+    "serviceId": "led-tv-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-125",
+    "serviceId": "led-tv-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-126",
+    "serviceId": "led-tv-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-127",
+    "serviceId": "led-tv-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-128",
+    "serviceId": "led-tv-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-129",
+    "serviceId": "microwave-oven-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-130",
+    "serviceId": "microwave-oven-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-131",
+    "serviceId": "microwave-oven-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-132",
+    "serviceId": "microwave-oven-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-133",
+    "serviceId": "microwave-oven-installation",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-134",
+    "serviceId": "microwave-oven-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-135",
+    "serviceId": "microwave-oven-installation",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-136",
+    "serviceId": "microwave-oven-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-137",
+    "serviceId": "microwave-oven-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-138",
+    "serviceId": "microwave-oven-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-139",
+    "serviceId": "microwave-oven-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-140",
+    "serviceId": "microwave-oven-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-141",
+    "serviceId": "microwave-oven-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-142",
+    "serviceId": "microwave-oven-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-143",
+    "serviceId": "microwave-oven-service",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-144",
+    "serviceId": "microwave-oven-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-145",
+    "serviceId": "microwave-oven-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-146",
+    "serviceId": "microwave-oven-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-147",
+    "serviceId": "microwave-oven-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-148",
+    "serviceId": "microwave-oven-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-149",
+    "serviceId": "microwave-oven-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-150",
+    "serviceId": "microwave-oven-repair",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-151",
+    "serviceId": "microwave-oven-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-152",
+    "serviceId": "microwave-oven-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-153",
+    "serviceId": "microwave-oven-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-154",
+    "serviceId": "microwave-oven-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-155",
+    "serviceId": "microwave-oven-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-156",
+    "serviceId": "microwave-oven-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-157",
+    "serviceId": "microwave-oven-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-158",
+    "serviceId": "microwave-oven-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-159",
+    "serviceId": "microwave-oven-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-160",
+    "serviceId": "microwave-oven-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-161",
+    "serviceId": "hob-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-162",
+    "serviceId": "hob-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-163",
+    "serviceId": "hob-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-164",
+    "serviceId": "hob-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-165",
+    "serviceId": "hob-installation",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-166",
+    "serviceId": "hob-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-167",
+    "serviceId": "hob-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-168",
+    "serviceId": "hob-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-169",
+    "serviceId": "hob-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-170",
+    "serviceId": "hob-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-171",
+    "serviceId": "hob-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-172",
+    "serviceId": "hob-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-173",
+    "serviceId": "hob-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-174",
+    "serviceId": "hob-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-175",
+    "serviceId": "hob-service",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-176",
+    "serviceId": "hob-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-177",
+    "serviceId": "hob-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-178",
+    "serviceId": "hob-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-179",
+    "serviceId": "hob-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-180",
+    "serviceId": "hob-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-181",
+    "serviceId": "hob-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-182",
+    "serviceId": "hob-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-183",
+    "serviceId": "hob-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-184",
+    "serviceId": "hob-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-185",
+    "serviceId": "hob-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-186",
+    "serviceId": "hob-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-187",
+    "serviceId": "hob-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-188",
+    "serviceId": "hob-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-189",
+    "serviceId": "hob-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-190",
+    "serviceId": "hob-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-191",
+    "serviceId": "hob-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-192",
+    "serviceId": "hob-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-193",
+    "serviceId": "gas-stove-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-194",
+    "serviceId": "gas-stove-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-195",
+    "serviceId": "gas-stove-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-196",
+    "serviceId": "gas-stove-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-197",
+    "serviceId": "gas-stove-installation",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-198",
+    "serviceId": "gas-stove-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-199",
+    "serviceId": "gas-stove-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-200",
+    "serviceId": "gas-stove-installation",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-201",
+    "serviceId": "gas-stove-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-202",
+    "serviceId": "gas-stove-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-203",
+    "serviceId": "gas-stove-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-204",
+    "serviceId": "gas-stove-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-205",
+    "serviceId": "gas-stove-service",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-206",
+    "serviceId": "gas-stove-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-207",
+    "serviceId": "gas-stove-service",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-208",
+    "serviceId": "gas-stove-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-209",
+    "serviceId": "gas-stove-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-210",
+    "serviceId": "gas-stove-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-211",
+    "serviceId": "gas-stove-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-212",
+    "serviceId": "gas-stove-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-213",
+    "serviceId": "gas-stove-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-214",
+    "serviceId": "gas-stove-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-215",
+    "serviceId": "gas-stove-repair",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-216",
+    "serviceId": "gas-stove-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-217",
+    "serviceId": "gas-stove-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-218",
+    "serviceId": "gas-stove-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-219",
+    "serviceId": "gas-stove-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-220",
+    "serviceId": "gas-stove-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-221",
+    "serviceId": "gas-stove-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-222",
+    "serviceId": "gas-stove-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-223",
+    "serviceId": "gas-stove-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-224",
+    "serviceId": "gas-stove-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-225",
+    "serviceId": "chimney-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-226",
+    "serviceId": "chimney-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-227",
+    "serviceId": "chimney-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-228",
+    "serviceId": "chimney-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-229",
+    "serviceId": "chimney-installation",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-230",
+    "serviceId": "chimney-installation",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-231",
+    "serviceId": "chimney-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-232",
+    "serviceId": "chimney-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-233",
+    "serviceId": "chimney-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-234",
+    "serviceId": "chimney-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-235",
+    "serviceId": "chimney-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-236",
+    "serviceId": "chimney-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-237",
+    "serviceId": "chimney-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-238",
+    "serviceId": "chimney-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-239",
+    "serviceId": "chimney-service",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-240",
+    "serviceId": "chimney-service",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-241",
+    "serviceId": "chimney-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-242",
+    "serviceId": "chimney-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-243",
+    "serviceId": "chimney-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-244",
+    "serviceId": "chimney-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-245",
+    "serviceId": "chimney-repair",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-246",
+    "serviceId": "chimney-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-247",
+    "serviceId": "chimney-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-248",
+    "serviceId": "chimney-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-249",
+    "serviceId": "chimney-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-250",
+    "serviceId": "chimney-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-251",
+    "serviceId": "chimney-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-252",
+    "serviceId": "chimney-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-253",
+    "serviceId": "chimney-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-254",
+    "serviceId": "chimney-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-255",
+    "serviceId": "chimney-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-256",
+    "serviceId": "chimney-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-257",
+    "serviceId": "dishwasher-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-258",
+    "serviceId": "dishwasher-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-259",
+    "serviceId": "dishwasher-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-260",
+    "serviceId": "dishwasher-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-261",
+    "serviceId": "dishwasher-installation",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-262",
+    "serviceId": "dishwasher-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-263",
+    "serviceId": "dishwasher-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-264",
+    "serviceId": "dishwasher-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-265",
+    "serviceId": "dishwasher-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-266",
+    "serviceId": "dishwasher-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-267",
+    "serviceId": "dishwasher-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-268",
+    "serviceId": "dishwasher-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-269",
+    "serviceId": "dishwasher-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-270",
+    "serviceId": "dishwasher-service",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-271",
+    "serviceId": "dishwasher-service",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-272",
+    "serviceId": "dishwasher-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-273",
+    "serviceId": "dishwasher-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-274",
+    "serviceId": "dishwasher-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-275",
+    "serviceId": "dishwasher-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-276",
+    "serviceId": "dishwasher-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-277",
+    "serviceId": "dishwasher-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-278",
+    "serviceId": "dishwasher-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-279",
+    "serviceId": "dishwasher-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-280",
+    "serviceId": "dishwasher-repair",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-281",
+    "serviceId": "dishwasher-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-282",
+    "serviceId": "dishwasher-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-283",
+    "serviceId": "dishwasher-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-284",
+    "serviceId": "dishwasher-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-285",
+    "serviceId": "dishwasher-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-286",
+    "serviceId": "dishwasher-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-287",
+    "serviceId": "dishwasher-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-288",
+    "serviceId": "dishwasher-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-289",
+    "serviceId": "ro-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-290",
+    "serviceId": "ro-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-291",
+    "serviceId": "ro-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-292",
+    "serviceId": "ro-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-293",
+    "serviceId": "ro-installation",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-294",
+    "serviceId": "ro-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-295",
+    "serviceId": "ro-installation",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-296",
+    "serviceId": "ro-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-297",
+    "serviceId": "ro-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-298",
+    "serviceId": "ro-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-299",
+    "serviceId": "ro-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-300",
+    "serviceId": "ro-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-301",
+    "serviceId": "ro-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-302",
+    "serviceId": "ro-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-303",
+    "serviceId": "ro-service",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-304",
+    "serviceId": "ro-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-305",
+    "serviceId": "ro-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-306",
+    "serviceId": "ro-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-307",
+    "serviceId": "ro-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-308",
+    "serviceId": "ro-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-309",
+    "serviceId": "ro-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-310",
+    "serviceId": "ro-repair",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-311",
+    "serviceId": "ro-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-312",
+    "serviceId": "ro-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-313",
+    "serviceId": "ro-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-314",
+    "serviceId": "ro-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-315",
+    "serviceId": "ro-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-316",
+    "serviceId": "ro-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-317",
+    "serviceId": "ro-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-318",
+    "serviceId": "ro-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-319",
+    "serviceId": "ro-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-320",
+    "serviceId": "ro-amc",
+    "cityId": "kolkata",
+    "active": false
+  },
+  {
+    "id": "avail-321",
+    "serviceId": "air-purifier-installation",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-322",
+    "serviceId": "air-purifier-installation",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-323",
+    "serviceId": "air-purifier-installation",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-324",
+    "serviceId": "air-purifier-installation",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-325",
+    "serviceId": "air-purifier-installation",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-326",
+    "serviceId": "air-purifier-installation",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-327",
+    "serviceId": "air-purifier-installation",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-328",
+    "serviceId": "air-purifier-installation",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-329",
+    "serviceId": "air-purifier-service",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-330",
+    "serviceId": "air-purifier-service",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-331",
+    "serviceId": "air-purifier-service",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-332",
+    "serviceId": "air-purifier-service",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-333",
+    "serviceId": "air-purifier-service",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-334",
+    "serviceId": "air-purifier-service",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-335",
+    "serviceId": "air-purifier-service",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-336",
+    "serviceId": "air-purifier-service",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-337",
+    "serviceId": "air-purifier-repair",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-338",
+    "serviceId": "air-purifier-repair",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-339",
+    "serviceId": "air-purifier-repair",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-340",
+    "serviceId": "air-purifier-repair",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-341",
+    "serviceId": "air-purifier-repair",
+    "cityId": "jamshedpur",
+    "active": true
+  },
+  {
+    "id": "avail-342",
+    "serviceId": "air-purifier-repair",
+    "cityId": "patna",
+    "active": true
+  },
+  {
+    "id": "avail-343",
+    "serviceId": "air-purifier-repair",
+    "cityId": "pune",
+    "active": true
+  },
+  {
+    "id": "avail-344",
+    "serviceId": "air-purifier-repair",
+    "cityId": "kolkata",
+    "active": true
+  },
+  {
+    "id": "avail-345",
+    "serviceId": "air-purifier-amc",
+    "cityId": "ranchi",
+    "active": true
+  },
+  {
+    "id": "avail-346",
+    "serviceId": "air-purifier-amc",
+    "cityId": "delhi",
+    "active": true
+  },
+  {
+    "id": "avail-347",
+    "serviceId": "air-purifier-amc",
+    "cityId": "mumbai",
+    "active": true
+  },
+  {
+    "id": "avail-348",
+    "serviceId": "air-purifier-amc",
+    "cityId": "bengaluru",
+    "active": true
+  },
+  {
+    "id": "avail-349",
+    "serviceId": "air-purifier-amc",
+    "cityId": "jamshedpur",
+    "active": false
+  },
+  {
+    "id": "avail-350",
+    "serviceId": "air-purifier-amc",
+    "cityId": "patna",
+    "active": false
+  },
+  {
+    "id": "avail-351",
+    "serviceId": "air-purifier-amc",
+    "cityId": "pune",
+    "active": false
+  },
+  {
+    "id": "avail-352",
+    "serviceId": "air-purifier-amc",
+    "cityId": "kolkata",
+    "active": false
+  }
+]

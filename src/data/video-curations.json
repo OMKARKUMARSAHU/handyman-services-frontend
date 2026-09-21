@@ -1,0 +1,80 @@
+[
+  {
+    "id": "vc-technician-visit",
+    "title": "What a Technician Visit Looks Like",
+    "description": "A walkthrough of a typical visit, start to finish — arrival, diagnosis, the work itself, and the WhatsApp summary afterward.",
+    "categoryId": null,
+    "serviceTypeId": null,
+    "thumbnail": "/images/services/context/context-2.svg",
+    "videoUrl": null,
+    "externalUrl": null,
+    "durationSeconds": null,
+    "sortOrder": 1,
+    "active": true
+  },
+  {
+    "id": "vc-ac-installation",
+    "title": "AC Installation Walkthrough",
+    "description": "Split AC installation, from unboxing to a final cooling check.",
+    "categoryId": "consumer-durables",
+    "serviceTypeId": "installation",
+    "thumbnail": "/images/services/products/air-conditioner.svg",
+    "videoUrl": null,
+    "externalUrl": null,
+    "durationSeconds": null,
+    "sortOrder": 2,
+    "active": true
+  },
+  {
+    "id": "vc-washing-machine-service",
+    "title": "Washing Machine Service, Start to Finish",
+    "description": "A routine service visit for a front-load washing machine.",
+    "categoryId": "consumer-durables",
+    "serviceTypeId": "service",
+    "thumbnail": "/images/services/products/washing-machine.svg",
+    "videoUrl": null,
+    "externalUrl": null,
+    "durationSeconds": null,
+    "sortOrder": 3,
+    "active": true
+  },
+  {
+    "id": "vc-chimney-deep-clean",
+    "title": "Chimney Deep Clean",
+    "description": "What's involved in a full baffle-filter chimney clean.",
+    "categoryId": "kitchen-appliances",
+    "serviceTypeId": "service",
+    "thumbnail": "/images/services/products/chimney.svg",
+    "videoUrl": null,
+    "externalUrl": null,
+    "durationSeconds": null,
+    "sortOrder": 4,
+    "active": true
+  },
+  {
+    "id": "vc-refrigerator-repair",
+    "title": "Refrigerator Repair, Explained",
+    "description": "How a technician diagnoses and fixes a common cooling issue.",
+    "categoryId": "consumer-durables",
+    "serviceTypeId": "repair",
+    "thumbnail": "/images/services/products/refrigerator.svg",
+    "videoUrl": null,
+    "externalUrl": null,
+    "durationSeconds": null,
+    "sortOrder": 5,
+    "active": true
+  },
+  {
+    "id": "vc-water-purifier-amc",
+    "title": "A Water Purifier AMC Visit",
+    "description": "What's covered on an annual maintenance visit for a water purifier.",
+    "categoryId": "water-air-purifiers",
+    "serviceTypeId": "amc",
+    "thumbnail": "/images/services/products/ro.svg",
+    "videoUrl": null,
+    "externalUrl": null,
+    "durationSeconds": null,
+    "sortOrder": 6,
+    "active": true
+  }
+]

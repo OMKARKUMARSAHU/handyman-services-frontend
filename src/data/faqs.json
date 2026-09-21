@@ -2,7 +2,7 @@
   {
     "id": "f1",
     "question": "Who are the technicians?",
-    "answer": "All visits are carried out by certified, vetted technician partners in our network.",
+    "answer": "All visits are carried out by technician partners in our network.",
     "sortOrder": 1,
     "category": null,
     "answerConfirmed": false
@@ -25,8 +25,8 @@
   },
   {
     "id": "f4",
-    "question": "Can I upgrade my plan mid-year?",
-    "answer": "Yes — you can upgrade your plan at any time. Contact us and we'll help you move to a higher coverage tier.",
+    "question": "Can I book more than one service at a time?",
+    "answer": "Yes — you can add multiple services to your cart, even across different appliances, and check out together.",
     "sortOrder": 4,
     "category": null,
     "answerConfirmed": false

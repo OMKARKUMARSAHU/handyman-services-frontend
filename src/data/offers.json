@@ -1,0 +1,68 @@
+[
+  {
+    "id": "offer-welcome10",
+    "title": "Welcome Offer — 10% off",
+    "description": "10% off your first booking, site-wide.",
+    "discountType": "percent",
+    "discountValue": 10,
+    "appliesTo": {
+      "scope": "all",
+      "ids": []
+    },
+    "bannerImage": "/images/offers/banner-1.svg",
+    "startDate": null,
+    "endDate": null,
+    "active": true
+  },
+  {
+    "id": "offer-consumer-durables",
+    "title": "Consumer Durables Special",
+    "description": "Flat ₹100 off on Consumer Durables category services.",
+    "discountType": "flat",
+    "discountValue": 100,
+    "appliesTo": {
+      "scope": "category",
+      "ids": [
+        "consumer-durables"
+      ]
+    },
+    "bannerImage": "/images/offers/banner-2.svg",
+    "startDate": null,
+    "endDate": null,
+    "active": true
+  },
+  {
+    "id": "offer-amc-launch",
+    "title": "AC AMC Launch Offer",
+    "description": "15% off Air Conditioner AMC plans this month.",
+    "discountType": "percent",
+    "discountValue": 15,
+    "appliesTo": {
+      "scope": "service",
+      "ids": [
+        "air-conditioner-amc"
+      ]
+    },
+    "bannerImage": "/images/offers/banner-3.svg",
+    "startDate": null,
+    "endDate": null,
+    "active": true
+  },
+  {
+    "id": "offer-water-air-purifiers",
+    "title": "Water & Air Purifier Offer",
+    "description": "Flat ₹150 off on RO and Air Purifier services.",
+    "discountType": "flat",
+    "discountValue": 150,
+    "appliesTo": {
+      "scope": "category",
+      "ids": [
+        "water-air-purifiers"
+      ]
+    },
+    "bannerImage": "/images/offers/banner-4.svg",
+    "startDate": null,
+    "endDate": null,
+    "active": true
+  }
+]

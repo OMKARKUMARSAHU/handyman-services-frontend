@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { HeaderActionButton, HeaderModal } from "./HeaderActionModal";
+import { HeaderActionButton } from "./HeaderActionModal";
+import { CartDrawer } from "@/components/cart/CartDrawer";
+import { useCart } from "@/lib/state/CartProvider";
 
 /**
- * Frontend-only cart placeholder (Phase 4 frontend-polish scope). No
- * checkout/order backend exists yet — clicking it shows a clean empty
- * state rather than doing nothing or pretending to hold real items.
+ * Live item-count badge + opens the cart drawer, reading useCart()
+ * (PHASE_2_COMPONENT_ARCHITECTURE.md §3).
  */
 export function CartButton({
   className,
@@ -17,27 +17,28 @@ export function CartButton({
   showLabel?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const { itemCount } = useCart();
+
   return (
     <>
-      <HeaderActionButton
-        icon="shopping-cart"
-        label="Cart"
-        className={className}
-        showLabel={showLabel}
-        onClick={() => setOpen(true)}
-      />
-      <HeaderModal open={open} onClose={() => setOpen(false)} title="Your cart">
-        <p className="text-sm text-neutral-600">Your cart is currently empty.</p>
-        <div className="mt-4">
-          <Link
-            href="/plans"
-            onClick={() => setOpen(false)}
-            className="block w-full rounded-lg bg-brand-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-700"
+      <div className="relative">
+        <HeaderActionButton
+          icon="shopping-cart"
+          label={itemCount > 0 ? `Cart, ${itemCount} item${itemCount === 1 ? "" : "s"}` : "Cart"}
+          className={className}
+          showLabel={showLabel}
+          onClick={() => setOpen(true)}
+        />
+        {itemCount > 0 && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white"
           >
-            Browse plans
-          </Link>
-        </div>
-      </HeaderModal>
+            {itemCount > 99 ? "99+" : itemCount}
+          </span>
+        )}
+      </div>
+      <CartDrawer open={open} onClose={() => setOpen(false)} />
     </>
   );
 }
