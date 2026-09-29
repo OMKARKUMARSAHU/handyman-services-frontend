@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Pune landmark illustration">
+  <circle cx="100" cy="100" r="92" fill="#1f7267" opacity="0.08"/>
+  <circle cx="100" cy="100" r="68" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(68,68) scale(1.55)" fill="none" stroke="#1f7267" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    
+      <path d="M2 21H22"/>
+      <path d="M3 21V10H4.3V8H5.6V10H7V21"/>
+      <path d="M17 21V10H18.4V8H19.7V10H21V21"/>
+      <path d="M9 21V14A3 3 0 0 1 15 14V21"/>
+      <circle cx="10.2" cy="19" r="0.4" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="19" r="0.4" fill="currentColor" stroke="none"/>
+      <circle cx="13.8" cy="19" r="0.4" fill="currentColor" stroke="none"/>
+      <circle cx="10.2" cy="17" r="0.4" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="17" r="0.4" fill="currentColor" stroke="none"/>
+      <circle cx="13.8" cy="17" r="0.4" fill="currentColor" stroke="none"/>
+    
+  </g>
+</svg>

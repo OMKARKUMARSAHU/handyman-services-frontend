@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import type { Service } from "@/types";
 import { Container } from "@/components/ui/Container";
+import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
+import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
 import { ServiceCard } from "./ServiceCard";
 
 /**
@@ -14,6 +18,12 @@ import { ServiceCard } from "./ServiceCard";
  * Renders nothing when `services` is empty — an honest omission rather
  * than a broken-looking empty rail, consistent with the project's existing
  * empty-state practice (see ServiceList).
+ *
+ * HORIZONTAL RAIL SCROLL INDICATOR phase: converted to a client component
+ * solely to attach `useHorizontalScrollIndicator` to the existing scroll
+ * container below — no other behavior here needed client-side rendering,
+ * and nothing about the rail's own markup, data, or server-provided
+ * `services`/props changed.
  */
 export function ServiceRail({
   eyebrow,
@@ -30,6 +40,12 @@ export function ServiceRail({
   citySlug?: string;
   seeAllHref?: string;
 }) {
+  // Hooks must run unconditionally on every render — the `services.length
+  // === 0` early return happens after this, not before.
+  const { ref: scrollRef, state: scrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
+    services.map((s) => s.id).join(",")
+  );
+
   if (services.length === 0) return null;
 
   return (
@@ -71,6 +87,7 @@ export function ServiceRail({
           as any ordinary horizontal-scroll rail.
         */}
         <div
+          ref={scrollRef}
           role="region"
           aria-label={`${heading} — scrollable list`}
           tabIndex={0}
@@ -82,6 +99,7 @@ export function ServiceRail({
             </div>
           ))}
         </div>
+        <HorizontalScrollIndicator state={scrollState} />
 
         {seeAllHref && (
           <Link

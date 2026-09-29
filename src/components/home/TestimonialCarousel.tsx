@@ -1,16 +1,28 @@
+"use client";
+
 import { Container } from "@/components/ui/Container";
+import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
+import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
 import type { Testimonial } from "@/types";
 import { TestimonialCard } from "./TestimonialCard";
 
 /**
  * Horizontally scrollable on mobile (snap-scroll single card), a static
  * grid on larger screens — matches PHASE_2_UI_UX_DESIGN.md §6 responsive
- * behavior for testimonials without requiring extra client-side JS.
+ * behavior for testimonials. `useHorizontalScrollIndicator` naturally
+ * reports `hasOverflow: false` once the `sm:grid`/`sm:overflow-visible`
+ * breakpoint kicks in, so the indicator only ever shows on the mobile
+ * scroll layout with no extra breakpoint logic here.
  */
 export function TestimonialCarousel({ testimonials }: { testimonials: Testimonial[] }) {
+  const { ref: scrollRef, state: scrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
+    testimonials.map((t) => t.id).join(",")
+  );
+
   return (
     <Container>
       <div
+        ref={scrollRef}
         role="region"
         aria-label="Customer testimonials — scrollable list"
         tabIndex={0}
@@ -22,6 +34,7 @@ export function TestimonialCarousel({ testimonials }: { testimonials: Testimonia
           </div>
         ))}
       </div>
+      <HorizontalScrollIndicator state={scrollState} />
     </Container>
   );
 }

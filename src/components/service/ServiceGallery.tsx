@@ -4,9 +4,16 @@ import { useState } from "react";
 import type { ServiceImage } from "@/types";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
+import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
 
 export function ServiceGallery({ images, serviceName }: { images: ServiceImage[]; serviceName: string }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  // Hooks run unconditionally, before the `images.length === 0` early
+  // return below.
+  const { ref: thumbScrollRef, state: thumbScrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
+    images.length
+  );
 
   if (images.length === 0) {
     return (
@@ -57,7 +64,12 @@ export function ServiceGallery({ images, serviceName }: { images: ServiceImage[]
         )}
       </div>
       {sorted.length > 1 && (
-        <div className="mt-3 flex gap-2 overflow-x-auto">
+        <div
+          ref={thumbScrollRef}
+          role="region"
+          aria-label={`${serviceName} — photo thumbnails, scrollable list`}
+          className="mt-3 flex gap-2 overflow-x-auto"
+        >
           {sorted.map((img, i) => (
             <button
               key={img.id}
@@ -76,6 +88,7 @@ export function ServiceGallery({ images, serviceName }: { images: ServiceImage[]
           ))}
         </div>
       )}
+      <HorizontalScrollIndicator state={thumbScrollState} />
     </div>
   );
 }

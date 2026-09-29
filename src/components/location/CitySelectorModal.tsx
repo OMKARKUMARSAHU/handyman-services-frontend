@@ -22,7 +22,14 @@ export function CitySelectorModal() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return allCities;
-    return allCities.filter((c) => c.name.toLowerCase().includes(q));
+    // City-name match is the primary behavior (unchanged from before this
+    // phase). A state-name match is layered on top — searching "Jharkhand"
+    // additionally surfaces Ranchi/Jamshedpur — since the data layer already
+    // carries `state` on every city; this is additive and never narrows what
+    // a plain city-name search used to return.
+    return allCities.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.state.toLowerCase().includes(q)
+    );
   }, [allCities, query]);
 
   const popular = filtered.filter((c) => c.isPopular);
@@ -41,7 +48,7 @@ export function CitySelectorModal() {
   return (
     <HeaderModal open={citySelectorOpen} onClose={handleClose} title="Select your city">
       <CitySearchInput value={query} onChange={setQuery} />
-      <div className="mt-3 max-h-80 space-y-4 overflow-y-auto">
+      <div className="mt-3 max-h-[26rem] space-y-4 overflow-y-auto">
         {filtered.length === 0 && (
           <p className="py-6 text-center text-sm text-neutral-500">
             No cities match &ldquo;{query}&rdquo;.

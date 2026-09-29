@@ -66,6 +66,23 @@ export interface City {
   isPopular: boolean;
   active: boolean;
   sortOrder: number;
+  /**
+   * Location-selector landmark visual (LOCATION SELECTOR — LANDMARK ICON
+   * SYSTEM phase). Admin-Panel-ready: a future Admin Panel sets this to an
+   * uploaded asset's URL; the frontend never hardcodes a per-city image
+   * import. `null`/undefined means "no icon uploaded yet" — components must
+   * render the shared neutral fallback illustration in that case, never a
+   * broken image or empty box. Optional so existing mock rows and any
+   * future city added without an icon stay valid.
+   */
+  iconUrl?: string | null;
+  /**
+   * Accessible text for the icon. When the icon is purely decorative next
+   * to an already-visible city name, components pass `alt=""`; this field
+   * exists for when the icon is the only conveyed information (e.g. inside
+   * an icon-only control) or for a future Admin-authored description.
+   */
+  iconAlt?: string | null;
 }
 
 /** Renamed conceptually from `Appliance` — see PHASE_2_DATA_ARCHITECTURE.md §3 (Product). */

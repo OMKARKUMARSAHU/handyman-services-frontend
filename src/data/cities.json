@@ -6,7 +6,9 @@
     "slug": "ranchi",
     "isPopular": true,
     "active": true,
-    "sortOrder": 1
+    "sortOrder": 1,
+    "iconUrl": "/images/locations/ranchi.svg",
+    "iconAlt": "Ranchi landmark illustration"
   },
   {
     "id": "delhi",
@@ -15,7 +17,9 @@
     "slug": "delhi",
     "isPopular": true,
     "active": true,
-    "sortOrder": 2
+    "sortOrder": 2,
+    "iconUrl": "/images/locations/delhi.svg",
+    "iconAlt": "Delhi landmark illustration"
   },
   {
     "id": "mumbai",
@@ -24,7 +28,9 @@
     "slug": "mumbai",
     "isPopular": true,
     "active": true,
-    "sortOrder": 3
+    "sortOrder": 3,
+    "iconUrl": "/images/locations/mumbai.svg",
+    "iconAlt": "Mumbai landmark illustration"
   },
   {
     "id": "bengaluru",
@@ -33,7 +39,9 @@
     "slug": "bengaluru",
     "isPopular": true,
     "active": true,
-    "sortOrder": 4
+    "sortOrder": 4,
+    "iconUrl": "/images/locations/bengaluru.svg",
+    "iconAlt": "Bengaluru landmark illustration"
   },
   {
     "id": "jamshedpur",
@@ -42,7 +50,9 @@
     "slug": "jamshedpur",
     "isPopular": false,
     "active": true,
-    "sortOrder": 5
+    "sortOrder": 5,
+    "iconUrl": "/images/locations/jamshedpur.svg",
+    "iconAlt": "Jamshedpur landmark illustration"
   },
   {
     "id": "patna",
@@ -51,7 +61,9 @@
     "slug": "patna",
     "isPopular": false,
     "active": true,
-    "sortOrder": 6
+    "sortOrder": 6,
+    "iconUrl": "/images/locations/patna.svg",
+    "iconAlt": "Patna landmark illustration"
   },
   {
     "id": "pune",
@@ -60,7 +72,9 @@
     "slug": "pune",
     "isPopular": false,
     "active": true,
-    "sortOrder": 7
+    "sortOrder": 7,
+    "iconUrl": "/images/locations/pune.svg",
+    "iconAlt": "Pune landmark illustration"
   },
   {
     "id": "kolkata",
@@ -69,6 +83,8 @@
     "slug": "kolkata",
     "isPopular": false,
     "active": true,
-    "sortOrder": 8
+    "sortOrder": 8,
+    "iconUrl": "/images/locations/kolkata.svg",
+    "iconAlt": "Kolkata landmark illustration"
   }
 ]

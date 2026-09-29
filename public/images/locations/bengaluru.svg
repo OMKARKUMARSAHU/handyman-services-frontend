@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Bengaluru landmark illustration">
+  <circle cx="100" cy="100" r="92" fill="#1f7267" opacity="0.08"/>
+  <circle cx="100" cy="100" r="68" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(68,68) scale(1.55)" fill="none" stroke="#1f7267" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    
+      <path d="M2 21H22"/>
+      <path d="M3 21V15H21V21"/>
+      <path d="M9 15V10H15V15"/>
+      <path d="M9 10Q9 5 12 5Q15 5 15 10"/>
+      <path d="M12 5V3"/>
+      <circle cx="12" cy="2.6" r="0.7" fill="currentColor" stroke="none"/>
+      <path d="M5 15V19"/>
+      <path d="M7 15V19"/>
+      <path d="M17 15V19"/>
+      <path d="M19 15V19"/>
+    
+  </g>
+</svg>

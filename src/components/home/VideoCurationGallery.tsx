@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { VideoCuration } from "@/types";
 import { Icon } from "@/lib/icons";
+import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
+import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
 import { VideoCurationCard } from "./VideoCurationCard";
 import { VideoCurationModal } from "./VideoCurationModal";
 
@@ -47,7 +49,14 @@ export function VideoCurationGallery({
   heading: string;
 }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  // The same ref/element used for the existing left/right arrow buttons'
+  // `scrollBy` calls below is what `useHorizontalScrollIndicator` observes —
+  // programmatic (arrow) scrolling fires the same native `scroll` event as
+  // touch/trackpad/mouse scrolling, so the indicator stays in sync with all
+  // of them without any extra wiring.
+  const { ref: scrollerRef, state: scrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
+    items.map((i) => i.curation.id).join(",")
+  );
 
   const selected = selectedIndex != null ? items[selectedIndex]?.curation ?? null : null;
 
@@ -76,6 +85,9 @@ export function VideoCurationGallery({
             onOpen={() => setSelectedIndex(i)}
           />
         ))}
+      </div>
+      <div className="-mx-4 px-4 sm:mx-0 sm:px-0">
+        <HorizontalScrollIndicator state={scrollState} tone="inverted" />
       </div>
 
       {items.length > 1 && (

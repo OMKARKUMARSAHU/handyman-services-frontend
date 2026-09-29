@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Jamshedpur landmark illustration">
+  <circle cx="100" cy="100" r="92" fill="#1f7267" opacity="0.08"/>
+  <circle cx="100" cy="100" r="68" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(68,68) scale(1.55)" fill="none" stroke="#1f7267" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    
+      <path d="M2 21H22"/>
+      <path d="M3 21V17L7 14H21V21"/>
+      <path d="M6 14V3"/>
+      <path d="M8 14V3"/>
+      <path d="M6 3H8"/>
+      <path d="M12 14V7"/>
+      <path d="M13.5 14V7"/>
+      <path d="M12 7H13.5"/>
+      <path d="M17 14V10"/>
+      <path d="M18.5 14V10"/>
+      <path d="M17 10H18.5"/>
+      <path d="M6.2 2.2Q7 1.2 7.8 2.2"/>
+      <path d="M7.4 1Q8.2 0 9 1"/>
+    
+  </g>
+</svg>

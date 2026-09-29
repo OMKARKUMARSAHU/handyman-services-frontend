@@ -1,4 +1,8 @@
+"use client";
+
 import { Icon } from "@/lib/icons";
+import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
+import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
 import type { HomepageSection } from "@/types";
 
 /**
@@ -26,11 +30,16 @@ import type { HomepageSection } from "@/types";
  */
 export function TrustStrip({ section }: { section: HomepageSection }) {
   const items = section.items ?? [];
+  const { ref: scrollRef, state: scrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
+    items.length
+  );
+
   if (items.length === 0) return null;
 
   return (
     <section className="border-b border-neutral-200 bg-neutral-50/60 py-5">
       <div
+        ref={scrollRef}
         role="region"
         aria-label="Why choose us — scrollable list"
         tabIndex={0}
@@ -46,6 +55,9 @@ export function TrustStrip({ section }: { section: HomepageSection }) {
             </span>
           </div>
         ))}
+      </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <HorizontalScrollIndicator state={scrollState} />
       </div>
     </section>
   );

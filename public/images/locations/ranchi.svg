@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Ranchi landmark illustration">
+  <circle cx="100" cy="100" r="92" fill="#1f7267" opacity="0.08"/>
+  <circle cx="100" cy="100" r="68" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(68,68) scale(1.55)" fill="none" stroke="#1f7267" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    
+      <path d="M4 21H20"/>
+      <path d="M6 21V17H18V21"/>
+      <path d="M10 21V18.5A2 2 0 0 1 14 18.5V21"/>
+      <path d="M8 17L9 13H15L16 17"/>
+      <path d="M9 13L9.8 9.5H14.2L15 13"/>
+      <path d="M9.8 9.5L10.6 6H13.4L14.2 9.5"/>
+      <path d="M10.6 6Q12 4.6 13.4 6"/>
+      <path d="M12 4.6V2.2"/>
+      <circle cx="12" cy="1.8" r="0.7" fill="currentColor" stroke="none"/>
+    
+  </g>
+</svg>

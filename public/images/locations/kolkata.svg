@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Kolkata landmark illustration">
+  <circle cx="100" cy="100" r="92" fill="#1f7267" opacity="0.08"/>
+  <circle cx="100" cy="100" r="68" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(68,68) scale(1.55)" fill="none" stroke="#1f7267" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    
+      <path d="M2 16H22"/>
+      <path d="M4 19H20"/>
+      <path d="M6 16L8 5L10 16"/>
+      <path d="M14 16L16 5L18 16"/>
+      <path d="M8 8L12 11L16 8"/>
+      <path d="M8 12L12 9L16 12"/>
+      <path d="M6 16V19"/>
+      <path d="M10 16V19"/>
+      <path d="M14 16V19"/>
+      <path d="M18 16V19"/>
+    
+  </g>
+</svg>

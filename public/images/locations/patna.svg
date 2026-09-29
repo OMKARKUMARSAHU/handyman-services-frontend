@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Patna landmark illustration">
+  <circle cx="100" cy="100" r="92" fill="#1f7267" opacity="0.08"/>
+  <circle cx="100" cy="100" r="68" fill="#ffffff" stroke="#1f7267" stroke-opacity="0.25" stroke-width="1.5"/>
+  <g transform="translate(68,68) scale(1.55)" fill="none" stroke="#1f7267" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    
+      <path d="M2 21H22"/>
+      <path d="M5 21Q5 8 12 4Q19 8 19 21"/>
+      <path d="M6 17Q12 15 18 17"/>
+      <path d="M6.5 13Q12 11 17.5 13"/>
+      <path d="M7.5 9Q12 7.5 16.5 9"/>
+      <path d="M10 21V18A2 2 0 0 1 14 18V21"/>
+      <path d="M12 4V2"/>
+      <circle cx="12" cy="1.6" r="0.7" fill="currentColor" stroke="none"/>
+    
+  </g>
+</svg>

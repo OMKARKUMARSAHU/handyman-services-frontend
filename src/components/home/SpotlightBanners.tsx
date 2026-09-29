@@ -1,6 +1,10 @@
+"use client";
+
 import type { Offer } from "@/types";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
+import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
 import { OfferBannerImage } from "./OfferBannerImage";
 
 /**
@@ -22,6 +26,12 @@ import { OfferBannerImage } from "./OfferBannerImage";
  * changed.
  */
 export function SpotlightBanners({ offers }: { offers: Offer[] }) {
+  // Hooks must run unconditionally, before the `offers.length === 0` early
+  // return below.
+  const { ref: scrollRef, state: scrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
+    offers.map((o) => o.id).join(",")
+  );
+
   if (offers.length === 0) return null;
 
   return (
@@ -29,6 +39,7 @@ export function SpotlightBanners({ offers }: { offers: Offer[] }) {
       <SectionHeading eyebrow="Spotlight" heading="Offers you don't want to miss" />
       <Container className="mt-6">
         <div
+          ref={scrollRef}
           role="region"
           aria-label="Offers you don't want to miss — scrollable list"
           tabIndex={0}
@@ -58,6 +69,7 @@ export function SpotlightBanners({ offers }: { offers: Offer[] }) {
             </div>
           ))}
         </div>
+        <HorizontalScrollIndicator state={scrollState} />
       </Container>
     </section>
   );
