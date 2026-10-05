@@ -27,6 +27,50 @@ async function getOrCreateCartId(customerId: string, trx?: Knex): Promise<string
 }
 
 /**
+ * BUG FIX ("Duplicate entry for key cart_items_cart_id_service_id_city_id_unique"):
+ * both addCartItem and mergeLocalCart used to check "does a row for this
+ * (cart_id, service_id, city_id) already exist?" and then separately
+ * insert-or-update based on that check -- two round trips with a gap
+ * between them. Under any overlap (a double-click, a retried request, two
+ * concurrent merge calls for the same cart) both requests could see "not
+ * found" before either had written, and both would then try to INSERT the
+ * same (cart_id, service_id, city_id) pair, so the second one always hit
+ * the unique constraint.
+ *
+ * This replaces that check-then-act with a single atomic statement --
+ * `INSERT ... ON DUPLICATE KEY UPDATE` (knex's cross-dialect
+ * onConflict/merge) -- so the database itself resolves the race: whichever
+ * request's statement lands second simply updates the row the first one
+ * just created, in the same atomic operation, instead of racing a
+ * separate SELECT against it. The existing quantity is INCREMENTED by the
+ * newly added quantity (never overwritten), matching the documented
+ * "matching pairs sum their quantities" behavior -- unchanged semantics,
+ * just race-free. The unique constraint itself is untouched; this is what
+ * makes the upsert possible at all.
+ */
+async function upsertCartItem(
+  db: Knex,
+  cartId: string,
+  item: { serviceId: string; cityId: string; quantity: number },
+  unitPriceAtAdd: string
+): Promise<void> {
+  await db<CartItemRow>(ITEMS)
+    .insert({
+      id: randomUUID(),
+      cart_id: cartId,
+      service_id: item.serviceId,
+      city_id: item.cityId,
+      quantity: item.quantity,
+      unit_price_at_add: unitPriceAtAdd,
+    })
+    .onConflict(["cart_id", "service_id", "city_id"])
+    .merge({
+      quantity: db.raw("?? + ?", ["quantity", item.quantity]),
+      updated_at: db.fn.now(),
+    });
+}
+
+/**
  * PHASE 3 CORRECTION — the cart may now DISPLAY the combined
  * service-discount + effective-offer price (resolved per item's own
  * `cityId`, since a cart can structurally hold items added in different
@@ -103,24 +147,7 @@ export async function addCartItem(
   const service = await getServiceRowById(input.serviceId);
   const cartId = await getOrCreateCartId(customerId);
 
-  const existing = await getDb()<CartItemRow>(ITEMS)
-    .where({ cart_id: cartId, service_id: input.serviceId, city_id: input.cityId })
-    .first();
-
-  if (existing) {
-    await getDb()<CartItemRow>(ITEMS)
-      .where({ id: existing.id })
-      .update({ quantity: existing.quantity + input.quantity });
-  } else {
-    await getDb()<CartItemRow>(ITEMS).insert({
-      id: randomUUID(),
-      cart_id: cartId,
-      service_id: input.serviceId,
-      city_id: input.cityId,
-      quantity: input.quantity,
-      unit_price_at_add: service!.offer_price,
-    });
-  }
+  await upsertCartItem(getDb(), cartId, input, service!.offer_price);
   return getCart(customerId);
 }
 
@@ -156,43 +183,34 @@ export async function mergeLocalCart(
   localItems: { serviceId: string; cityId: string; quantity: number }[]
 ): Promise<{ cart: CartDto; skipped: MergeSkipped[] }> {
   const skipped: MergeSkipped[] = [];
-  const cartId = await getOrCreateCartId(customerId);
 
-  for (const item of localItems) {
-    if (!(item.quantity > 0)) continue;
-    const service = await getServiceRowById(item.serviceId);
-    if (!service) {
-      skipped.push({ serviceId: item.serviceId, cityId: item.cityId, reason: "Service no longer exists." });
-      continue;
-    }
-    const purchasable = await isServicePurchasableInCity(item.serviceId, item.cityId);
-    if (!purchasable) {
-      skipped.push({
-        serviceId: item.serviceId,
-        cityId: item.cityId,
-        reason: "Service is no longer available in this city.",
-      });
-      continue;
-    }
+  // The whole merge is one transaction: finding/creating the cart row and
+  // every item's atomic upsert either all commit together or all roll
+  // back together, so a mid-merge error (or this process being killed)
+  // can never leave some items merged and others not.
+  await getDb().transaction(async (trx) => {
+    const cartId = await getOrCreateCartId(customerId, trx);
 
-    const existing = await getDb()<CartItemRow>(ITEMS)
-      .where({ cart_id: cartId, service_id: item.serviceId, city_id: item.cityId })
-      .first();
-    if (existing) {
-      await getDb()<CartItemRow>(ITEMS)
-        .where({ id: existing.id })
-        .update({ quantity: existing.quantity + item.quantity });
-    } else {
-      await getDb()<CartItemRow>(ITEMS).insert({
-        id: randomUUID(),
-        cart_id: cartId,
-        service_id: item.serviceId,
-        city_id: item.cityId,
-        quantity: item.quantity,
-        unit_price_at_add: service.offer_price,
-      });
+    for (const item of localItems) {
+      if (!(item.quantity > 0)) continue;
+      const service = await getServiceRowById(item.serviceId);
+      if (!service) {
+        skipped.push({ serviceId: item.serviceId, cityId: item.cityId, reason: "Service no longer exists." });
+        continue;
+      }
+      const purchasable = await isServicePurchasableInCity(item.serviceId, item.cityId);
+      if (!purchasable) {
+        skipped.push({
+          serviceId: item.serviceId,
+          cityId: item.cityId,
+          reason: "Service is no longer available in this city.",
+        });
+        continue;
+      }
+
+      await upsertCartItem(trx, cartId, item, service.offer_price);
     }
-  }
+  });
 
   return { cart: await getCart(customerId), skipped };
 }

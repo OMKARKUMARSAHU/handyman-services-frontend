@@ -12,6 +12,8 @@ export interface CartItemRow {
   city_id: string;
   quantity: number;
   unit_price_at_add: string;
+  created_at: string | Date;
+  updated_at: string | Date;
 }
 
 export interface CartItemDto {
