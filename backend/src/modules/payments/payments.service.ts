@@ -31,6 +31,22 @@ function getRazorpayClient(): Razorpay {
       "The payment gateway is not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET (test mode) in the backend's .env."
     );
   }
+  // Defensive format check, never logs or echoes either value: every real
+  // Razorpay key id (test or live) starts with "rzp_test_"/"rzp_live_".
+  // Catches the easy-to-make mistake of pasting a DIFFERENT provider's
+  // credentials (e.g. an AWS Access Key ID, which looks like "AKIA...")
+  // into these two env vars -- that mistake would otherwise only surface
+  // as an opaque Razorpay 401 deep inside orders.create(), logged as a
+  // generic "unhandled_error" with no hint at the actual cause.
+  if (!/^rzp_(test|live)_/.test(env.RAZORPAY_KEY_ID)) {
+    throw new AppError(
+      503,
+      "INTERNAL_ERROR",
+      "RAZORPAY_KEY_ID in backend/.env does not look like a Razorpay key (it should start with \"rzp_test_\" for test mode). " +
+        "Generate a Test Mode key pair from the Razorpay Dashboard (Settings -> API Keys) and put ONLY those two values in RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET -- " +
+        "do not reuse credentials from another provider (e.g. AWS)."
+    );
+  }
   if (!client) {
     client = new Razorpay({ key_id: env.RAZORPAY_KEY_ID, key_secret: env.RAZORPAY_KEY_SECRET });
   }
@@ -64,12 +80,38 @@ export async function createRazorpayOrderForOrder(customerId: string, orderId: s
 
   const amountPaise = Math.round(Number(order.total) * 100);
   const razorpay = getRazorpayClient();
-  const rzOrder = await razorpay.orders.create({
-    amount: amountPaise,
-    currency: "INR",
-    receipt: order.order_number,
-    notes: { orderId: order.id },
-  });
+
+  // Narrowly typed to just the one field this function actually uses --
+  // avoids relying on ReturnType<typeof razorpay.orders.create>, which
+  // resolves to the SDK's callback overload (returning void) rather than
+  // the Promise overload actually being called below.
+  let rzOrder: { id: string };
+  try {
+    rzOrder = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: "INR",
+      receipt: order.order_number,
+      notes: { orderId: order.id },
+    });
+  } catch (err) {
+    // The Razorpay SDK throws a plain `{ statusCode, error }` object (not
+    // an Error instance) on any API-level failure -- most commonly bad
+    // credentials (401) in dev/test setup. Logging it here, with context,
+    // is what step 1 of debugging a Razorpay failure means in practice:
+    // this is the "exact error" to look for in the backend terminal.
+    // Never log env.RAZORPAY_KEY_ID/KEY_SECRET themselves.
+    const gatewayError = err as { statusCode?: number; error?: { code?: string; description?: string } };
+    logger.error(
+      { orderId: order.id, statusCode: gatewayError?.statusCode, razorpayError: gatewayError?.error },
+      "razorpay_order_create_failed"
+    );
+    throw new AppError(
+      502,
+      "INTERNAL_ERROR",
+      "The payment gateway rejected the request. This usually means the test-mode Razorpay credentials in backend/.env " +
+        "are missing, wrong, or belong to a different provider -- check the backend logs for \"razorpay_order_create_failed\" and verify RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET."
+    );
+  }
 
   await getDb()<PaymentRow>(PAYMENTS).insert({
     id: randomUUID(),
