@@ -63,6 +63,16 @@ const envSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),
 
+  // --- Payment gateway (Razorpay, TEST MODE) ---
+  // Optional at the schema level (so the backend still boots with no gateway
+  // configured, matching the existing "boot even without S3 configured"
+  // pattern) -- payments.service.ts fails the specific request, not server
+  // startup, if a payment is attempted with these unset. Never hardcode a
+  // value here or anywhere else -- these must come only from the real .env
+  // (untracked) at runtime, test-mode keys only.
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(120),
 });

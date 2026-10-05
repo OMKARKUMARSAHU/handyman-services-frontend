@@ -150,7 +150,13 @@ export async function createOrder(customerId: string, input: CreateOrderInput): 
       total,
       status: "pending",
       provider_id: null,
-      payment_status: "not_applicable",
+      // RAZORPAY INTEGRATION: every order now goes through Razorpay Checkout
+      // (TEST MODE) at the next step, so a freshly created order starts
+      // "pending_payment" rather than the old "not_applicable" (which meant
+      // "no gateway exists at all" -- no longer true). Only
+      // payments.service.ts verifyRazorpayPayment(), after an independently
+      // verified signature, ever moves this to "paid".
+      payment_status: "pending_payment",
       idempotency_key: input.idempotencyKey,
     } as unknown as OrderRow);
 

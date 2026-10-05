@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Address", "Schedule", "Summary"] as const;
+const STEPS = ["Address", "Schedule", "Summary", "Payment"] as const;
 
-export function CheckoutStepper({ activeStep }: { activeStep: 0 | 1 | 2 }) {
+export function CheckoutStepper({ activeStep }: { activeStep: 0 | 1 | 2 | 3 }) {
   return (
     <ol className="flex items-center gap-2 text-sm">
       {STEPS.map((label, i) => (

@@ -1,53 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import type { Address, CartItem } from "@/types";
-import { getServiceByIdSync } from "@/lib/data/services";
+import type { CustomerAddress, CustomerCart } from "@/lib/customer/api";
 import { formatINR } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 
 export function OrderSummaryStep({
-  items,
+  cart,
   address,
   scheduledDate,
   scheduledSlot,
-  subtotal,
   onBack,
   onConfirm,
   submitting,
   errorMessage,
 }: {
-  items: CartItem[];
-  address: Address;
+  cart: CustomerCart;
+  address: CustomerAddress;
   scheduledDate: string;
   scheduledSlot: string;
-  subtotal: number;
   onBack: () => void;
   onConfirm: () => void;
   submitting: boolean;
   errorMessage: string | null;
 }) {
   const [consent, setConsent] = useState(false);
+  const availableItems = cart.items.filter((i) => i.isAvailable);
 
   return (
     <div className="space-y-5">
       <div>
         <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-500">Services</h3>
         <ul className="space-y-2">
-          {items.map((item) => {
-            const service = getServiceByIdSync(item.serviceId);
-            return (
-              <li key={item.id} className="flex items-center justify-between text-sm">
-                <span className="text-neutral-800">
-                  {service ? service.name : "Service no longer available"} × {item.quantity}
-                </span>
-                <span className="font-semibold text-neutral-900">
-                  {formatINR(item.unitPriceAtAdd * item.quantity)}
-                </span>
-              </li>
-            );
-          })}
+          {availableItems.map((item) => (
+            <li key={item.id} className="flex items-center justify-between text-sm">
+              <span className="text-neutral-800">
+                {item.serviceName ?? "Service"} × {item.quantity}
+              </span>
+              <span className="font-semibold text-neutral-900">{formatINR(item.lineTotal)}</span>
+            </li>
+          ))}
         </ul>
+        {cart.items.length > availableItems.length && (
+          <p className="mt-2 text-xs text-amber-600">
+            Some items in your cart are no longer available and will not be included in this order.
+          </p>
+        )}
       </div>
 
       <div>
@@ -69,14 +67,14 @@ export function OrderSummaryStep({
       <div>
         <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-neutral-500">Payment</h3>
         <p className="rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
-          No online payment yet — a payment gateway has not been selected (Phase 1 §18, still TBD).
-          You will pay the technician directly once the visit is confirmed.
+          You will pay securely via Razorpay on the next step. Your card/UPI details are handled entirely by
+          Razorpay — this site never sees them.
         </p>
       </div>
 
       <div className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2.5 text-sm font-bold text-neutral-900">
         <span>Total</span>
-        <span>{formatINR(subtotal)}</span>
+        <span>{formatINR(cart.subtotal)}</span>
       </div>
 
       <label className="flex items-start gap-2 text-xs text-neutral-600">
@@ -100,8 +98,8 @@ export function OrderSummaryStep({
         <Button type="button" variant="outline" size="lg" onClick={onBack} disabled={submitting}>
           Back
         </Button>
-        <Button type="button" size="lg" onClick={onConfirm} disabled={!consent || submitting}>
-          {submitting ? "Placing request…" : "Confirm booking"}
+        <Button type="button" size="lg" onClick={onConfirm} disabled={!consent || submitting || availableItems.length === 0}>
+          {submitting ? "Placing order…" : "Confirm & Pay"}
         </Button>
       </div>
     </div>

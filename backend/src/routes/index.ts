@@ -9,6 +9,7 @@ import { providersRouter } from "../modules/providers/providers.routes";
 import { customersRouter } from "../modules/customers/customers.routes";
 import { cartRouter } from "../modules/cart/cart.routes";
 import { ordersRouter } from "../modules/orders/orders.routes";
+import { paymentsRouter } from "../modules/payments/payments.routes";
 import { offersRouter } from "../modules/offers/offers.routes";
 import { searchRouter } from "../modules/search/search.routes";
 import { mediaRouter } from "../modules/media/media.routes";
@@ -42,6 +43,7 @@ export function buildRouter(): Router {
   router.use(customersRouter());
   router.use(cartRouter());
   router.use(ordersRouter());
+  router.use(paymentsRouter());
   router.use(offersRouter());
   router.use(searchRouter());
   router.use(mediaRouter());

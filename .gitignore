@@ -32,6 +32,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except .env.example files (variable NAMES only, never real values) --
+# these must stay tracked so anyone cloning the repo knows which env vars
+# to set (this was previously broken: the blanket .env* rule above was
+# silently swallowing backend/.env.example too, so it was never actually
+# committed despite backend/.gitignore's own comment claiming it was).
+!.env.example
+!**/.env.example
 
 # vercel
 .vercel

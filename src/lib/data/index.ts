@@ -25,5 +25,5 @@ export * from "./serviceTypes";
 export * from "./services";
 export * from "./offers";
 export * from "./search";
-export * from "./orders";
+// RAZORPAY INTEGRATION: the Phase-3 mock order store (./orders.ts, localStorage-only, never talked to the backend) has been removed -- checkout now uses the real backend via @/lib/customer/api (createMyOrder/getMyOrder).
 export * from "./videoCurations";
