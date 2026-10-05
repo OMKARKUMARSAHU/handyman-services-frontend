@@ -34,11 +34,23 @@ export class AuthApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    });
+  } catch {
+    // MEDIA LIBRARY FOLLOW-UP: the request never reached a server at all --
+    // distinguish this from a parsed backend error so the UI doesn't just
+    // show the browser's bare "Failed to fetch".
+    throw new AuthApiError(
+      0,
+      "NETWORK_ERROR",
+      `Could not reach the server at ${API_BASE_URL}. Check that the backend is running and reachable.`
+    );
+  }
 
   const body = (await res.json().catch(() => null)) as (ApiErrorBody & { data?: T }) | null;
 

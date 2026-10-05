@@ -96,7 +96,17 @@ export async function uploadMedia(file: File, metadata: MediaMetadataInput = {})
     contentType: file.type,
     fileSizeBytes: file.size,
   });
-  const putRes = await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+  let putRes: Response;
+  try {
+    putRes = await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+  } catch {
+    // The backend presign call succeeded, but the direct browser->S3 PUT
+    // never got a response at all -- most commonly the bucket's CORS
+    // configuration doesn't allow this origin yet, or the link expired.
+    throw new Error(
+      "Could not reach storage to upload this file. If this keeps happening, the S3 bucket's CORS configuration may need to allow this site's origin."
+    );
+  }
   if (!putRes.ok) throw new Error(`Upload to storage failed (${putRes.status}).`);
   return createMediaRecord({
     key,
