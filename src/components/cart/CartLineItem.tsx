@@ -45,7 +45,12 @@ export function CartLineItem({ item, compact = false }: { item: CartItem; compac
   }
 
   const lineTotal = item.unitPriceAtAdd * item.quantity;
-  const image = service.images[0]?.url ?? null;
+  // MEDIA LIBRARY FOLLOW-UP: images[0] may now be a video (a service's
+  // primary media item isn't necessarily a photo) -- this card has no video
+  // player, so prefer the first photo and fall back to images[0] only if the
+  // service has no photo at all.
+  const image =
+    service.images.find((img) => img.mediaType !== "video")?.url ?? service.images[0]?.url ?? null;
 
   return (
     <li className="flex gap-3 rounded-lg border border-neutral-200 p-3">

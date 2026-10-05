@@ -24,6 +24,9 @@ export function ServiceGallery({ images, serviceName }: { images: ServiceImage[]
 
   const sorted = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
   const active = sorted[activeIndex] ?? sorted[0];
+  // MEDIA LIBRARY FOLLOW-UP: a service can mix photos and videos -- never
+  // force a video into the <img> gallery, render it with a real player.
+  const isActiveVideo = active.mediaType === "video";
 
   function go(delta: number) {
     setActiveIndex((i) => (i + delta + sorted.length) % sorted.length);
@@ -32,12 +35,23 @@ export function ServiceGallery({ images, serviceName }: { images: ServiceImage[]
   return (
     <div>
       <div className="relative overflow-hidden rounded-2xl bg-neutral-100">
-        {/* eslint-disable-next-line @next/next/no-img-element -- mock/placeholder gallery asset */}
-        <img
-          src={active.url}
-          alt={active.alt || `${serviceName} — photo ${activeIndex + 1}`}
-          className="aspect-[4/3] w-full object-cover"
-        />
+        {isActiveVideo ? (
+          // eslint-disable-next-line jsx-a11y/media-has-caption -- admin-provided preview, no caption track available
+          <video
+            key={active.id}
+            src={active.url}
+            className="aspect-[4/3] w-full bg-neutral-900 object-contain"
+            controls
+            playsInline
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- mock/placeholder gallery asset
+          <img
+            src={active.url}
+            alt={active.alt || `${serviceName} — photo ${activeIndex + 1}`}
+            className="aspect-[4/3] w-full object-cover"
+          />
+        )}
         {sorted.length > 1 && (
           <>
             <button
@@ -82,8 +96,14 @@ export function ServiceGallery({ images, serviceName }: { images: ServiceImage[]
                   i === activeIndex ? "border-brand-600" : "border-transparent"
                 )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- mock/placeholder gallery asset */}
-                <img src={img.url} alt="" className="h-full w-full object-cover" />
+                {img.mediaType === "video" ? (
+                  <span className="relative flex h-full w-full items-center justify-center bg-neutral-800">
+                    <Icon name="film" className="h-5 w-5 text-white" />
+                  </span>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element -- mock/placeholder gallery asset
+                  <img src={img.url} alt="" className="h-full w-full object-cover" />
+                )}
               </button>
             ))}
           </div>

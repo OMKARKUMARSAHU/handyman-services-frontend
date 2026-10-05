@@ -10,11 +10,20 @@ export const uploadUrlSchema = z.object({
 export const serviceIdParamsSchema = z.object({ serviceId: z.string().uuid() });
 export const imageIdParamsSchema = z.object({ id: z.string().uuid() });
 
-export const attachImageSchema = z.object({
-  key: z.string().min(1).max(1024),
-  alt: z.string().min(1).max(255),
-  sortOrder: z.number().int().optional(),
-});
+// MEDIA LIBRARY FOLLOW-UP: `key` (the original direct-upload path) and
+// `mediaId` (attach an existing/just-uploaded central Media Library item)
+// are now mutually exclusive alternatives -- exactly one is required.
+export const attachImageSchema = z
+  .object({
+    key: z.string().min(1).max(1024).optional(),
+    mediaId: z.string().uuid().optional(),
+    alt: z.string().min(1).max(255),
+    sortOrder: z.number().int().optional(),
+    mediaType: z.enum(["image", "video"]).optional(),
+  })
+  .refine((v) => (v.key ? 1 : 0) + (v.mediaId ? 1 : 0) === 1, {
+    message: "Provide exactly one of key or mediaId.",
+  });
 
 // ADMIN CMS FOLLOW-UP ("Reorder images / Set primary image"): PATCH body for
 // `PATCH /media/images/:id` -- both fields optional/independent so a reorder

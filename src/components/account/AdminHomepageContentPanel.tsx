@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/lib/icons";
-import { uploadCmsFile } from "@/lib/admin/catalog-api";
+import { MediaPickerField } from "@/components/account/MediaPicker";
 import {
   AuthApiError,
   listHomepageSectionsAdmin,
@@ -124,71 +124,11 @@ const inputClasses =
   "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
 const labelClasses = "mb-1 block text-xs font-medium text-neutral-700";
 
-function ImageUploadField({
-  label,
-  value,
-  onChange,
-  accept = "image/jpeg,image/png,image/webp",
-}: {
-  label: string;
-  value: string | null;
-  onChange: (url: string | null) => void;
-  accept?: string;
-}) {
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  async function handleUpload(file: File) {
-    setUploading(true);
-    setUploadError(null);
-    try {
-      const url = await uploadCmsFile("homepage", file);
-      onChange(url);
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Could not upload this file.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  return (
-    <div>
-      <label className={labelClasses}>{label}</label>
-      {uploadError && <p className="mb-1 text-xs font-medium text-red-600">{uploadError}</p>}
-      <div className="flex items-center gap-2">
-        {value ? (
-          accept.includes("video") ? (
-            <span className="truncate text-xs text-neutral-600">{value.split("/").pop()}</span>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element -- Admin-uploaded preview thumbnail
-            <img src={value} alt="" className="h-10 w-10 rounded-lg object-cover ring-1 ring-neutral-200" />
-          )
-        ) : (
-          <span className="text-xs text-neutral-400">None uploaded</span>
-        )}
-        <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-neutral-300 px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:border-brand-400">
-          {uploading ? "Uploading…" : value ? "Replace" : "Upload"}
-          <input
-            type="file"
-            accept={accept}
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleUpload(file);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        {value && (
-          <button type="button" className="text-xs text-red-600 hover:underline" onClick={() => onChange(null)}>
-            Remove
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
+// MEDIA LIBRARY FOLLOW-UP: the old local ImageUploadField (homepage-scoped
+// CMS presign upload only) is gone -- MediaPickerField (the same Central
+// Media Picker used throughout Catalog) now backs both the thumbnail and
+// video fields below, so homepage media is reused from, and added to, the
+// same single library instead of a separate homepage-only upload path.
 
 function move<T>(arr: T[], from: number, to: number): T[] {
   const next = [...arr];
@@ -464,12 +404,12 @@ function VideoCurationsEditor({
             <label className={labelClasses}>Service type key (optional)</label>
             <input className={inputClasses} value={d.serviceTypeId} onChange={(e) => update(i, { serviceTypeId: e.target.value })} />
           </div>
-          <ImageUploadField label="Thumbnail image" value={d.thumbnail} onChange={(url) => update(i, { thumbnail: url })} />
-          <ImageUploadField
+          <MediaPickerField label="Thumbnail image" accept="image" value={d.thumbnail} onChange={(url) => update(i, { thumbnail: url })} />
+          <MediaPickerField
             label="Video file (optional — leave empty to show 'Video coming soon')"
+            accept="video"
             value={d.videoUrl}
             onChange={(url) => update(i, { videoUrl: url })}
-            accept="video/mp4"
           />
           <div className="sm:col-span-2">
             <label className={labelClasses}>Or an external video link (optional, used if no file is uploaded)</label>

@@ -17,11 +17,19 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4
 export class AuthApiError extends Error {
   readonly code: string;
   readonly status: number;
-  constructor(status: number, code: string, message: string) {
+  // MEDIA LIBRARY FOLLOW-UP: the backend's error envelope has always carried
+  // an optional `details` field (see ApiErrorBody in ./types) -- it was just
+  // never surfaced here. Optional, additive: every existing call site that
+  // constructs or catches an AuthApiError is unaffected. The Media Library's
+  // "this item is still in use" 409 is the first consumer, carrying a
+  // structured reference list instead of just a message string.
+  readonly details?: unknown;
+  constructor(status: number, code: string, message: string, details?: unknown) {
     super(message);
     this.name = "AuthApiError";
     this.status = status;
     this.code = code;
+    this.details = details;
   }
 }
 
@@ -37,7 +45,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok || !body || body.success === false) {
     const message = body && "error" in body ? body.error.message : "Something went wrong. Please try again.";
     const code = body && "error" in body ? body.error.code : "UNKNOWN_ERROR";
-    throw new AuthApiError(res.status, code, message);
+    const details = body && "error" in body ? body.error.details : undefined;
+    throw new AuthApiError(res.status, code, message, details);
   }
 
   return (body as unknown as { data: T }).data;

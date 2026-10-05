@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/lib/icons";
+import { MediaPicker, MediaPickerField } from "@/components/account/MediaPicker";
 import {
   AuthApiError,
   listCitiesAdmin,
@@ -39,12 +40,10 @@ import {
   updateOffer,
   type AdminOffer,
   type OfferInput,
-  createMediaUploadUrl,
   attachServiceImage,
   updateServiceImage,
   type AdminServiceImage,
   deleteServiceImage,
-  uploadCmsFile,
 } from "@/lib/admin/catalog-api";
 
 /**
@@ -82,84 +81,11 @@ function StatusPill({ active }: { active: boolean }) {
   );
 }
 
-/**
- * AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline") — reusable
- * Admin image-upload field, backed by the new generic, non-service-scoped
- * CMS presign flow (`uploadCmsFile` / `POST /admin/media/cms-upload-url`;
- * see media.service.ts's `createCmsUploadUrl`). Every entity field this
- * feeds (`category.image`, `product.image`, `city.iconUrl`,
- * `offer.bannerImage`, a homepage-section item's own image/thumbnail) is
- * optional on the frontend — leaving it unset keeps that entity's existing
- * icon/placeholder fallback on the customer site (the explicit `if
- * admin_image exists: show it else: default icon` pattern used throughout
- * this audit pass).
- */
-function ImageUploadField({
-  label,
-  entityType,
-  value,
-  onChange,
-  accept = "image/jpeg,image/png,image/webp",
-}: {
-  label: string;
-  entityType: "category" | "product" | "city" | "offer" | "homepage" | "branding";
-  value: string | null;
-  onChange: (url: string | null) => void;
-  accept?: string;
-}) {
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleUpload(file: File) {
-    setUploading(true);
-    setError(null);
-    try {
-      const url = await uploadCmsFile(entityType, file);
-      onChange(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not upload this image.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  return (
-    <div className="sm:col-span-2">
-      <label className={labelClasses}>{label}</label>
-      {error && <p className="mt-1 text-xs font-medium text-red-600">{error}</p>}
-      <div className="mt-1 flex items-center gap-3">
-        {value ? (
-          // eslint-disable-next-line @next/next/no-img-element -- Admin-uploaded preview thumbnail
-          <img src={value} alt="" className="h-12 w-12 rounded-lg object-cover ring-1 ring-neutral-200" />
-        ) : (
-          <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-neutral-100 text-neutral-400 ring-1 ring-neutral-200">
-            <Icon name="package" className="h-5 w-5" />
-          </span>
-        )}
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-xs font-medium text-neutral-700 hover:border-brand-400">
-          {uploading ? "Uploading…" : value ? "Replace image" : "Upload image"}
-          <input
-            type="file"
-            accept={accept}
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleUpload(file);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        {value && (
-          <button type="button" className="text-xs text-red-600 hover:underline" onClick={() => onChange(null)}>
-            Remove
-          </button>
-        )}
-      </div>
-      <p className="mt-1 text-[11px] text-neutral-500">Leave empty to keep the default icon/placeholder on the customer site.</p>
-    </div>
-  );
-}
+// MEDIA LIBRARY FOLLOW-UP: the old per-file ImageUploadField (CMS presign
+// upload only, no reuse) is gone. Every single-image/video admin field in
+// this file now uses MediaPickerField (@/components/account/MediaPicker),
+// the shared Central Media Picker -- "Select from Media Library" / "Upload
+// New Media", backed by the same /admin/media-library API everywhere.
 
 type CatalogTab = "cities" | "categories" | "products" | "serviceTypes" | "services" | "offers";
 
@@ -363,7 +289,7 @@ function CityForm({
           Popular city
         </label>
       </div>
-      <ImageUploadField label="City icon/photo (optional)" entityType="city" value={iconUrl} onChange={setIconUrl} />
+      <MediaPickerField label="City icon/photo (optional)" accept="image" value={iconUrl} onChange={setIconUrl} />
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" size="md" disabled={saving}>
           {initial ? "Save changes" : "Create city"}
@@ -533,7 +459,7 @@ function CategoryForm({
         <label className={labelClasses}>Icon key (from the existing icon set, e.g. "snowflake", "washing-machine")</label>
         <input className={inputClasses} value={icon} onChange={(e) => setIcon(e.target.value)} required />
       </div>
-      <ImageUploadField label="Category photo (optional — falls back to the icon above)" entityType="category" value={image} onChange={setImage} />
+      <MediaPickerField label="Category photo (optional — falls back to the icon above)" accept="image" value={image} onChange={setImage} />
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" size="md" disabled={saving}>
           {initial ? "Save changes" : "Create category"}
@@ -735,7 +661,7 @@ function ProductForm({
         <label className={labelClasses}>Icon key</label>
         <input className={inputClasses} value={icon} onChange={(e) => setIcon(e.target.value)} required />
       </div>
-      <ImageUploadField label="Product photo (optional — falls back to the icon above)" entityType="product" value={image} onChange={setImage} />
+      <MediaPickerField label="Product photo (optional — falls back to the icon above)" accept="image" value={image} onChange={setImage} />
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" size="md" disabled={saving}>
           {initial ? "Save changes" : "Create product"}
@@ -1324,33 +1250,35 @@ function CityAvailabilityEditor({
 }
 
 function ServiceImagesEditor({ service, onUpdated }: { service: AdminService; onUpdated: () => void }) {
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reordering, setReordering] = useState<string | null>(null);
+  // MEDIA LIBRARY FOLLOW-UP: "+ Add Media" opens the shared Central Media
+  // Picker (same component/library as Catalog/Homepage) instead of this
+  // editor driving its own upload. A service can hold photos AND videos --
+  // accept="both" -- distinguished per-item by mediaType.
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [attaching, setAttaching] = useState(false);
 
   // ADMIN CMS FOLLOW-UP ("Reorder images / Set primary image"): display order
   // follows sortOrder, not insertion order -- index 0 after sorting is the
   // primary image shown on the service card / gallery cover.
   const sortedImages = [...service.images].sort((a, b) => a.sortOrder - b.sortOrder);
 
-  async function handleUpload(file: File) {
-    setUploading(true);
+  async function handleAttach(media: { id: string; type: "image" | "video"; url: string; title: string | null; altText: string | null; originalFilename: string }) {
+    setAttaching(true);
     setError(null);
     try {
-      const { uploadUrl, key } = await createMediaUploadUrl({
-        serviceId: service.id,
-        fileName: file.name,
-        contentType: file.type,
-        fileSizeBytes: file.size,
+      await attachServiceImage(service.id, {
+        mediaId: media.id,
+        mediaType: media.type,
+        alt: media.altText || media.title || media.originalFilename,
+        sortOrder: service.images.length,
       });
-      const putRes = await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-      if (!putRes.ok) throw new Error(`Upload to storage failed (${putRes.status}).`);
-      await attachServiceImage(service.id, { key, alt: file.name, sortOrder: service.images.length });
       onUpdated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not upload this image.");
+      setError(err instanceof Error ? err.message : "Could not attach this media.");
     } finally {
-      setUploading(false);
+      setAttaching(false);
     }
   }
 
@@ -1427,10 +1355,20 @@ function ServiceImagesEditor({ service, onUpdated }: { service: AdminService; on
             key={img.id}
             className="flex items-center gap-2 rounded-lg border border-neutral-200 p-2 text-xs text-neutral-700"
           >
-            <img src={img.url} alt={img.alt} className="h-12 w-12 flex-shrink-0 rounded-md object-cover" />
+            {img.mediaType === "video" ? (
+              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md bg-neutral-800">
+                <Icon name="film" className="h-5 w-5 text-white" />
+              </span>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail
+              <img src={img.url} alt={img.alt} className="h-12 w-12 flex-shrink-0 rounded-md object-cover" />
+            )}
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-neutral-900">{img.alt}</p>
-              {index === 0 && <p className="text-[10px] font-semibold uppercase text-brand-600">Primary</p>}
+              <p className="text-[10px] uppercase text-neutral-400">
+                {img.mediaType === "video" ? "Video" : "Image"}
+                {index === 0 && <span className="ml-1 font-semibold text-brand-600">· Primary</span>}
+              </p>
             </div>
             <div className="flex flex-shrink-0 items-center gap-1">
               <button
@@ -1467,21 +1405,21 @@ function ServiceImagesEditor({ service, onUpdated }: { service: AdminService; on
         ))}
         {service.images.length === 0 && <li className="text-xs text-neutral-500">No images yet.</li>}
       </ul>
-      <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-xs font-medium text-neutral-700 hover:border-brand-400">
-        <Icon name="package" className="h-3.5 w-3.5" />
-        {uploading ? "Uploading…" : "Upload image (3–5+ recommended)"}
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,video/mp4"
-          className="hidden"
-          disabled={uploading}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleUpload(file);
-            e.target.value = "";
-          }}
-        />
-      </label>
+      <button
+        type="button"
+        className="mt-3 inline-flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-xs font-medium text-neutral-700 hover:border-brand-400 disabled:opacity-50"
+        disabled={attaching}
+        onClick={() => setPickerOpen(true)}
+      >
+        <Icon name="plus" className="h-3.5 w-3.5" />
+        {attaching ? "Adding…" : "+ Add Media (3–5+ recommended)"}
+      </button>
+      <MediaPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        accept="both"
+        onSelect={(media) => handleAttach(media)}
+      />
     </div>
   );
 }
@@ -1722,7 +1660,7 @@ function OfferForm({
         <label className={labelClasses}>Description</label>
         <textarea className={inputClasses} value={description} onChange={(e) => setDescription(e.target.value)} required rows={2} />
       </div>
-      <ImageUploadField label="Promotional banner image (optional)" entityType="offer" value={bannerImage} onChange={setBannerImage} />
+      <MediaPickerField label="Promotional banner image (optional)" accept="image" value={bannerImage} onChange={setBannerImage} />
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" size="md" disabled={saving}>
           {initial ? "Save changes" : "Create offer"}

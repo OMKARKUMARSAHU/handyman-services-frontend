@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/state/AuthProvider";
 import { AdminProviderQueue } from "@/components/account/AdminProviderQueue";
 import { AdminCatalogPanel } from "@/components/account/AdminCatalogPanel";
 import { AdminHomepageContentPanel } from "@/components/account/AdminHomepageContentPanel";
+import { AdminMediaLibraryPanel } from "@/components/account/AdminMediaLibraryPanel";
 import {
   AuthApiError,
   listCustomers,
@@ -24,13 +25,16 @@ import {
   type AdminOrderStats,
 } from "@/lib/admin/api";
 
-type Tab = "overview" | "providers" | "customers" | "orders" | "catalog" | "homepage";
+// MEDIA LIBRARY FOLLOW-UP: "media" sits between Orders and Catalog per the
+// requested sidebar order.
+type Tab = "overview" | "providers" | "customers" | "orders" | "media" | "catalog" | "homepage";
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "overview", label: "Overview", icon: "layout-grid" },
   { key: "providers", label: "Provider Approvals", icon: "shield-check" },
   { key: "customers", label: "Customers", icon: "user" },
   { key: "orders", label: "Orders", icon: "package" },
+  { key: "media", label: "Media", icon: "film" },
   { key: "catalog", label: "Catalog", icon: "wrench" },
   { key: "homepage", label: "Homepage Content", icon: "layout-grid" },
 ];
@@ -144,6 +148,7 @@ export function AdminDashboardPanel() {
               {tab === "providers" && <AdminProviderQueue />}
               {tab === "customers" && <AdminCustomersTab />}
               {tab === "orders" && <AdminOrdersTab />}
+              {tab === "media" && <AdminMediaLibraryPanel />}
               {tab === "catalog" && <AdminCatalogPanel />}
               {tab === "homepage" && <AdminHomepageContentPanel />}
             </div>

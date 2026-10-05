@@ -19,7 +19,26 @@ const TABLE = "service_images";
  * differentiated cap would be an invented, unconfirmed detail; flagged as a
  * simplification in PHASE_3_BACKEND_IMPLEMENTATION.md, not silently assumed.
  */
-const ALLOWED_CONTENT_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "video/mp4"]);
+// MEDIA LIBRARY FOLLOW-UP: exported (and renamed from the original
+// module-private ALLOWED_CONTENT_TYPES) so the new central Media Library
+// module (../media-library/media-library.service.ts) validates uploads
+// against the exact same allow-list instead of maintaining a second,
+// potentially-drifting copy. Extended with gif/webm/quicktime per the
+// Media Library's "do not unnecessarily restrict formats" requirement --
+// S3 storage doesn't care about the format, so the only real constraint
+// is sensible validation, not an arbitrarily narrow allow-list.
+export const ALLOWED_MEDIA_CONTENT_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
+
+// Back-compat alias -- every existing call site in this file keeps working unchanged.
+const ALLOWED_CONTENT_TYPES = ALLOWED_MEDIA_CONTENT_TYPES;
 
 let s3Client: S3Client | null = null;
 
@@ -32,7 +51,9 @@ let s3Client: S3Client | null = null;
  * local development and tests can presign without a real IAM role
  * available, exactly as `.env.example` documents.
  */
-function getS3Client(): S3Client {
+// MEDIA LIBRARY FOLLOW-UP: exported so ../media-library/media-library.service.ts
+// reuses this exact client/credential-resolution logic instead of a second copy.
+export function getS3Client(): S3Client {
   if (!s3Client) {
     s3Client = new S3Client({
       region: env.S3_REGION,
@@ -44,7 +65,8 @@ function getS3Client(): S3Client {
   return s3Client;
 }
 
-function requireBucketName(): string {
+// MEDIA LIBRARY FOLLOW-UP: exported, same reasoning as getS3Client above.
+export function requireBucketName(): string {
   if (!env.S3_BUCKET_NAME) {
     throw new Error(
       "S3_BUCKET_NAME is not configured — cannot broker a media upload. Set it in the environment before handling media requests."
@@ -53,12 +75,14 @@ function requireBucketName(): string {
   return env.S3_BUCKET_NAME;
 }
 
-function buildPublicUrl(key: string): string {
+// MEDIA LIBRARY FOLLOW-UP: exported, same reasoning as getS3Client above.
+export function buildPublicUrl(key: string): string {
   const bucket = requireBucketName();
   return `https://${bucket}.s3.${env.S3_REGION}.amazonaws.com/${key}`;
 }
 
-function sanitizeFileName(fileName: string): string {
+// MEDIA LIBRARY FOLLOW-UP: exported, same reasoning as getS3Client above.
+export function sanitizeFileName(fileName: string): string {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
 }
 
@@ -104,23 +128,59 @@ export async function createUploadUrl(
   };
 }
 
-/** Called by the browser after its direct-to-S3 upload succeeds, to record the resulting key as a `service_images` row. Never receives raw file bytes itself. */
+/**
+ * Called by the browser after its direct-to-S3 upload succeeds, to record
+ * the resulting key as a `service_images` row. Never receives raw file
+ * bytes itself.
+ *
+ * MEDIA LIBRARY FOLLOW-UP: `input` now accepts EITHER `key` (the original,
+ * still-fully-supported path -- a file just PUT directly to a fresh,
+ * service-scoped S3 key via `createUploadUrl` above) OR `mediaId` (the new
+ * path -- the file already exists as a Media Library row, selected or
+ * just-uploaded through the central picker). Exactly one of the two is
+ * required (enforced by `attachImageSchema`'s `.refine()`). When `mediaId`
+ * is given, the resulting `service_images` row's `media_id` links back to
+ * that shared row -- this is what lets `deleteServiceImage` below avoid
+ * ever deleting a library-owned, possibly-shared S3 object, and what lets
+ * the Media Library's own delete refuse to remove something still attached
+ * to a service (`media-library.service.ts`'s `findMediaReferences`).
+ */
 export async function attachServiceImage(
   auth: AuthenticatedUser,
   serviceId: string,
-  input: { key: string; alt: string; sortOrder?: number }
+  input: { key?: string; mediaId?: string; alt: string; sortOrder?: number; mediaType?: "image" | "video" }
 ): Promise<ServiceImageDto> {
   const service = await getManagedServiceById(serviceId);
   if (!service) throw new NotFoundError("Service not found.");
   assertCanManageServiceMedia(service, auth);
 
+  let url: string;
+  let mediaId: string | null = null;
+  let mediaType: "image" | "video" = input.mediaType ?? "image";
+
+  if (input.mediaId) {
+    const media = await getDb()<{ id: string; url: string; type: "image" | "video" }>("media")
+      .where({ id: input.mediaId })
+      .first();
+    if (!media) throw new NotFoundError("Media not found.");
+    url = media.url;
+    mediaId = media.id;
+    mediaType = media.type;
+  } else if (input.key) {
+    url = buildPublicUrl(input.key);
+  } else {
+    throw new ConflictError("Provide either a key or a mediaId.");
+  }
+
   const id = randomUUID();
   await getDb()<ServiceImageRow>(TABLE).insert({
     id,
     service_id: serviceId,
-    url: buildPublicUrl(input.key),
+    url,
     alt: input.alt,
     sort_order: input.sortOrder ?? 0,
+    media_type: mediaType,
+    media_id: mediaId,
   });
   const row = await getDb()<ServiceImageRow>(TABLE).where({ id }).first();
   if (!row) throw new Error("Failed to read back created service image.");
@@ -145,6 +205,7 @@ export async function updateServiceImage(
   const patch: Partial<ServiceImageRow> = {};
   if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
   if (input.alt !== undefined) patch.alt = input.alt;
+  // (sortOrder/alt only -- media_type is fixed at attach time, by design.)
 
   if (Object.keys(patch).length > 0) {
     await getDb()<ServiceImageRow>(TABLE).where({ id: imageId }).update(patch);
@@ -168,6 +229,17 @@ async function getImageWithService(imageId: string) {
  * implementation detail per the approved AWS doc — this best-effort deletes
  * the S3 object too (never blocking the MySQL row deletion on it), rather
  * than leaving every removed image as an orphaned, unreferenced object.
+ *
+ * MEDIA LIBRARY FOLLOW-UP: that S3-delete is now conditional on
+ * `media_id` being unset. A row with `media_id` set came from the central
+ * Media Library -- its S3 object may be attached elsewhere (another
+ * service, a category image, a homepage section), so only the
+ * `service_images` row (the attachment) is removed here; the shared
+ * media/S3 object's own lifecycle belongs to the Media Library's own
+ * delete endpoint, which checks for exactly this kind of reference
+ * before ever touching S3 (see media-library.service.ts's
+ * `findMediaReferences`). A row with no `media_id` (attached the old,
+ * direct-upload way) keeps today's exact behavior.
  */
 export async function deleteServiceImage(auth: AuthenticatedUser, imageId: string): Promise<void> {
   const found = await getImageWithService(imageId);
@@ -175,6 +247,8 @@ export async function deleteServiceImage(auth: AuthenticatedUser, imageId: strin
   assertCanManageServiceMedia(found.service, auth);
 
   await getDb()<ServiceImageRow>(TABLE).where({ id: imageId }).delete();
+
+  if (found.image.media_id) return;
 
   try {
     const bucket = requireBucketName();

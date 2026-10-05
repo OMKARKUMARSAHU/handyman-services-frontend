@@ -2,12 +2,16 @@ import { computeFinalPricing } from "../../shared/pricing";
 import type { OfferDto } from "../offers/offers.types";
 import type { ManagedServiceDto, PublicServiceDto, ServiceRow } from "./services.types";
 
+// MEDIA LIBRARY FOLLOW-UP: media_type lets a service mix photos and videos
+// in its gallery; defaults to "image" in the database for every
+// pre-existing row, so this is purely additive.
 export interface ServiceImageRow {
   id: string;
   service_id: string;
   url: string;
   alt: string;
   sort_order: number;
+  media_type: "image" | "video";
 }
 
 function parseJsonColumn<T>(value: unknown, fallback: T): T {
@@ -25,7 +29,14 @@ function parseJsonColumn<T>(value: unknown, fallback: T): T {
 function toImages(rows: ServiceImageRow[]) {
   return rows
     .sort((a, b) => a.sort_order - b.sort_order)
-    .map((r) => ({ id: r.id, serviceId: r.service_id, url: r.url, alt: r.alt, sortOrder: r.sort_order }));
+    .map((r) => ({
+      id: r.id,
+      serviceId: r.service_id,
+      url: r.url,
+      alt: r.alt,
+      sortOrder: r.sort_order,
+      mediaType: r.media_type,
+    }));
 }
 
 export function toPublicServiceDto(

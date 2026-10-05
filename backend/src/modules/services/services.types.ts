@@ -23,7 +23,7 @@ export interface PublicServiceDto {
   shortDescription: string;
   description: string;
   whatsIncluded: string[];
-  images: { id: string; serviceId: string; url: string; alt: string; sortOrder: number }[];
+  images: { id: string; serviceId: string; url: string; alt: string; sortOrder: number; mediaType: "image" | "video" }[];
   mrp: number;
   offerPrice: number;
   discountPercent: number;

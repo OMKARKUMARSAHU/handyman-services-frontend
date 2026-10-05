@@ -12,6 +12,7 @@ import { ordersRouter } from "../modules/orders/orders.routes";
 import { offersRouter } from "../modules/offers/offers.routes";
 import { searchRouter } from "../modules/search/search.routes";
 import { mediaRouter } from "../modules/media/media.routes";
+import { mediaLibraryRouter } from "../modules/media-library/media-library.routes";
 import { contentRouter } from "../modules/content/content.routes";
 import { usersRouter } from "../modules/users/users.routes";
 import { authRouter } from "../modules/auth/auth.routes";
@@ -44,6 +45,7 @@ export function buildRouter(): Router {
   router.use(offersRouter());
   router.use(searchRouter());
   router.use(mediaRouter());
+  router.use(mediaLibraryRouter());
   router.use(contentRouter());
   router.use(usersRouter());
 

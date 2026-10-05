@@ -176,12 +176,18 @@ export interface AdminOfferSummary {
   cityId: string | null;
 }
 
+// MEDIA LIBRARY FOLLOW-UP: mediaType distinguishes a photo from a video in
+// a service's gallery; mediaId links back to a central Media Library row
+// when this item was attached via the picker (null for the original,
+// still-supported direct-upload path).
 export interface AdminServiceImage {
   id: string;
   serviceId: string;
   url: string;
   alt: string;
   sortOrder: number;
+  mediaType: "image" | "video";
+  mediaId: string | null;
 }
 
 export interface AdminService {
@@ -361,9 +367,13 @@ export function createMediaUploadUrl(input: {
   return apiRequest("/media/upload-url", { method: "POST", body: JSON.stringify(input) });
 }
 
+// MEDIA LIBRARY FOLLOW-UP: `input` now accepts either the original `key`
+// (a file just PUT to a fresh, service-scoped S3 key) or `mediaId` (an
+// existing/just-uploaded central Media Library item, from the picker) --
+// exactly one of the two.
 export function attachServiceImage(
   serviceId: string,
-  input: { key: string; alt: string; sortOrder?: number }
+  input: { key?: string; mediaId?: string; alt: string; sortOrder?: number; mediaType?: "image" | "video" }
 ): Promise<AdminServiceImage> {
   return apiRequest<AdminServiceImage>(`/media/${serviceId}/images`, { method: "POST", body: JSON.stringify(input) });
 }

@@ -99,6 +99,7 @@ interface BackendServiceImage {
   url: string;
   alt: string;
   sortOrder: number;
+  mediaType: "image" | "video";
 }
 interface BackendService {
   id: string;
@@ -265,7 +266,14 @@ function mapService(dto: BackendService, ctx: LiveCatalogContext): Service {
     shortDescription: dto.shortDescription,
     description: dto.description,
     whatsIncluded: dto.whatsIncluded,
-    images: dto.images.map((img) => ({ id: img.id, serviceId: dto.slug, url: img.url, alt: img.alt, sortOrder: img.sortOrder })),
+    images: dto.images.map((img) => ({
+      id: img.id,
+      serviceId: dto.slug,
+      url: img.url,
+      alt: img.alt,
+      sortOrder: img.sortOrder,
+      mediaType: img.mediaType,
+    })),
     mrp: dto.mrp,
     offerPrice: dto.offerPrice,
     discountPercent: dto.discountPercent,

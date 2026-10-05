@@ -106,12 +106,15 @@ export interface ServiceType {
   active: boolean;
 }
 
+// MEDIA LIBRARY FOLLOW-UP: a service's gallery can mix photos and videos --
+// mediaType tells ServiceGallery/ServiceCard/CartLineItem which to render.
 export interface ServiceImage {
   id: string;
   serviceId: string;
   url: string;
   alt: string;
   sortOrder: number;
+  mediaType: "image" | "video";
 }
 
 /**
