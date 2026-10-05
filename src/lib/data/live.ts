@@ -179,7 +179,24 @@ export async function getLiveCatalogContext(): Promise<LiveCatalogContext | null
     backendGet<BackendCategory[]>("/categories"),
     backendGet<BackendServiceType[]>("/service-types"),
   ]);
-  if (!citiesRaw || !categoriesRaw || !serviceTypesRaw) return null;
+  // AUDIT FOLLOW-UP ("Browse by Category" showing only "All Services" on a
+  // *reachable* local backend whose database has never been migrated/
+  // seeded): a reachable-but-empty response is a successful fetch, so the
+  // original `!categoriesRaw` style checks only ever caught a *failed*
+  // fetch (network error / non-2xx -> backendGet returns null), never an
+  // empty-but-200 catalog. Treat "reachable with zero rows" the same as
+  // "unreachable" so every *Live reader below falls back to the full mock
+  // catalog instead of rendering an empty category/product/service list.
+  if (
+    !citiesRaw ||
+    !categoriesRaw ||
+    !serviceTypesRaw ||
+    citiesRaw.length === 0 ||
+    categoriesRaw.length === 0 ||
+    serviceTypesRaw.length === 0
+  ) {
+    return null;
+  }
 
   const productsPerCategory = await Promise.all(
     categoriesRaw.map((c) => backendGet<BackendProduct[]>(`/categories/${c.slug}/products`))
