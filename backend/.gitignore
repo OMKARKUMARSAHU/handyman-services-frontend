@@ -1,0 +1,14 @@
+# Backend-local ignores (scoped to this directory — the frontend's own
+# root .gitignore is left untouched; git applies this file to everything
+# under backend/ regardless).
+
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Never commit real secrets — only .env.example (variable names only) is tracked.
+.env
+.env.local
+.env.*.local

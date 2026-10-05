@@ -1,8 +1,8 @@
 "use client";
 
 import { Icon } from "@/lib/icons";
-import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
-import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
+import { HorizontalRailNavigation } from "@/components/ui/HorizontalRailNavigation";
+import { useHorizontalRailScroll } from "@/lib/hooks/useHorizontalRailScroll";
 import type { HomepageSection } from "@/types";
 
 /**
@@ -29,35 +29,46 @@ import type { HomepageSection } from "@/types";
  * avoid showing the same 4 items twice.
  */
 export function TrustStrip({ section }: { section: HomepageSection }) {
-  const items = section.items ?? [];
-  const { ref: scrollRef, state: scrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
-    items.length
-  );
+  // AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline"): respect an
+  // Admin's activate/deactivate toggle on a trust-strip item. `active` is
+  // stored as 0/1 on the generic `homepage_sections.items` JSON column (see
+  // backend/src/modules/content/*); a missing flag (legacy/mock rows that
+  // never had one) is treated as active so nothing already-live silently
+  // disappears.
+  const items = (section.items ?? []).filter((item) => item.active === undefined || Number(item.active) === 1);
+  const { ref: scrollRef, canScrollLeft, canScrollRight, onScrollLeft, onScrollRight } =
+    useHorizontalRailScroll<HTMLDivElement>(items.length);
 
   if (items.length === 0) return null;
 
   return (
     <section className="border-b border-neutral-200 bg-neutral-50/60 py-5">
-      <div
-        ref={scrollRef}
-        role="region"
-        aria-label="Why choose us — scrollable list"
-        tabIndex={0}
-        className="mx-auto flex w-full max-w-7xl gap-4 overflow-x-auto px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-6 lg:grid-cols-4 lg:px-8"
-      >
-        {items.map((item, i) => (
-          <div key={i} className="flex min-w-[220px] shrink-0 items-center gap-3 sm:min-w-0">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-brand-600 ring-1 ring-neutral-200">
-              <Icon name={String(item.icon ?? "shield-check")} className="h-4 w-4" />
-            </span>
-            <span className="text-xs font-medium leading-tight text-neutral-700">
-              {item.title}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <HorizontalScrollIndicator state={scrollState} />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div
+          ref={scrollRef}
+          role="region"
+          aria-label="Why choose us — scrollable list"
+          tabIndex={0}
+          className="flex w-full gap-4 overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4"
+        >
+          {items.map((item, i) => (
+            <div key={i} className="flex min-w-[220px] shrink-0 items-center gap-3 sm:min-w-0">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-brand-600 ring-1 ring-neutral-200">
+                <Icon name={String(item.icon ?? "shield-check")} className="h-4 w-4" />
+              </span>
+              <span className="text-xs font-medium leading-tight text-neutral-700">
+                {item.title}
+              </span>
+            </div>
+          ))}
+        </div>
+        <HorizontalRailNavigation
+          canScrollLeft={canScrollLeft}
+          canScrollRight={canScrollRight}
+          onScrollLeft={onScrollLeft}
+          onScrollRight={onScrollRight}
+          label="Why choose us"
+        />
       </div>
     </section>
   );

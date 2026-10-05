@@ -4,16 +4,15 @@ import { useState } from "react";
 import type { ServiceImage } from "@/types";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
-import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
+import { HorizontalRailNavigation } from "@/components/ui/HorizontalRailNavigation";
+import { useHorizontalRailScroll } from "@/lib/hooks/useHorizontalRailScroll";
 
 export function ServiceGallery({ images, serviceName }: { images: ServiceImage[]; serviceName: string }) {
   const [activeIndex, setActiveIndex] = useState(0);
   // Hooks run unconditionally, before the `images.length === 0` early
   // return below.
-  const { ref: thumbScrollRef, state: thumbScrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
-    images.length
-  );
+  const { ref: thumbScrollRef, canScrollLeft, canScrollRight, onScrollLeft, onScrollRight } =
+    useHorizontalRailScroll<HTMLDivElement>(images.length);
 
   if (images.length === 0) {
     return (
@@ -64,31 +63,39 @@ export function ServiceGallery({ images, serviceName }: { images: ServiceImage[]
         )}
       </div>
       {sorted.length > 1 && (
-        <div
-          ref={thumbScrollRef}
-          role="region"
-          aria-label={`${serviceName} — photo thumbnails, scrollable list`}
-          className="mt-3 flex gap-2 overflow-x-auto"
-        >
-          {sorted.map((img, i) => (
-            <button
-              key={img.id}
-              type="button"
-              onClick={() => setActiveIndex(i)}
-              aria-label={`Show photo ${i + 1}`}
-              aria-current={i === activeIndex}
-              className={cn(
-                "h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2",
-                i === activeIndex ? "border-brand-600" : "border-transparent"
-              )}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element -- mock/placeholder gallery asset */}
-              <img src={img.url} alt="" className="h-full w-full object-cover" />
-            </button>
-          ))}
+        <div className="relative mt-3">
+          <div
+            ref={thumbScrollRef}
+            role="region"
+            aria-label={`${serviceName} — photo thumbnails, scrollable list`}
+            className="flex gap-2 overflow-x-auto"
+          >
+            {sorted.map((img, i) => (
+              <button
+                key={img.id}
+                type="button"
+                onClick={() => setActiveIndex(i)}
+                aria-label={`Show photo ${i + 1}`}
+                aria-current={i === activeIndex}
+                className={cn(
+                  "h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2",
+                  i === activeIndex ? "border-brand-600" : "border-transparent"
+                )}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- mock/placeholder gallery asset */}
+                <img src={img.url} alt="" className="h-full w-full object-cover" />
+              </button>
+            ))}
+          </div>
+          <HorizontalRailNavigation
+            canScrollLeft={canScrollLeft}
+            canScrollRight={canScrollRight}
+            onScrollLeft={onScrollLeft}
+            onScrollRight={onScrollRight}
+            label={`${serviceName} photo thumbnails`}
+          />
         </div>
       )}
-      <HorizontalScrollIndicator state={thumbScrollState} />
     </div>
   );
 }

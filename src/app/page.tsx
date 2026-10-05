@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
-import { getHomepageSection, getCategories, getVideoCurations } from "@/lib/data";
-import { getOffers } from "@/lib/data/offers";
-import { getAllProductsSync } from "@/lib/data/products";
 import { getAllServicesSync } from "@/lib/data/services";
+import {
+  getHomepageSectionLive,
+  getCategoriesLive,
+  getAllProductsLive,
+  getVideoCurationsLive,
+  getOffersLive,
+} from "@/lib/data/live";
 import { Hero } from "@/components/home/Hero";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
@@ -37,51 +41,33 @@ export const metadata: Metadata = {
  * offer cards, the compact How It Works strip — after that, before the
  * footer.
  *
- * Three changes from this order relative to earlier rounds, all removals:
- *  - **FAQ is gone from the homepage entirely** (item 2) — the `/faq`
- *    route and its data/accessor (`getFAQs`, `faqs.json`) are completely
- *    untouched and still fully reachable; this page just no longer renders
- *    a preview of it. `FAQAccordion` is still used by `/faq` itself.
- *  - **The Final CTA section is gone** (item 16 — "giant CTA section" /
- *    "unnecessary 'book a service' corporate CTA blocks"). `CTASection`
- *    and the `finalCta` homepage-section entry are kept, unused, the same
- *    way `Testimonials` was kept unused after its own removal — nothing
- *    referencing them is deleted, in case a real, non-generic closing CTA
- *    is wanted again later.
- *  - The large promotional banner now appears **twice** (item 4 — "use
- *    multiple banners at different points in the homepage") instead of
- *    once; the second instance uses `startIndex={1}` purely so the two
- *    don't show identical content before anyone interacts with either
- *    (see LargeSpotlightBanner.tsx).
- *
- * Two carryovers, both documented at their own component: (1) "Trust /
- * rating / customer statistics" is the existing `whyChooseUs` data shown
- * as a compact strip, not fabricated figures (see TrustStrip.tsx) — this
- * is real, non-"excessive" content and wasn't targeted for removal; (2)
- * Testimonials stay removed (customer quotes/ratings were all
- * mock/placeholder content — presenting them as real customer evidence
- * was misleading) — `TestimonialCarousel`/`TestimonialCard` and
- * `testimonials.ts`/`testimonials.json` stay kept, unused.
- *
- * The rail sections (New & Noteworthy / Featured / Category-wise) need a
- * city to filter availability and build working links; this page is a
- * server component with no city known at request time, so that piece is
- * delegated to the client `HomeDiscoveryRails`, which uses a
- * previously-selected city from LocationProvider if one exists, or an
- * honest "select your city" prompt if not (see that component's doc
- * comment — this mirrors the reasoning already used for CategoryCard).
+ * AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline"): every section
+ * below that is supposed to be Admin-editable (hero, trust strip,
+ * categories, products, offers/banners, video curations) now reads through
+ * `@/lib/data/live` — the real backend database the Admin CMS panels write
+ * to — instead of the repo's static `src/data/*.json`. Each `*Live`
+ * function falls back to the exact same mock reader it replaces if the
+ * backend is unreachable, so this page can never render blank; see
+ * `src/lib/data/live.ts`'s doc comment for the full rationale. `services`
+ * below stays on the mock, synchronous reader deliberately — it's only
+ * used by `LargeSpotlightBanner` to resolve a *service*-scoped offer's CTA
+ * link to a category (a cosmetic fallback-to-generic-link concern, not
+ * content), and `getOffersLive` already documents why that one link
+ * degrades gracefully for service-scoped offers rather than being wired
+ * up end-to-end this pass.
  */
 export default async function HomePage() {
-  const heroSection = getHomepageSection("hero");
-  const whyChooseUsSection = getHomepageSection("whyChooseUs");
-  const howItWorksSection = getHomepageSection("howItWorks");
-  const categories = getCategories();
-  const products = getAllProductsSync();
+  const [heroSection, whyChooseUsSection, howItWorksSection, categories, products, videoCurations, offers] =
+    await Promise.all([
+      getHomepageSectionLive("hero"),
+      getHomepageSectionLive("whyChooseUs"),
+      getHomepageSectionLive("howItWorks"),
+      getCategoriesLive(),
+      getAllProductsLive(),
+      getVideoCurationsLive(),
+      getOffersLive(),
+    ]);
   const services = getAllServicesSync();
-  const videoCurations = getVideoCurations();
-
-  // City-unfiltered — no Offer record is city-scoped today (see offers.ts).
-  const offers = await getOffers();
 
   return (
     <>

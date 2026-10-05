@@ -1,29 +1,13 @@
-import type { Metadata } from "next";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { Container } from "@/components/ui/Container";
-import { AccountPreAuth } from "@/components/account/AccountPreAuth";
-
-export const metadata: Metadata = { title: "My Orders" };
+import { redirect } from "next/navigation";
 
 /**
- * "FINAL UX + CART FUNCTIONALITY CORRECTION" (item 4): dropped the shared
- * `AccountShell` tab bar (Profile/Orders/Addresses side nav) in favor of a
- * single focused honest stub, same as `/account` and `/account/addresses`.
- * Reachable from the mobile hamburger's "My Orders" item (MobileMenu.tsx)
- * — a real, existing route, not an invented one.
+ * MASTER TASK Bug 3: "My Orders" now lives inside the real Customer
+ * Dashboard at `/account` (the Orders tab), wired to the actual
+ * `/customer/orders` endpoint — this route is no longer an honest "not
+ * available yet" stub pointing at nothing, so it redirects into the
+ * dashboard instead of showing stale placeholder copy. The MobileMenu link
+ * that points here keeps working unchanged.
  */
 export default function AccountOrdersPage() {
-  return (
-    <>
-      <PageHeader heading="My Orders" />
-      <section className="py-10 sm:py-14">
-        <Container>
-          <AccountPreAuth
-            message="Log in to view your order history. If you just placed a booking, use the confirmation link from that order instead."
-            ctaHref="/login"
-          />
-        </Container>
-      </section>
-    </>
-  );
+  redirect("/account");
 }

@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllCitiesSync, getCityBySlugSync } from "@/lib/data/cities";
-import { getCategories } from "@/lib/data/categories";
-import { getAllProductsSync } from "@/lib/data/products";
+import { getAllServicesSync } from "@/lib/data/services";
 import {
-  getFeaturedServices,
-  getMostBookedServices,
-  getServicesByCategory,
-  getAllServicesSync,
-} from "@/lib/data/services";
-import { getOffers } from "@/lib/data/offers";
-import { getHomepageSection, getVideoCurations } from "@/lib/data";
+  getCategoriesLive,
+  getAllProductsLive,
+  getFeaturedServicesLive,
+  getMostBookedServicesLive,
+  getServicesByCategoryLive,
+  getOffersLive,
+  getHomepageSectionLive,
+  getVideoCurationsLive,
+} from "@/lib/data/live";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Hero } from "@/components/home/Hero";
 import { TrustStrip } from "@/components/home/TrustStrip";
@@ -51,28 +52,42 @@ export async function generateMetadata({
  * the hero and the current section order (two `LargeSpotlightBanner`
  * placements bracketing the catalog-discovery block, Video Curations right
  * after the second banner, FAQ and the Final CTA section both removed).
+ *
+ * AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline"): categories,
+ * products, featured/most-booked/by-category services, offers/banners,
+ * trust strip and video curations all now read through `@/lib/data/live`
+ * (the real backend the Admin CMS writes to), each falling back to the
+ * exact same mock reader it replaces if the backend is unreachable — see
+ * `src/lib/data/live.ts`. City selection itself (`cities.ts`,
+ * `getCityBySlugSync`) is deliberately untouched — out of scope, and the
+ * existing auth/session/cookie architecture must not change. `services`
+ * (passed to `LargeSpotlightBanner` only, for resolving a service-scoped
+ * offer's CTA link) stays on the mock, synchronous reader — see the
+ * matching comment in `app/page.tsx`.
  */
 export default async function CityHomePage({ params }: { params: Promise<{ city: string }> }) {
   const { city: citySlug } = await params;
   const city = getCityBySlugSync(citySlug);
   if (!city) notFound();
 
-  const categories = getCategories();
-  const products = getAllProductsSync();
+  const [categories, products, featured, mostBooked, offers, whyChooseUsSection, howItWorksSection, videoCurations] =
+    await Promise.all([
+      getCategoriesLive(),
+      getAllProductsLive(),
+      getFeaturedServicesLive(city.slug),
+      getMostBookedServicesLive(city.slug),
+      getOffersLive({ citySlug: city.slug }),
+      getHomepageSectionLive("whyChooseUs"),
+      getHomepageSectionLive("howItWorks"),
+      getVideoCurationsLive(),
+    ]);
   const services = getAllServicesSync();
-  const featured = await getFeaturedServices(city.id);
-  const mostBooked = await getMostBookedServices(city.id);
-  const offers = await getOffers({ cityId: city.id });
   const categoryRails = await Promise.all(
     categories.map(async (category) => ({
       category,
-      services: await getServicesByCategory(category.id, { cityId: city.id, limit: 10 }),
+      services: await getServicesByCategoryLive(category.id, { citySlug: city.slug, limit: 10 }),
     }))
   );
-
-  const whyChooseUsSection = getHomepageSection("whyChooseUs");
-  const howItWorksSection = getHomepageSection("howItWorks");
-  const videoCurations = getVideoCurations();
 
   return (
     <>

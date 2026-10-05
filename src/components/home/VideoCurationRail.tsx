@@ -46,11 +46,17 @@ export function VideoCurationRail({
 }) {
   if (curations.length === 0) return null;
 
+  // AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline"): an
+  // Admin-uploaded thumbnail is a remote S3/CDN URL (http/https), which
+  // `fs.existsSync` can never find on this server's local disk — treat
+  // any remote URL as existing without the disk check, and keep the
+  // disk check only for the legacy local `/images/...` mock thumbnails.
   const items: VideoCurationGalleryItem[] = curations.map((curation) => ({
     curation,
     thumbnailExists:
       curation.thumbnail !== null &&
-      fs.existsSync(path.join(process.cwd(), "public", curation.thumbnail)),
+      (/^https?:\/\//.test(curation.thumbnail) ||
+        fs.existsSync(path.join(process.cwd(), "public", curation.thumbnail))),
     tagLabel:
       (curation.serviceTypeId && getServiceTypeByIdSync(curation.serviceTypeId)?.label) ||
       (curation.categoryId && getCategoryById(curation.categoryId)?.name) ||

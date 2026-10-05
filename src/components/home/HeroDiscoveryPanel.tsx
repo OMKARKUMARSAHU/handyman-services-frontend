@@ -48,9 +48,9 @@ export function HeroDiscoveryPanel({
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
   type Tile =
-    | { kind: "product"; id: string; label: string; icon: string; href: (city: string) => string }
-    | { kind: "category"; id: string; label: string; icon: string; href: (city: string) => string }
-    | { kind: "all"; label: string; icon: string; href: string };
+    | { kind: "product"; id: string; label: string; icon: string; image: string | null; href: (city: string) => string }
+    | { kind: "category"; id: string; label: string; icon: string; image: string | null; href: (city: string) => string }
+    | { kind: "all"; label: string; icon: string; image: null; href: string };
 
   const productTile = (id: string, label?: string): Tile | null => {
     const p = byId.get(id);
@@ -60,6 +60,7 @@ export function HeroDiscoveryPanel({
       id,
       label: label ?? p.name,
       icon: p.icon,
+      image: p.image ?? null,
       href: (city: string) => `/${city}/${p.categoryId}/${p.slug}`,
     };
   };
@@ -76,12 +77,13 @@ export function HeroDiscoveryPanel({
           id: kitchenCategory.id,
           label: kitchenCategory.name,
           icon: kitchenCategory.icon,
+          image: kitchenCategory.image ?? null,
           href: (city: string) => `/${city}/${kitchenCategory.id}`,
         }
       : null,
     productTile("ro", "Water Purifier"),
     productTile("air-purifier"),
-    { kind: "all", label: "All Services", icon: "layout-grid", href: "/services" },
+    { kind: "all", label: "All Services", icon: "layout-grid", image: null, href: "/services" },
   ].filter((t): t is Tile => t !== null);
 
   function go(href: string) {
@@ -101,7 +103,16 @@ export function HeroDiscoveryPanel({
         {tiles.map((tile) => {
           const tileClassName =
             "group flex flex-col items-center gap-2 rounded-xl border border-neutral-100 bg-white px-2 py-3 text-center transition-colors hover:border-brand-200 hover:bg-brand-50/40";
-          const iconWrap = (
+          // AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline"): an
+          // Admin-uploaded image takes over this tile's visual, falling
+          // back to the existing icon when none was ever uploaded — the
+          // same `image ?? Icon` pattern already used by CategoryCard.tsx.
+          const iconWrap = tile.image ? (
+            <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-neutral-50 ring-1 ring-neutral-100 transition-colors group-hover:bg-brand-100">
+              {/* eslint-disable-next-line @next/next/no-img-element -- Admin-uploaded business image, same plain-<img> pattern as CategoryCard.tsx */}
+              <img src={tile.image} alt="" className="h-full w-full object-cover" />
+            </span>
+          ) : (
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-50 text-brand-600 ring-1 ring-neutral-100 transition-colors group-hover:bg-brand-100">
               <Icon name={tile.icon} className="h-5 w-5" />
             </span>

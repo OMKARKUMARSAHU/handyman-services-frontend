@@ -3,10 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAllCitiesSync, getCityBySlugSync } from "@/lib/data/cities";
 import { getAllServicesSync, getServiceBySlug } from "@/lib/data/services";
-import { getAllProductsSync } from "@/lib/data/products";
-import { getCategoryById } from "@/lib/data/categories";
 import { getServiceTypeByIdSync } from "@/lib/data/serviceTypes";
-import { getOffersForServiceSync } from "@/lib/data/offers";
+import { getServiceDetailLive, getAllProductsLive, getCategoriesLive } from "@/lib/data/live";
 import { Container } from "@/components/ui/Container";
 import { ServiceGallery } from "@/components/service/ServiceGallery";
 import { ServicePriceBlock } from "@/components/service/ServicePriceBlock";
@@ -35,6 +33,19 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline" -- "real
+ * product photos, not icons"): this page now reads the service (price,
+ * description, what's included, image gallery) and its applicable offers
+ * through `getServiceDetailLive`, so a photo uploaded via the Admin
+ * Catalog panel's "Images" editor for this service shows up here
+ * immediately -- falling back to the exact same mock service lookup this
+ * page used before if the backend is unreachable, so this page can never
+ * 404 or render blank because of that. Breadcrumb category/product names
+ * are likewise sourced live. City resolution and the service-type label
+ * (a small, fixed taxonomy, not part of this audit's content scope) stay
+ * on the existing mock readers, unchanged.
+ */
 export default async function ServiceDetailPage({
   params,
 }: {
@@ -44,13 +55,17 @@ export default async function ServiceDetailPage({
   const city = getCityBySlugSync(citySlug);
   if (!city) notFound();
 
-  const service = await getServiceBySlug(serviceSlug, { cityId: city.id });
-  if (!service) notFound();
+  const [detail, products, categories] = await Promise.all([
+    getServiceDetailLive(serviceSlug, { citySlug: city.slug }),
+    getAllProductsLive(),
+    getCategoriesLive(),
+  ]);
+  if (!detail) notFound();
+  const { service, offers } = detail;
 
-  const product = getAllProductsSync().find((p) => p.id === service.productId);
-  const category = product ? getCategoryById(product.categoryId) : undefined;
+  const product = products.find((p) => p.id === service.productId);
+  const category = product ? categories.find((c) => c.id === product.categoryId) : undefined;
   const serviceType = getServiceTypeByIdSync(service.serviceTypeId);
-  const offers = getOffersForServiceSync(service.id);
 
   return (
     <section className="py-8 sm:py-12">

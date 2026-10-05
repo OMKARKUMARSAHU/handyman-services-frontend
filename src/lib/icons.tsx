@@ -32,6 +32,15 @@ import {
   Play,
   Film,
   Globe,
+  Trash2,
+  Plus,
+  Package,
+  Pencil,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  XCircle,
+  Clock,
 } from "lucide-react";
 
 export type IconKey =
@@ -68,7 +77,16 @@ export type IconKey =
   | "layout-grid"
   | "play"
   | "film"
-  | "globe";
+  | "globe"
+  | "trash"
+  | "plus"
+  | "package"
+  | "pencil"
+  | "eye"
+  | "eye-off"
+  | "check-circle"
+  | "x-circle"
+  | "clock";
 
 /**
  * A single, consistent icon set (lucide-react) resolved from the string
@@ -152,6 +170,24 @@ export function Icon({
       return <Film {...props} />;
     case "globe":
       return <Globe {...props} />;
+    case "trash":
+      return <Trash2 {...props} />;
+    case "plus":
+      return <Plus {...props} />;
+    case "package":
+      return <Package {...props} />;
+    case "pencil":
+      return <Pencil {...props} />;
+    case "eye":
+      return <Eye {...props} />;
+    case "eye-off":
+      return <EyeOff {...props} />;
+    case "check-circle":
+      return <CheckCircle2 {...props} />;
+    case "x-circle":
+      return <XCircle {...props} />;
+    case "clock":
+      return <Clock {...props} />;
     case "shield-check":
     default:
       return <ShieldCheck {...props} />;

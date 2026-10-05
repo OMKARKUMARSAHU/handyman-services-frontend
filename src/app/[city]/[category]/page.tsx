@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllCitiesSync, getCityBySlugSync } from "@/lib/data/cities";
 import { getCategoryById, getCategories } from "@/lib/data/categories";
-import { getAllProductsSync } from "@/lib/data/products";
+import { getCategoriesLive, getAllProductsLive } from "@/lib/data/live";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container } from "@/components/ui/Container";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
@@ -28,6 +28,16 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline" -- "real
+ * product photos, not icons"): category + product reads now go through
+ * `@/lib/data/live` (falling back to mock if the backend is unreachable),
+ * so an Admin-uploaded category/product photo and any newly added product
+ * show up here without a code change -- the same pattern already used on
+ * the homepage. `generateStaticParams`/`generateMetadata` above stay on
+ * the mock readers (build-time path seeding only; unreachable at request
+ * time anyway), matching every other page in this audit.
+ */
 export default async function CategoryPage({
   params,
 }: {
@@ -35,10 +45,11 @@ export default async function CategoryPage({
 }) {
   const { city: citySlug, category: categoryId } = await params;
   const city = getCityBySlugSync(citySlug);
-  const category = getCategoryById(categoryId);
+  const [categories, allProducts] = await Promise.all([getCategoriesLive(), getAllProductsLive()]);
+  const category = categories.find((c) => c.id === categoryId);
   if (!city || !category) notFound();
 
-  const products = getAllProductsSync().filter((p) => p.categoryId === category.id);
+  const products = allProducts.filter((p) => p.categoryId === category.id);
 
   return (
     <>

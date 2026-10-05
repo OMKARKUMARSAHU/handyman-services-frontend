@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { CartProvider } from "@/lib/state/CartProvider";
 import { LocationProvider } from "@/lib/state/LocationProvider";
+import { AuthProvider } from "@/lib/state/AuthProvider";
 import { CitySelectorModal } from "@/components/location/CitySelectorModal";
 import "./globals.css";
 
@@ -46,31 +47,33 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <LocationProvider>
           <CartProvider>
-            <Header />
-            <main id="main-content" className="flex-1">
-              {children}
-            </main>
-            <Footer />
-            {/*
-              "FINAL HOMEPAGE / UX CORRECTION" item 13: the old mobile-only
-              `StickyMobileCTA` rendered a full-width "Chat on WhatsApp" bar
-              fixed to the bottom of the screen — the client called this out
-              explicitly as unacceptable (it occupies its own section, can
-              collide with the browser's own bottom chrome, and reads as a
-              persistent layout element rather than a small utility action).
-              It's deleted, not just hidden — see git history for the old
-              component if a full-width variant is ever wanted back.
-              `WhatsAppButton`'s `floating` variant (small, circular, fixed
-              bottom-right, safe-area aware — see that component) now
-              renders unconditionally at every breakpoint instead of only
-              `md:flex`, so there is exactly one WhatsApp entry point, and
-              it never pushes content, changes page layout, or spans full
-              width on any screen size.
-            */}
-            <div role="complementary" aria-label="WhatsApp contact">
-              <WhatsAppButton variant="floating" />
-            </div>
-            <CitySelectorModal />
+            <AuthProvider>
+              <Header />
+              <main id="main-content" className="flex-1">
+                {children}
+              </main>
+              <Footer />
+              {/*
+                "FINAL HOMEPAGE / UX CORRECTION" item 13: the old mobile-only
+                `StickyMobileCTA` rendered a full-width "Chat on WhatsApp" bar
+                fixed to the bottom of the screen — the client called this out
+                explicitly as unacceptable (it occupies its own section, can
+                collide with the browser's own bottom chrome, and reads as a
+                persistent layout element rather than a small utility action).
+                It's deleted, not just hidden — see git history for the old
+                component if a full-width variant is ever wanted back.
+                `WhatsAppButton`'s `floating` variant (small, circular, fixed
+                bottom-right, safe-area aware — see that component) now
+                renders unconditionally at every breakpoint instead of only
+                `md:flex`, so there is exactly one WhatsApp entry point, and
+                it never pushes content, changes page layout, or spans full
+                width on any screen size.
+              */}
+              <div role="complementary" aria-label="WhatsApp contact">
+                <WhatsAppButton variant="floating" />
+              </div>
+              <CitySelectorModal />
+            </AuthProvider>
           </CartProvider>
         </LocationProvider>
       </body>

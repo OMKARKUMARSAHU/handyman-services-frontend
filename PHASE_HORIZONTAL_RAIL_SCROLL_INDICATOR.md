@@ -1,5 +1,7 @@
 # Phase: Horizontal Rail Scroll Indicator — Global UX Fix
 
+> **⚠️ Superseded.** The client rejected the horizontal scrollbar/progress indicator described in this document. It was replaced with contextual edge arrow navigation. See `PHASE_EDGE_ARROW_NAVIGATION.md` for the current system; the files described below (`useHorizontalScrollIndicator.ts`, `HorizontalScrollIndicator.tsx`) have been deleted and no longer exist in the codebase. This document is kept for historical context only.
+
 Local frontend UX correction only. No git add/commit/push, no Vercel deploy — this phase stops after implementation and QA, per the brief's own explicit stop rule. The approved GitHub commit (`3f0100f`, "Finalize Handyman marketplace frontend") remains the baseline; nothing here has been staged, committed, or pushed.
 
 ## 1. Why this was added

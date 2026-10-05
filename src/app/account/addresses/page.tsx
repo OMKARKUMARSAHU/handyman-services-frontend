@@ -1,28 +1,12 @@
-import type { Metadata } from "next";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { Container } from "@/components/ui/Container";
-import { AccountPreAuth } from "@/components/account/AccountPreAuth";
-
-export const metadata: Metadata = { title: "My Addresses" };
+import { redirect } from "next/navigation";
 
 /**
- * "FINAL UX + CART FUNCTIONALITY CORRECTION" (item 4): dropped the shared
- * `AccountShell` tab bar, same as `/account` and `/account/orders`. Not
- * part of the primary navigation surface (hamburger/footer) — reachable by
- * direct URL only, same as `/account` itself.
+ * MASTER TASK Bug 3: "Saved Addresses" now lives inside the real Customer
+ * Dashboard at `/account` (the Saved Addresses tab), wired to the actual
+ * `/customer/addresses` endpoint — this route is no longer an honest "not
+ * available yet" stub, so it redirects into the dashboard instead of
+ * showing stale placeholder copy.
  */
 export default function AccountAddressesPage() {
-  return (
-    <>
-      <PageHeader heading="My Addresses" />
-      <section className="py-10 sm:py-14">
-        <Container>
-          <AccountPreAuth
-            message="Log in to view and manage your saved addresses. You can also enter an address directly during checkout."
-            ctaHref="/login"
-          />
-        </Container>
-      </section>
-    </>
-  );
+  redirect("/account");
 }

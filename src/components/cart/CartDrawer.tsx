@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useCart } from "@/lib/state/CartProvider";
 import { Icon } from "@/lib/icons";
@@ -11,9 +12,38 @@ import { CartSummary } from "./CartSummary";
  * Slide-over cart drawer (PHASE_2_UI_UX_DESIGN.md §8), same accessibility
  * baseline as the existing HeaderModal pattern (role=dialog, aria-modal,
  * Escape-to-close, focus handling kept simple by trapping via overlay click).
+ *
+ * CART REMOVE BUTTON — CHECKOUT / CART DRAWER VISIBILITY FIX: this used to
+ * render inline wherever `CartButton` sits, which is inside `<Header>`.
+ * `Header` has `backdrop-blur` (`backdrop-filter: blur(...)`), and per the
+ * CSS spec, an ancestor with a non-none `filter`/`backdrop-filter`
+ * establishes a new containing block for `position: fixed` descendants —
+ * so this drawer's `fixed inset-0` overlay was sizing and positioning
+ * itself against the header's own ~64–120px sticky bar instead of the
+ * viewport. The header itself rendered fine; everything *below* the
+ * header's height (the cart items, their Remove buttons, and — on a short
+ * viewport — even the subtotal/checkout footer) was pushed outside that
+ * tiny box and effectively unreachable, exactly as reported, on every
+ * page (not just `/checkout` — that just happened to be where it was
+ * screenshotted).
+ *
+ * Fixed by portaling the drawer's whole overlay to `document.body`, so it
+ * is no longer a DOM descendant of the header and `position: fixed`
+ * correctly resolves against the real viewport again. `CartButton` (the
+ * header icon + badge) is untouched — only the drawer's rendered output
+ * moves; the on-page trigger stays exactly where it was.
  */
 export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { cart } = useCart();
+  const [mounted, setMounted] = useState(false);
+
+  // Portal target must be read after mount (no `document` during SSR) —
+  // same one-time mount-detection pattern already used by CartProvider's
+  // own hydration effect.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -24,9 +54,9 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex justify-end bg-neutral-900/40"
       role="presentation"
@@ -78,6 +108,7 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

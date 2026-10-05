@@ -57,3 +57,7 @@ Thumbs.db
 
 # local scratch / QA output (screenshots, ad-hoc reports) — never intended for the repo
 /Claude outputs/
+
+# Contains real, live secrets (AWS Cognito client secret / AWS IAM access key) -- never commit.
+/MANUAL_TEST_ACCOUNTS.md
+/RDS_TUNNEL_SETUP.md

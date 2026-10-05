@@ -2,54 +2,64 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/state/AuthProvider";
+import type { Role } from "@/lib/auth/types";
 
 /**
  * Mobile "hamburger" drawer — rebuilt in the "FINAL UX + CART FUNCTIONALITY
  * CORRECTION" pass as a genuine PRIMARY NAVIGATION menu, not a copy of the
  * footer.
  *
- * The previous version read the same Company/Customer/Legal nav groups the
- * footer renders (About Us, Contact Us, FAQ / Login, My Account, My Orders,
- * Addresses, Cart / Privacy Policy, Terms & Conditions) — nine links across
- * three headed groups, effectively reproducing the footer inside a drawer.
- * The client's explicit correction: the hamburger is mobile's primary nav
- * entry point (now that the standalone Account icon is gone from the mobile
- * header — see Header.tsx), and primary navigation, account access, cart,
- * and footer/legal navigation are four different concepts that shouldn't
- * all render the same link list.
+ * AUTH/SESSION AUDIT FIX: the "Login" row below used to be a static link
+ * regardless of sign-in state — same bug as the old AccountButton (see
+ * that file's comment). A signed-in customer/admin/provider opening this
+ * drawer always saw "Login" even though their session was perfectly
+ * valid, which is one of the ways the app could LOOK logged out without
+ * actually being logged out. The nav list is now built per-render from
+ * real auth state: signed out keeps "Login"; signed in shows "My
+ * Account" (routed to that role's own dashboard) plus a real "Log out"
+ * action that calls the same `logout()` every other dashboard uses.
  *
- * So this is now a single flat, compact list — real routes only, nothing
- * invented:
- *   Home         /
- *   Services     /services
- *   My Orders    /account/orders   (an honest "sign in to view" stub today —
- *                                    see AccountPreAuth.tsx — not a fake
- *                                    order history)
- *   Login        /login
- *   About Us     /about
- *   Contact Us   /contact
- *   FAQ          /faq              (the homepage dropped its FAQ preview
- *                                    section, but the standalone /faq route
- *                                    is still real and still worth a link)
- *
- * Cart is deliberately absent — it already has its own always-visible header
- * icon+badge (CartButton), so listing it again here would be the same
- * duplication this pass is removing. Company/Customer/Legal links
- * (Privacy Policy, Terms & Conditions, Addresses, Cart) stay footer-only.
+ * "My Orders" stays pointed at `/account/orders` unconditionally — that
+ * route already handles its own "sign in to view" stub (AccountPreAuth)
+ * for guests, so no duplicate auth branching is needed here.
  */
-const PRIMARY_NAV = [
+const BASE_NAV = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
   { label: "My Orders", href: "/account/orders" },
-  { label: "Login", href: "/login" },
+];
+
+const TRAILING_NAV = [
   { label: "About Us", href: "/about" },
   { label: "Contact Us", href: "/contact" },
   { label: "FAQ", href: "/faq" },
 ];
 
+const DASHBOARD_HREF_BY_ROLE: Record<Role, string> = {
+  customer: "/account",
+  provider: "/provider",
+  admin: "/admin",
+};
+
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const accountItem = user
+    ? { label: "My Account", href: DASHBOARD_HREF_BY_ROLE[user.role] }
+    : { label: "Login", href: "/login" };
+
+  const navItems = [...BASE_NAV, accountItem, ...TRAILING_NAV];
+
+  async function handleLogout() {
+    setOpen(false);
+    await logout();
+    router.push("/login");
+  }
 
   return (
     <div className="md:hidden">
@@ -99,7 +109,7 @@ export function MobileMenu() {
           aria-label="Primary"
           className="flex max-h-[calc(100vh-4rem)] flex-col gap-0.5 overflow-y-auto px-2 py-2 sm:px-3"
         >
-          {PRIMARY_NAV.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -109,6 +119,15 @@ export function MobileMenu() {
               {item.label}
             </Link>
           ))}
+          {user && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-neutral-800 hover:bg-neutral-50 hover:text-brand-700"
+            >
+              Log out
+            </button>
+          )}
         </nav>
       </div>
     </div>

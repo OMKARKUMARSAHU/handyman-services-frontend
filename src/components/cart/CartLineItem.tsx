@@ -8,6 +8,19 @@ import { formatINR } from "@/lib/format";
 import { useCart } from "@/lib/state/CartProvider";
 import { Icon } from "@/lib/icons";
 
+/**
+ * CART ITEM REMOVE / DELETE FUNCTIONALITY phase: a real <button> Remove
+ * action (never hidden in a menu), always visible alongside the quantity
+ * control, on both the cart drawer and the full `/cart` page — both render
+ * this same component, backed by the same central `useCart()` state, so a
+ * removal in one place is reflected everywhere (badge, subtotal, item
+ * count) with no page reload and no separate local cart state. Decrementing
+ * quantity to 0 also removes the item — see CartProvider's
+ * `updateCartItemQuantity`, which filters an item out once its quantity is
+ * <= 0 — but the explicit Remove button remains available at every
+ * quantity, not just 1, per the brief.
+ */
+
 export function CartLineItem({ item, compact = false }: { item: CartItem; compact?: boolean }) {
   const { updateCartItemQuantity, removeFromCart } = useCart();
   const service = getServiceByIdSync(item.serviceId);
@@ -23,7 +36,7 @@ export function CartLineItem({ item, compact = false }: { item: CartItem; compac
           type="button"
           aria-label={`Remove item (no longer available) from cart`}
           onClick={() => removeFromCart(item.id)}
-          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 hover:underline"
+          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
         >
           Remove
         </button>
@@ -68,16 +81,18 @@ export function CartLineItem({ item, compact = false }: { item: CartItem; compac
               type="button"
               aria-label={`Decrease quantity of ${service.name}`}
               onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
-              className="px-2.5 py-1 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+              className="px-2.5 py-1 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-500"
             >
               −
             </button>
-            <span className="min-w-[1.5rem] px-1 text-center text-sm">{item.quantity}</span>
+            <span className="min-w-[1.5rem] px-1 text-center text-sm" aria-live="polite">
+              {item.quantity}
+            </span>
             <button
               type="button"
               aria-label={`Increase quantity of ${service.name}`}
               onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
-              className="px-2.5 py-1 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+              className="px-2.5 py-1 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-500"
             >
               +
             </button>
@@ -86,9 +101,9 @@ export function CartLineItem({ item, compact = false }: { item: CartItem; compac
             type="button"
             aria-label={`Remove ${service.name} from cart`}
             onClick={() => removeFromCart(item.id)}
-            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 hover:underline"
+            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
           >
-            <Icon name="x" className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <Icon name="trash" className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             Remove
           </button>
         </div>

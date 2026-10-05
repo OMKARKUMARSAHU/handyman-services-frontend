@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import type { VideoCuration } from "@/types";
-import { Icon } from "@/lib/icons";
-import { HorizontalScrollIndicator } from "@/components/ui/HorizontalScrollIndicator";
-import { useHorizontalScrollIndicator } from "@/lib/hooks/useHorizontalScrollIndicator";
+import { HorizontalRailNavigation } from "@/components/ui/HorizontalRailNavigation";
+import { useHorizontalRailScroll } from "@/lib/hooks/useHorizontalRailScroll";
 import { VideoCurationCard } from "./VideoCurationCard";
 import { VideoCurationModal } from "./VideoCurationModal";
 
@@ -24,16 +23,17 @@ export interface VideoCurationGalleryItem {
  * the modal itself, moving between videos) lives here, one state value
  * shared by every card in the rail so only one modal instance ever exists.
  *
- * "FINAL HOMEPAGE / UX CORRECTION" additions (items 5 & 7):
+ * "FINAL HOMEPAGE / UX CORRECTION" additions (items 5 & 7), since
+ * superseded by the EDGE ARROW NAVIGATION phase below:
  *  - State moved from "which curation is open" to "which index is open" so
  *    the modal can offer previous/next navigation between curations
  *    without closing and reopening.
- *  - Desktop left/right arrow buttons scroll the rail by roughly one card
- *    width — "left/right navigation where appropriate" for what was
- *    already a horizontal `snap-x` slider (not a static grid) even before
- *    this pass. On touch devices the rail is swiped directly, same as
- *    before; the arrows are `hidden` below `sm` so they never compete with
- *    a touch scroll gesture on mobile.
+ *  - Left/right arrow buttons scroll the rail via the shared
+ *    `useHorizontalRailScroll`/`HorizontalRailNavigation` pair (this rail
+ *    was the original model for that shared pattern) — shown at every
+ *    breakpoint, including mobile, and only when that direction can
+ *    actually still scroll. On touch devices the rail remains directly
+ *    swipeable; the arrows are additive, not a replacement for that.
  *  - Closing the modal doesn't touch the rail's scroll position at all —
  *    the modal is a `position: fixed` portal to `document.body`, entirely
  *    outside this scrollable container, so there is nothing here that
@@ -49,23 +49,15 @@ export function VideoCurationGallery({
   heading: string;
 }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  // The same ref/element used for the existing left/right arrow buttons'
-  // `scrollBy` calls below is what `useHorizontalScrollIndicator` observes —
-  // programmatic (arrow) scrolling fires the same native `scroll` event as
-  // touch/trackpad/mouse scrolling, so the indicator stays in sync with all
-  // of them without any extra wiring.
-  const { ref: scrollerRef, state: scrollState } = useHorizontalScrollIndicator<HTMLDivElement>(
-    items.map((i) => i.curation.id).join(",")
-  );
+  const {
+    ref: scrollerRef,
+    canScrollLeft,
+    canScrollRight,
+    onScrollLeft,
+    onScrollRight,
+  } = useHorizontalRailScroll<HTMLDivElement>(items.map((i) => i.curation.id).join(","));
 
   const selected = selectedIndex != null ? items[selectedIndex]?.curation ?? null : null;
-
-  function scrollByCards(direction: 1 | -1) {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const cardWidth = el.querySelector("button")?.clientWidth ?? 280;
-    el.scrollBy({ left: direction * (cardWidth + 20), behavior: "smooth" });
-  }
 
   return (
     <div className="relative">
@@ -86,30 +78,14 @@ export function VideoCurationGallery({
           />
         ))}
       </div>
-      <div className="-mx-4 px-4 sm:mx-0 sm:px-0">
-        <HorizontalScrollIndicator state={scrollState} tone="inverted" />
-      </div>
-
-      {items.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={() => scrollByCards(-1)}
-            aria-label={`Scroll ${heading} left`}
-            className="absolute -left-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-neutral-800 shadow-lg ring-1 ring-black/5 transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 sm:flex"
-          >
-            <Icon name="chevron-left" className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollByCards(1)}
-            aria-label={`Scroll ${heading} right`}
-            className="absolute -right-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-neutral-800 shadow-lg ring-1 ring-black/5 transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 sm:flex"
-          >
-            <Icon name="chevron-right" className="h-5 w-5" />
-          </button>
-        </>
-      )}
+      <HorizontalRailNavigation
+        canScrollLeft={canScrollLeft}
+        canScrollRight={canScrollRight}
+        onScrollLeft={onScrollLeft}
+        onScrollRight={onScrollRight}
+        label={heading}
+        tone="inverted"
+      />
 
       <VideoCurationModal
         curation={selected}
