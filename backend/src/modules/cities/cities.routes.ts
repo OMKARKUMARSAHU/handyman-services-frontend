@@ -41,6 +41,18 @@ export function citiesRouter(): Router {
     })
   );
 
+  // ADMIN CMS FOLLOW-UP: unrestricted listing (active or not) so a
+  // disabled city stays visible/re-enable-able in Admin. See the
+  // `includeInactive` doc comment on `listCities()`.
+  router.get(
+    "/admin/cities",
+    authenticate(),
+    requireRole("admin"),
+    asyncHandler(async (_req, res) => {
+      ok(res, await listCities({ includeInactive: true }));
+    })
+  );
+
   router.post(
     "/admin/cities",
     authenticate(),

@@ -5,9 +5,22 @@ import { type CityDto, type CityRow, toCityDto } from "./cities.types";
 
 const TABLE = "cities";
 
-export async function listCities(opts: { popularOnly?: boolean } = {}): Promise<CityDto[]> {
+/**
+ * `includeInactive` -- ADMIN CMS FOLLOW-UP ("Enable/disable" must round-trip
+ * in Admin, not just hide a row forever): the public reader (and the old
+ * Admin UI, before this fix, which reused it) always filtered to
+ * `active: true`, so disabling a city from Admin made it silently
+ * disappear from Admin's own list too, with no way back. The public
+ * `GET /cities` route still calls this with the default (active-only,
+ * unchanged customer-facing behavior); only the new admin-gated
+ * `GET /admin/cities` route passes `includeInactive: true`.
+ */
+export async function listCities(
+  opts: { popularOnly?: boolean; includeInactive?: boolean } = {}
+): Promise<CityDto[]> {
   const db = getDb();
-  let query = db<CityRow>(TABLE).where({ active: true });
+  let query = db<CityRow>(TABLE);
+  if (!opts.includeInactive) query = query.where({ active: true });
   if (opts.popularOnly) query = query.andWhere({ is_popular: true });
   const rows = await query.orderBy("sort_order", "asc");
   return rows.map(toCityDto);

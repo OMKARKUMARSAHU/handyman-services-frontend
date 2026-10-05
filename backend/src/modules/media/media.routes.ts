@@ -4,8 +4,15 @@ import { created, ok } from "../../shared/response";
 import { UnauthenticatedError, ForbiddenError } from "../../shared/errors";
 import { authenticate } from "../../middleware/authenticate";
 import { validateBody, validateParams } from "../../middleware/validate";
-import { attachImageSchema, cmsUploadUrlSchema, imageIdParamsSchema, serviceIdParamsSchema, uploadUrlSchema } from "./media.schema";
-import { attachServiceImage, createCmsUploadUrl, createUploadUrl, deleteServiceImage } from "./media.service";
+import {
+  attachImageSchema,
+  cmsUploadUrlSchema,
+  imageIdParamsSchema,
+  serviceIdParamsSchema,
+  updateImageSchema,
+  uploadUrlSchema,
+} from "./media.schema";
+import { attachServiceImage, createCmsUploadUrl, createUploadUrl, deleteServiceImage, updateServiceImage } from "./media.service";
 import { requireRole } from "../../middleware/authorize";
 
 /**
@@ -68,6 +75,18 @@ export function mediaRouter(): Router {
     validateBody(attachImageSchema),
     asyncHandler(async (req, res) => {
       created(res, await attachServiceImage(req.auth!, req.params.serviceId!, req.body));
+    })
+  );
+
+  // ADMIN CMS FOLLOW-UP ("Reorder images / Set primary image").
+  router.patch(
+    "/media/images/:id",
+    authenticate(),
+    requireAdminOrProvider(),
+    validateParams(imageIdParamsSchema),
+    validateBody(updateImageSchema),
+    asyncHandler(async (req, res) => {
+      ok(res, await updateServiceImage(req.auth!, req.params.id!, req.body));
     })
   );
 

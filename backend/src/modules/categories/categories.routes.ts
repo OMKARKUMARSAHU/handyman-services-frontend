@@ -53,6 +53,28 @@ export function categoriesRouter(): Router {
     })
   );
 
+  // ADMIN CMS FOLLOW-UP: unrestricted category + per-category product
+  // listings (active or not), so Admin can find and re-enable something
+  // it previously disabled -- the public routes above stay active-only.
+  router.get(
+    "/admin/categories",
+    authenticate(),
+    requireRole("admin"),
+    asyncHandler(async (_req, res) => {
+      ok(res, await listCategories({ includeInactive: true }));
+    })
+  );
+
+  router.get(
+    "/admin/categories/:categorySlug/products",
+    authenticate(),
+    requireRole("admin"),
+    asyncHandler(async (req, res) => {
+      const products = await listProductsByCategorySlug(req.params.categorySlug!, { includeInactive: true });
+      ok(res, products);
+    })
+  );
+
   router.post(
     "/admin/categories",
     authenticate(),

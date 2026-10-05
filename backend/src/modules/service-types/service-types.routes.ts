@@ -17,6 +17,16 @@ export function serviceTypesRouter(): Router {
     })
   );
 
+  // ADMIN CMS FOLLOW-UP: unrestricted listing (active or not).
+  router.get(
+    "/admin/service-types",
+    authenticate(),
+    requireRole("admin"),
+    asyncHandler(async (_req, res) => {
+      ok(res, await listServiceTypes({ includeInactive: true }));
+    })
+  );
+
   router.post(
     "/admin/service-types",
     authenticate(),

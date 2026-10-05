@@ -41,6 +41,8 @@ import {
   type OfferInput,
   createMediaUploadUrl,
   attachServiceImage,
+  updateServiceImage,
+  type AdminServiceImage,
   deleteServiceImage,
   uploadCmsFile,
 } from "@/lib/admin/catalog-api";
@@ -889,8 +891,17 @@ const SERVICE_STATUS_TABS: { key: ApprovalStatus; label: string }[] = [
   { key: "rejected", label: "Rejected" },
 ];
 
+/**
+ * ADMIN CMS FOLLOW-UP ("services not properly visible in Admin"): this
+ * defaulted to the "Pending Approval" queue, which is empty for an
+ * already-seeded/approved catalog (every seeded service has
+ * approval_status "approved") -- so Admin looked empty on first load even
+ * though the services existed. "Approved" is the useful default for
+ * managing an existing catalog; "Pending Approval" is still one click
+ * away for reviewing new submissions.
+ */
 function ServicesManager() {
-  const [statusFilter, setStatusFilter] = useState<ApprovalStatus>("pending_approval");
+  const [statusFilter, setStatusFilter] = useState<ApprovalStatus>("approved");
   const [services, setServices] = useState<AdminService[] | null>(null);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [cities, setCities] = useState<AdminCity[]>([]);
@@ -1037,7 +1048,9 @@ function ServicesManager() {
 
       {services === null && !error && <p className="mt-4 text-sm text-neutral-500">Loading…</p>}
       {services !== null && services.length === 0 && (
-        <p className="mt-4 text-sm text-neutral-500">No services in this category.</p>
+        <p className="mt-4 text-sm text-neutral-500">
+          No services with status &ldquo;{SERVICE_STATUS_TABS.find((t) => t.key === statusFilter)?.label}&rdquo;.
+        </p>
       )}
 
       {services !== null && services.length > 0 && (
@@ -1313,6 +1326,12 @@ function CityAvailabilityEditor({
 function ServiceImagesEditor({ service, onUpdated }: { service: AdminService; onUpdated: () => void }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reordering, setReordering] = useState<string | null>(null);
+
+  // ADMIN CMS FOLLOW-UP ("Reorder images / Set primary image"): display order
+  // follows sortOrder, not insertion order -- index 0 after sorting is the
+  // primary image shown on the service card / gallery cover.
+  const sortedImages = [...service.images].sort((a, b) => a.sortOrder - b.sortOrder);
 
   async function handleUpload(file: File) {
     setUploading(true);
@@ -1345,17 +1364,105 @@ function ServiceImagesEditor({ service, onUpdated }: { service: AdminService; on
     }
   }
 
+  /**
+   * ADMIN CMS FOLLOW-UP ("Reorder images / Set primary image"): swaps the
+   * sortOrder of two images so Move Up/Down can reuse one helper. Persists
+   * both changed rows, then refetches via onUpdated().
+   */
+  async function swapSortOrder(a: AdminServiceImage, b: AdminServiceImage) {
+    setError(null);
+    setReordering(a.id);
+    try {
+      await Promise.all([
+        updateServiceImage(a.id, { sortOrder: b.sortOrder }),
+        updateServiceImage(b.id, { sortOrder: a.sortOrder }),
+      ]);
+      onUpdated();
+    } catch (err) {
+      setError(errorMessage(err, "Could not reorder these images."));
+    } finally {
+      setReordering(null);
+    }
+  }
+
+  async function handleMoveUp(index: number) {
+    if (index <= 0) return;
+    await swapSortOrder(sortedImages[index]!, sortedImages[index - 1]!);
+  }
+
+  async function handleMoveDown(index: number) {
+    if (index >= sortedImages.length - 1) return;
+    await swapSortOrder(sortedImages[index]!, sortedImages[index + 1]!);
+  }
+
+  async function handleSetPrimary(index: number) {
+    if (index <= 0) return;
+    setError(null);
+    const target = sortedImages[index]!;
+    const before = sortedImages.slice(0, index);
+    setReordering(target.id);
+    try {
+      await Promise.all([
+        updateServiceImage(target.id, { sortOrder: 0 }),
+        ...before.map((img, i) => updateServiceImage(img.id, { sortOrder: i + 1 })),
+      ]);
+      onUpdated();
+    } catch (err) {
+      setError(errorMessage(err, "Could not set this image as primary."));
+    } finally {
+      setReordering(null);
+    }
+  }
+
   return (
     <div>
       <h3 className="text-sm font-semibold text-neutral-900">Images ({service.images.length})</h3>
+      <p className="mt-0.5 text-xs text-neutral-500">
+        The first image is the primary image shown on the service card and gallery cover.
+      </p>
       {error && <p className="mt-1 text-xs font-medium text-red-600">{error}</p>}
-      <ul className="mt-2 space-y-1">
-        {service.images.map((img) => (
-          <li key={img.id} className="flex items-center justify-between gap-2 text-xs text-neutral-700">
-            <span className="truncate">{img.alt}</span>
-            <button type="button" className="text-red-600 hover:underline" onClick={() => handleDelete(img.id)}>
-              Remove
-            </button>
+      <ul className="mt-2 space-y-2">
+        {sortedImages.map((img, index) => (
+          <li
+            key={img.id}
+            className="flex items-center gap-2 rounded-lg border border-neutral-200 p-2 text-xs text-neutral-700"
+          >
+            <img src={img.url} alt={img.alt} className="h-12 w-12 flex-shrink-0 rounded-md object-cover" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-neutral-900">{img.alt}</p>
+              {index === 0 && <p className="text-[10px] font-semibold uppercase text-brand-600">Primary</p>}
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-1">
+              <button
+                type="button"
+                className="rounded border border-neutral-300 px-1.5 py-0.5 text-[11px] font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+                disabled={index === 0 || reordering !== null}
+                onClick={() => handleMoveUp(index)}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                className="rounded border border-neutral-300 px-1.5 py-0.5 text-[11px] font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40"
+                disabled={index === sortedImages.length - 1 || reordering !== null}
+                onClick={() => handleMoveDown(index)}
+              >
+                ↓
+              </button>
+              {index !== 0 && (
+                <button
+                  type="button"
+                  className="rounded border border-brand-300 px-1.5 py-0.5 text-[11px] font-medium text-brand-700 hover:bg-brand-50 disabled:opacity-40"
+                  disabled={reordering !== null}
+                  onClick={() => handleSetPrimary(index)}
+                >
+                  Set primary
+                </button>
+              )}
+              <button type="button" className="text-red-600 hover:underline" onClick={() => handleDelete(img.id)}>
+                Remove
+              </button>
+            </div>
           </li>
         ))}
         {service.images.length === 0 && <li className="text-xs text-neutral-500">No images yet.</li>}

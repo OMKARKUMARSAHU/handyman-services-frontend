@@ -5,8 +5,11 @@ import { type CategoryDto, type CategoryRow, toCategoryDto } from "./categories.
 
 const TABLE = "categories";
 
-export async function listCategories(): Promise<CategoryDto[]> {
-  const rows = await getDb()<CategoryRow>(TABLE).where({ active: true }).orderBy("sort_order", "asc");
+/** `includeInactive` -- see the identical doc comment on `listCities()`. */
+export async function listCategories(opts: { includeInactive?: boolean } = {}): Promise<CategoryDto[]> {
+  let query = getDb()<CategoryRow>(TABLE);
+  if (!opts.includeInactive) query = query.where({ active: true });
+  const rows = await query.orderBy("sort_order", "asc");
   return rows.map(toCategoryDto);
 }
 

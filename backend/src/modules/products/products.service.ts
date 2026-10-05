@@ -5,13 +5,16 @@ import { type ProductDto, type ProductRow, toProductDto } from "./products.types
 
 const TABLE = "products";
 
-export async function listProductsByCategorySlug(categorySlug: string): Promise<ProductDto[]> {
-  const rows = await getDb()<ProductRow>(TABLE)
+/** `includeInactive` -- see the identical doc comment on `listCities()`. */
+export async function listProductsByCategorySlug(
+  categorySlug: string,
+  opts: { includeInactive?: boolean } = {}
+): Promise<ProductDto[]> {
+  let query = getDb()<ProductRow>(TABLE)
     .join("categories", "categories.id", `${TABLE}.category_id`)
-    .where("categories.slug", categorySlug)
-    .andWhere(`${TABLE}.active`, true)
-    .select(`${TABLE}.*`)
-    .orderBy(`${TABLE}.sort_order`, "asc");
+    .where("categories.slug", categorySlug);
+  if (!opts.includeInactive) query = query.andWhere(`${TABLE}.active`, true);
+  const rows = await query.select(`${TABLE}.*`).orderBy(`${TABLE}.sort_order`, "asc");
   return rows.map(toProductDto);
 }
 

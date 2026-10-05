@@ -127,6 +127,33 @@ export async function attachServiceImage(
   return toServiceImageDto(row);
 }
 
+/**
+ * ADMIN CMS FOLLOW-UP ("Reorder images / Set primary image"): the only way
+ * to change an existing image's position used to be delete-and-re-upload,
+ * which loses the file. This updates the row in place -- same
+ * ownership/approval-status gate as every other media mutation.
+ */
+export async function updateServiceImage(
+  auth: AuthenticatedUser,
+  imageId: string,
+  input: { sortOrder?: number; alt?: string }
+): Promise<ServiceImageDto> {
+  const found = await getImageWithService(imageId);
+  if (!found) throw new NotFoundError("Image not found.");
+  assertCanManageServiceMedia(found.service, auth);
+
+  const patch: Partial<ServiceImageRow> = {};
+  if (input.sortOrder !== undefined) patch.sort_order = input.sortOrder;
+  if (input.alt !== undefined) patch.alt = input.alt;
+
+  if (Object.keys(patch).length > 0) {
+    await getDb()<ServiceImageRow>(TABLE).where({ id: imageId }).update(patch);
+  }
+  const row = await getDb()<ServiceImageRow>(TABLE).where({ id: imageId }).first();
+  if (!row) throw new Error("Failed to read back updated service image.");
+  return toServiceImageDto(row);
+}
+
 /** Used by `requireOwnership()`-style checks and the delete route — resolves which service an image row belongs to. */
 async function getImageWithService(imageId: string) {
   const image = await getDb()<ServiceImageRow>(TABLE).where({ id: imageId }).first();

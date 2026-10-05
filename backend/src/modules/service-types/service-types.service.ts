@@ -5,8 +5,11 @@ import { type ServiceTypeDto, type ServiceTypeRow, toServiceTypeDto } from "./se
 
 const TABLE = "service_types";
 
-export async function listServiceTypes(): Promise<ServiceTypeDto[]> {
-  const rows = await getDb()<ServiceTypeRow>(TABLE).where({ active: true }).orderBy("sort_order", "asc");
+/** `includeInactive` -- see the identical doc comment on `listCities()` (cities.service.ts). */
+export async function listServiceTypes(opts: { includeInactive?: boolean } = {}): Promise<ServiceTypeDto[]> {
+  let query = getDb()<ServiceTypeRow>(TABLE);
+  if (!opts.includeInactive) query = query.where({ active: true });
+  const rows = await query.orderBy("sort_order", "asc");
   return rows.map(toServiceTypeDto);
 }
 
