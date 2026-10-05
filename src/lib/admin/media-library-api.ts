@@ -107,7 +107,18 @@ export async function uploadMedia(file: File, metadata: MediaMetadataInput = {})
       "Could not reach storage to upload this file. If this keeps happening, the S3 bucket's CORS configuration may need to allow this site's origin."
     );
   }
-  if (!putRes.ok) throw new Error(`Upload to storage failed (${putRes.status}).`);
+  if (!putRes.ok) {
+    // S3 returns a small XML error body on failure (AccessDenied,
+    // SignatureDoesNotMatch, ExpiredToken, etc.) -- surface its real <Code>
+    // instead of just the HTTP status, so a permissions problem doesn't look
+    // identical to an expired link or anything else. CORS already allows
+    // reading this response (the PUT itself reached S3), so no extra
+    // bucket configuration is needed for this.
+    const bodyText = await putRes.text().catch(() => "");
+    const code = bodyText.match(/<Code>([^<]+)<\/Code>/)?.[1];
+    const hint = code === "AccessDenied" ? " The AWS identity signing this upload likely lacks S3 permission on this bucket." : "";
+    throw new Error(`Upload to storage failed (${putRes.status}${code ? ` ${code}` : ""}).${hint}`);
+  }
   return createMediaRecord({
     key,
     mimeType: file.type,
