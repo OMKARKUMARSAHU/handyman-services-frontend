@@ -24,6 +24,13 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
   API_BASE_PATH: z.string().default("/api/v1"),
+  // MEDIA FIX FOLLOW-UP: this backend's own externally-reachable origin --
+  // needed so buildPublicUrl() (media.service.ts) can hand out an absolute
+  // URL to the new GET /media/file/<key> route (see that file's doc
+  // comment for why). Defaults to the local dev backend address so this
+  // works with zero .env changes locally; set to the real API origin
+  // (e.g. https://api.handymanservices.in) before production.
+  API_PUBLIC_BASE_URL: z.string().default("http://localhost:4000"),
   LOG_LEVEL: z.string().default("info"),
 
   CORS_ALLOWED_ORIGINS: z.string().default("http://localhost:3000"),

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "../../config/env";
 import { getDb } from "../../database/db";
@@ -75,10 +75,47 @@ export function requireBucketName(): string {
   return env.S3_BUCKET_NAME;
 }
 
-// MEDIA LIBRARY FOLLOW-UP: exported, same reasoning as getS3Client above.
+/**
+ * MEDIA FIX FOLLOW-UP ("broken thumbnails" root cause): this bucket has
+ * Block Public Access fully ON and no bucket policy, by design
+ * (PHASE_4_BACKEND_AWS_INFRASTRUCTURE_PLAN.md §9 -- "public access block
+ * stays exactly as-is, not relaxed"). The bucket's own
+ * `https://<bucket>.s3.<region>.amazonaws.com/<key>` URL this function used
+ * to return is therefore NEVER actually fetchable by a browser -- every
+ * `<img>`/`<video>` pointed at it was always going to 403, which is exactly
+ * the broken-thumbnail symptom. Rather than relaxing Block Public Access
+ * (explicitly out of bounds), this now returns a stable URL on this
+ * backend's own GET /media/file/<key> route (added below in this file /
+ * registered in media.routes.ts), which presigns a short-lived GET and
+ * 302-redirects to it fresh on every request -- the bucket stays fully
+ * private; only a request carrying a valid, freshly-minted signature ever
+ * reaches an object.
+ *
+ * This is the ONE place every caller that builds a storable image/video
+ * URL goes through -- `attachServiceImage`'s key-based path, `createCmsUploadUrl`
+ * (category/product/city/offer/homepage images, used by
+ * `uploadCmsFile()` on the frontend), and the Media Library's `createMedia`
+ * -- so fixing it here fixes every surface without touching any of those
+ * call sites.
+ */
 export function buildPublicUrl(key: string): string {
+  requireBucketName(); // keep the "is S3 actually configured" guard
+  return `${env.API_PUBLIC_BASE_URL}${env.API_BASE_PATH}/media/file/${key}`;
+}
+
+/**
+ * Used by the GET /media/file/<key> route (media.routes.ts) that
+ * buildPublicUrl() above now points every stored media URL at. A fresh
+ * presigned GET is minted on every request -- never stored -- so the
+ * link embedded in a `<img src>`/`<video src>` never itself expires (the
+ * browser re-requests this backend route each time, which always hands
+ * back a currently-valid redirect).
+ */
+export async function createMediaFileRedirectUrl(key: string): Promise<string> {
   const bucket = requireBucketName();
-  return `https://${bucket}.s3.${env.S3_REGION}.amazonaws.com/${key}`;
+  return getSignedUrl(getS3Client(), new GetObjectCommand({ Bucket: bucket, Key: key }), {
+    expiresIn: env.S3_UPLOAD_URL_TTL_SECONDS,
+  });
 }
 
 // MEDIA LIBRARY FOLLOW-UP: exported, same reasoning as getS3Client above.

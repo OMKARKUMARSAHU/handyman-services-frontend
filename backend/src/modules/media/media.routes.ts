@@ -1,7 +1,7 @@
 import { Router, type NextFunction, type Request, type Response } from "express";
 import { asyncHandler } from "../../shared/asyncHandler";
 import { created, ok } from "../../shared/response";
-import { UnauthenticatedError, ForbiddenError } from "../../shared/errors";
+import { UnauthenticatedError, ForbiddenError, NotFoundError } from "../../shared/errors";
 import { authenticate } from "../../middleware/authenticate";
 import { validateBody, validateParams } from "../../middleware/validate";
 import {
@@ -12,7 +12,14 @@ import {
   updateImageSchema,
   uploadUrlSchema,
 } from "./media.schema";
-import { attachServiceImage, createCmsUploadUrl, createUploadUrl, deleteServiceImage, updateServiceImage } from "./media.service";
+import {
+  attachServiceImage,
+  createCmsUploadUrl,
+  createMediaFileRedirectUrl,
+  createUploadUrl,
+  deleteServiceImage,
+  updateServiceImage,
+} from "./media.service";
 import { requireRole } from "../../middleware/authorize";
 
 /**
@@ -39,6 +46,27 @@ function requireAdminOrProvider() {
 
 export function mediaRouter(): Router {
   const router = Router();
+
+  /**
+   * MEDIA FIX FOLLOW-UP ("broken thumbnails"): every stored image/video
+   * URL (service images, Media Library items, category/product/city/offer/
+   * homepage media) now points here instead of the S3 bucket directly --
+   * see buildPublicUrl()'s doc comment in media.service.ts for the full
+   * reasoning. Deliberately public/unauthenticated: this is exactly the
+   * "anyone can view this media" access every stored URL always assumed;
+   * it just now happens via a freshly-signed redirect instead of a public
+   * bucket, so Block Public Access stays fully on. GET-only, no mutation.
+   * `*` (not `:key`) because keys contain `/` (e.g. `library/image/<uuid>-name.jpg`).
+   */
+  router.get(
+    "/media/file/*",
+    asyncHandler(async (req, res) => {
+      const key = (req.params as unknown as Record<string, string>)["0"];
+      if (!key) throw new NotFoundError("Media not found.");
+      const redirectUrl = await createMediaFileRedirectUrl(key);
+      res.redirect(302, redirectUrl);
+    })
+  );
 
   router.post(
     "/media/upload-url",
