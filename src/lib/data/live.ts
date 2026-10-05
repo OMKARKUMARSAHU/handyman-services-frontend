@@ -290,6 +290,31 @@ function mapService(dto: BackendService, ctx: LiveCatalogContext): Service {
   };
 }
 
+/**
+ * RAZORPAY/CHECKOUT FOLLOW-UP ("The request failed validation" —
+ * `items[0].cityId`/`items[0].serviceId` not UUIDs): every *Live mapper in
+ * this file deliberately maps an entity's frontend-facing `id` to its
+ * backend SLUG, never the backend's internal UUID (see this file's top
+ * doc comment) — that is correct for ROUTING/DISPLAY (links, cart-item
+ * lookups via getServiceByIdSync, etc.), which must stay slug-based. But
+ * the real backend's cart/order endpoints validate `serviceId`/`cityId`
+ * as actual UUIDs (cart.schema.ts) — they were never meant to receive a
+ * slug. These two resolvers are the ONLY place that hands back the real
+ * backend UUID, for the ONE place that actually needs it: checkout
+ * resolving the local (slug-keyed) cart into the server cart just before
+ * calling `mergeMyCart()`. Nothing about routing/display changes.
+ */
+export async function getCityBackendIdBySlugLive(citySlug: string): Promise<string | null> {
+  const ctx = await getLiveCatalogContext();
+  return ctx?.cityBackendIdBySlug.get(citySlug) ?? null;
+}
+
+/** Lightweight id-only lookup (distinct from getServiceDetailLive's full detail+offers fetch) — checkout may need to resolve several distinct services at once. */
+export async function getServiceBackendIdBySlugLive(slug: string): Promise<string | null> {
+  const dto = await backendGet<{ id: string }>(`/services/${encodeURIComponent(slug)}`);
+  return dto?.id ?? null;
+}
+
 export async function getCategoriesLive(): Promise<Category[]> {
   const ctx = await getLiveCatalogContext();
   return ctx ? ctx.categories : getCategoriesMock();

@@ -22,6 +22,7 @@ import {
   type CustomerCart,
   type CustomerOrder,
 } from "@/lib/customer/api";
+import { getCityBackendIdBySlugLive, getServiceBackendIdBySlugLive } from "@/lib/data/live";
 
 function newIdempotencyKey(): string {
   try {
@@ -48,6 +49,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [preparing, setPreparing] = useState(true);
   const [prepareError, setPrepareError] = useState<string | null>(null);
+  const [prepareWarning, setPrepareWarning] = useState<string | null>(null);
   const [serverCart, setServerCart] = useState<CustomerCart | null>(null);
 
   const [address, setAddress] = useState<{ id: string; value: CustomerAddress } | null>(null);
@@ -61,8 +63,24 @@ export default function CheckoutPage() {
   // Once signed in as a customer, move whatever is in the browser-local
   // cart into the real server cart exactly once (merge is additive —
   // calling it twice with the same items would double the quantities —
-  // so the local cart is cleared immediately after a successful merge),
+  // so the local cart is cleared only after a fully successful merge),
   // then load the authoritative server cart to check out from.
+  //
+  // BUG FIX ("The request failed validation" — items[0].cityId/serviceId
+  // not UUIDs): the local cart (CartProvider) deliberately keys items by
+  // SLUG, not the backend's internal UUID — that's correct for local
+  // display (getServiceByIdSync-style lookups throughout the cart/catalog
+  // UI) but `POST /customer/cart/merge` validates both ids as real UUIDs
+  // (cart.schema.ts), which a slug never is. The backend UUID for a given
+  // slug is only resolvable through the live catalog
+  // (getServiceBackendIdBySlugLive / getCityBackendIdBySlugLive, both new
+  // — see src/lib/data/live.ts) — a slug is never "upgraded" to a fake
+  // UUID, it is looked up against the real database. Any local item whose
+  // slug can't be resolved against the live catalog right now (backend
+  // unreachable, or a stale slug that no longer exists) is left OUT of
+  // the merge entirely and reported back, rather than sent with an
+  // invalid or fabricated id — real backend validation stays exactly as
+  // strict as it already is.
   useEffect(() => {
     if (status !== "ready" || !user || user.role !== "customer") return;
     let cancelled = false;
@@ -72,8 +90,46 @@ export default function CheckoutPage() {
       setPrepareError(null);
       try {
         if (localCart.items.length > 0) {
-          await mergeMyCart(localCart.items.map((i) => ({ serviceId: i.serviceId, cityId: i.cityId, quantity: i.quantity })));
-          if (!cancelled) clearLocalCart();
+          const resolved = await Promise.all(
+            localCart.items.map(async (item) => {
+              const [serviceBackendId, cityBackendId] = await Promise.all([
+                getServiceBackendIdBySlugLive(item.serviceId),
+                getCityBackendIdBySlugLive(item.cityId),
+              ]);
+              return { item, serviceBackendId, cityBackendId };
+            })
+          );
+          const mergeable = resolved.filter(
+            (r): r is typeof r & { serviceBackendId: string; cityBackendId: string } =>
+              Boolean(r.serviceBackendId) && Boolean(r.cityBackendId)
+          );
+          const unresolved = resolved.filter((r) => !r.serviceBackendId || !r.cityBackendId);
+
+          if (mergeable.length > 0) {
+            await mergeMyCart(
+              mergeable.map((r) => ({ serviceId: r.serviceBackendId, cityId: r.cityBackendId, quantity: r.item.quantity }))
+            );
+          }
+
+          if (unresolved.length > 0 && mergeable.length > 0) {
+            // Partial failure: proceed with what resolved, just say so --
+            // never silently drop items without telling the customer.
+            if (!cancelled) {
+              setPrepareWarning(
+                `${unresolved.length} item(s) in your cart could not be matched to the current catalog and were left out. Please remove and re-add them.`
+              );
+            }
+          } else if (unresolved.length > 0) {
+            // Total failure: nothing valid to check out with -- block
+            // rather than show an empty/broken checkout.
+            if (!cancelled) {
+              setPrepareError(
+                "Could not match the items in your cart against the current catalog. Please remove and re-add them, or try again shortly."
+              );
+            }
+          } else if (!cancelled) {
+            clearLocalCart();
+          }
         }
         const cart = await getMyCart();
         if (!cancelled) setServerCart(cart);
@@ -199,6 +255,11 @@ export default function CheckoutPage() {
       <PageHeader heading="Checkout" subheading="Address, schedule, summary and secure payment." />
       <section className="py-10 sm:py-14">
         <Container className="max-w-2xl">
+          {prepareWarning && (
+            <p role="alert" className="mb-6 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+              {prepareWarning}
+            </p>
+          )}
           <div className="mb-8">
             <CheckoutStepper activeStep={step} />
           </div>
