@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAllCitiesSync, getCityBySlugSync } from "@/lib/data/cities";
+import { getCityBySlugSync } from "@/lib/data/cities";
 import { getAllServicesSync } from "@/lib/data/services";
 import {
   getCategoriesLive,
@@ -22,9 +22,34 @@ import { ServiceRail } from "@/components/catalog/ServiceRail";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { VideoCurationRail } from "@/components/home/VideoCurationRail";
 
+/**
+ * BUILD-TIME FIX (Vercel build timeout -- "took more than 60 seconds ...
+ * after 3 attempts ... Next.js build worker exited with code: 1"): this
+ * previously returned every active city, forcing `next build` to eagerly
+ * render every single `/[city]` page right now by calling this page's
+ * body -- which fetches live catalog/homepage data from the backend via
+ * `@/lib/data/live` -- once per city, synchronously, during the build. If
+ * the backend is slow, cold, or unreachable from Vercel's build network
+ * at that moment, a render can hang past Next's internal per-page budget,
+ * and after 3 retries Next kills the build.
+ *
+ * Returning an empty array means `next build` pre-renders ZERO `/[city]`
+ * pages -- no backend calls happen at build time, so the build can never
+ * fail because of backend latency/unavailability again. `dynamicParams`
+ * below (default `true`, made explicit so this can't silently regress)
+ * is what keeps every `/[city]` URL working exactly as before: the first
+ * visitor to any city renders it on demand (full server-rendered HTML,
+ * same `generateMetadata` above, same live-data fetch, same mock
+ * fallback), and Next then caches that render per the `revalidate: 30`
+ * already set on every call in `@/lib/data/live` -- this is Incremental
+ * Static Regeneration seeded at request time instead of enumerated at
+ * build time, not a switch to client-side or uncached rendering.
+ */
 export function generateStaticParams() {
-  return getAllCitiesSync().map((city) => ({ city: city.slug }));
+  return [];
 }
+
+export const dynamicParams = true;
 
 export async function generateMetadata({
   params,

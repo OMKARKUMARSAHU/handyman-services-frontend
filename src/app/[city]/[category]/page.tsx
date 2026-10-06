@@ -1,17 +1,42 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAllCitiesSync, getCityBySlugSync } from "@/lib/data/cities";
-import { getCategoryById, getCategories } from "@/lib/data/categories";
+import { getCityBySlugSync } from "@/lib/data/cities";
+import { getCategoryById } from "@/lib/data/categories";
 import { getCategoriesLive, getAllProductsLive } from "@/lib/data/live";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container } from "@/components/ui/Container";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 
+/**
+ * BUILD-TIME FIX (Vercel build timeout -- "took more than 60 seconds ...
+ * after 3 attempts ... Next.js build worker exited with code: 1"): this
+ * previously returned every city x category combination, forcing
+ * `next build` to eagerly render every `/[city]/[category]` page right
+ * now by calling this page's body -- which fetches live categories +
+ * products from the backend via `@/lib/data/live` -- once per
+ * combination, synchronously, during the build. If the backend is slow,
+ * cold, or unreachable from Vercel's build network at that moment, a
+ * render can hang past Next's internal per-page budget, and after 3
+ * retries Next kills the build.
+ *
+ * Returning an empty array means `next build` pre-renders ZERO
+ * `/[city]/[category]` pages -- no backend calls happen at build time,
+ * so the build can never fail because of backend latency/unavailability
+ * again. `dynamicParams` below (default `true`, made explicit so this
+ * can't silently regress) is what keeps every `/[city]/[category]` URL
+ * working exactly as before: the first visitor to any combination
+ * renders it on demand (full server-rendered HTML, same
+ * `generateMetadata` above, same live-data fetch, same mock fallback),
+ * and Next then caches that render per the `revalidate: 30` already set
+ * on every call in `@/lib/data/live` -- this is Incremental Static
+ * Regeneration seeded at request time instead of enumerated at build
+ * time, not a switch to client-side or uncached rendering.
+ */
 export function generateStaticParams() {
-  const cities = getAllCitiesSync();
-  const categories = getCategories();
-  return cities.flatMap((city) => categories.map((category) => ({ city: city.slug, category: category.id })));
+  return [];
 }
+
+export const dynamicParams = true;
 
 export async function generateMetadata({
   params,

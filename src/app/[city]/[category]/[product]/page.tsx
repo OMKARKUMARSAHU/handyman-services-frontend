@@ -1,21 +1,46 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAllCitiesSync, getCityBySlugSync } from "@/lib/data/cities";
+import { getCityBySlugSync } from "@/lib/data/cities";
 import { getCategoryById } from "@/lib/data/categories";
-import { getAllProductsSync, getProductBySlugSync } from "@/lib/data/products";
+import { getProductBySlugSync } from "@/lib/data/products";
 import { getServiceTypes } from "@/lib/data/serviceTypes";
 import { getAllProductsLive, getServicesByProductLive } from "@/lib/data/live";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container } from "@/components/ui/Container";
 import { ProductServicesSection } from "@/components/catalog/ProductServicesSection";
 
+/**
+ * BUILD-TIME FIX (Vercel build timeout -- "took more than 60 seconds ...
+ * after 3 attempts ... Next.js build worker exited with code: 1"): this
+ * previously returned every city x product combination, forcing
+ * `next build` to eagerly render every `/[city]/[category]/[product]`
+ * page right now by calling this page's body -- which fetches live
+ * products + services from the backend via `@/lib/data/live` -- once per
+ * combination, synchronously, during the build. If the backend is slow,
+ * cold, or unreachable from Vercel's build network at that moment, a
+ * render can hang past Next's internal per-page budget, and after 3
+ * retries Next kills the build -- this is exactly what was happening to
+ * /ranchi/consumer-durables/air-conditioner, /ranchi/consumer-durables/
+ * refrigerator, etc.
+ *
+ * Returning an empty array means `next build` pre-renders ZERO
+ * `/[city]/[category]/[product]` pages -- no backend calls happen at
+ * build time, so the build can never fail because of backend latency/
+ * unavailability again. `dynamicParams` below (default `true`, made
+ * explicit so this can't silently regress) is what keeps every one of
+ * these URLs working exactly as before: the first visitor to any
+ * combination renders it on demand (full server-rendered HTML, same
+ * `generateMetadata` above, same live-data fetch, same mock fallback),
+ * and Next then caches that render per the `revalidate: 30` already set
+ * on every call in `@/lib/data/live` -- this is Incremental Static
+ * Regeneration seeded at request time instead of enumerated at build
+ * time, not a switch to client-side or uncached rendering.
+ */
 export function generateStaticParams() {
-  const cities = getAllCitiesSync();
-  const products = getAllProductsSync();
-  return cities.flatMap((city) =>
-    products.map((product) => ({ city: city.slug, category: product.categoryId, product: product.slug }))
-  );
+  return [];
 }
+
+export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
