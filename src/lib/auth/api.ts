@@ -8,11 +8,13 @@ import type { ApiErrorBody, CurrentUser } from "./types";
  * never readable from this code, so every call here must send/receive
  * cookies for the session to work at all.
  *
- * `NEXT_PUBLIC_API_BASE_URL` defaults to the local backend's dev address so
- * this works out of the box in local development; set it explicitly once a
- * real deployed API origin exists (Phase 4, still paused).
+ * PHASE R: this used to fetch `NEXT_PUBLIC_API_BASE_URL` directly from
+ * every caller, which works locally but can never work in the browser
+ * against the production EB backend (no working HTTPS/443 there yet) --
+ * see `@/lib/server/backend-url` for why `request()` below now branches
+ * on where this code is actually running.
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
+import { BROWSER_PROXY_BASE_PATH, DIRECT_BACKEND_BASE_URL, isBrowserRuntime } from "@/lib/server/backend-url";
 
 export class AuthApiError extends Error {
   readonly code: string;
@@ -34,9 +36,15 @@ export class AuthApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // PHASE R: in the browser, go through the same-origin proxy
+  // (`src/app/api/backend/[...path]/route.ts`) instead of the backend
+  // origin directly -- server-side (SSR) callers still dial it directly,
+  // since that hop is not a browser and has no mixed-content/TLS-trust
+  // restriction. See `@/lib/server/backend-url`.
+  const base = isBrowserRuntime() ? BROWSER_PROXY_BASE_PATH : DIRECT_BACKEND_BASE_URL;
   let res: Response;
   try {
-    res = await fetch(`${API_BASE_URL}${path}`, {
+    res = await fetch(`${base}${path}`, {
       ...init,
       credentials: "include",
       headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
@@ -48,7 +56,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new AuthApiError(
       0,
       "NETWORK_ERROR",
-      `Could not reach the server at ${API_BASE_URL}. Check that the backend is running and reachable.`
+      `Could not reach the server at ${base}. Check that the backend is running and reachable.`
     );
   }
 

@@ -48,13 +48,23 @@ import { getVideoCurations as getVideoCurationsMock } from "./videoCurations";
  * services/offers reads by city, never to drive the selector UI itself.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
+import { BROWSER_PROXY_BASE_PATH, DIRECT_BACKEND_BASE_URL, isBrowserRuntime } from "@/lib/server/backend-url";
+
 /** Balances "Admin changes should automatically appear" against not re-fetching the whole catalog on every single request. */
 const REVALIDATE_SECONDS = 30;
 
+// PHASE R: most callers of this file are server-rendered catalog pages
+// (app/page.tsx, app/[city]/page.tsx, ...), but the checkout page also
+// calls the two *BackendIdBySlugLive lookups client-side -- so, exactly
+// like @/lib/auth/api, this has to branch at runtime rather than assume
+// it only ever runs on the server. See @/lib/server/backend-url.
 async function backendGet<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}${path}`, { next: { revalidate: REVALIDATE_SECONDS } });
+    const base = isBrowserRuntime() ? BROWSER_PROXY_BASE_PATH : DIRECT_BACKEND_BASE_URL;
+    const res = await fetch(
+      `${base}${path}`,
+      isBrowserRuntime() ? { cache: "no-store" } : { next: { revalidate: REVALIDATE_SECONDS } }
+    );
     if (!res.ok) return null;
     const body = (await res.json().catch(() => null)) as { success?: boolean; data?: T } | null;
     if (!body || body.success === false || body.data === undefined) return null;
