@@ -9,7 +9,11 @@ async function main(): Promise<void> {
   await getDb().raw("SELECT 1");
 
   const app = createApp();
-  const server = app.listen(env.PORT, () => {
+  // Explicit host bind: Elastic Beanstalk's local nginx proxies to this
+  // process over the loopback interface, but binding all interfaces
+  // (rather than relying on Node's platform-dependent "no host given"
+  // default) is what EB's own health checker and docs expect.
+  const server = app.listen(env.PORT, "0.0.0.0", () => {
     logger.info({ port: env.PORT, basePath: env.API_BASE_PATH }, "backend_listening");
   });
 

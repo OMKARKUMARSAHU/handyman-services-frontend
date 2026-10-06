@@ -1,0 +1,19 @@
+{
+  // Production build config. Separate from tsconfig.json (used by
+  // `typecheck`, `dev`, and tests, which intentionally also cover
+  // tests/**/*.ts) because that file's "rootDir": "." + including
+  // tests/**/*.ts made `tsc` mirror the source tree under dist/ as
+  // dist/src/... and dist/tests/..., while package.json's
+  // "main"/"start" ("dist/server.js") expected output directly at
+  // dist/ -- so `npm start` was actually broken (Cannot find module
+  // '.../dist/server.js'; the real compiled entry point was
+  // dist/src/server.js). This file builds ONLY src/, rooted at src/,
+  // so the compiled entry point lands exactly where package.json
+  // expects it.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests"]
+}

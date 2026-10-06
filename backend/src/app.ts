@@ -17,6 +17,18 @@ import { buildRouter } from "./routes";
 export function createApp(): Express {
   const app = express();
 
+  // Elastic Beanstalk always puts at least one reverse proxy in front of
+  // this process (the instance's own nginx in a single-instance
+  // environment, or that nginx behind an ALB too in a load-balanced one)
+  // -- without this, Express's req.ip collapses to the nearest proxy's
+  // address for every request, which would bucket every client under the
+  // same key in defaultRateLimiter() below. `true` trusts the whole
+  // X-Forwarded-For chain rather than a hard-coded hop count, since both
+  // possible EB topologies are AWS-controlled infrastructure (never a
+  // client-spoofable hop), so it stays correct whichever one this
+  // environment turns out to be.
+  app.set("trust proxy", true);
+
   app.disable("x-powered-by");
   app.use(helmet());
   app.use(

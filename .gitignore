@@ -23,6 +23,12 @@
 # misc
 .DS_Store
 *.pem
+# ...except the AWS RDS CA bundle the production backend needs at runtime
+# to verify its TLS connection to RDS (backend/src/database/knexfile.ts) --
+# this is AWS's own public certificate data (no private key, nothing
+# secret), and must be committed/shipped or the production DB connection
+# cannot validate its TLS handshake.
+!backend/certs/rds-ca-global-bundle.pem
 
 # debug
 npm-debug.log*

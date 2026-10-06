@@ -4,8 +4,11 @@
   "private": true,
   "description": "Handyman Services — Phase 3 backend API (Node.js/TypeScript, REST, /api/v1). See PHASE_3_BACKEND_IMPLEMENTATION.md.",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "dev": "cross-env NODE_ENV=development tsx watch src/server.ts",
     "typecheck": "tsc --noEmit",
