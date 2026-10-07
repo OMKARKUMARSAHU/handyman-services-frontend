@@ -7,6 +7,7 @@ import {
 } from "@/lib/data";
 import { Container } from "@/components/ui/Container";
 import { Icon } from "@/lib/icons";
+import { getBrandingLive, getContactInfoLive } from "@/lib/data/live";
 
 /**
  * Global marketplace footer — redesigned a third time in the "FINAL
@@ -43,7 +44,7 @@ import { Icon } from "@/lib/icons";
  *    (still empty in mock data, so nothing fake renders — unchanged). No
  *    App Store/Play Store badges — there is no app.
  */
-export function Footer() {
+export async function Footer() {
   const companyNav = getFooterCompanyNav();
   const contactLink = companyNav.find((item) => item.label === "Contact Us" || item.label === "Contact");
   const companyLinks = [
@@ -58,7 +59,18 @@ export function Footer() {
     ...(contactLink ? [contactLink] : []),
   ];
   const legalLinks = getFooterLegalNav();
-  const socialLinks = getContactInfo().socialLinks;
+
+  // HOMEPAGE ADMIN REBUILD ("Header and branding" / footer): the logo and
+  // social links now prefer the Admin-managed `branding`/`contact_info`
+  // singletons (same existing backend tables/API as Header.tsx, previously
+  // unread anywhere) over the static mock data, falling back to the exact
+  // same mock-derived values when nothing's been set or the backend is
+  // unreachable — nav links themselves are untouched/still mock-sourced
+  // (flagged, not wired, in the accompanying phase report).
+  const [branding, liveContactInfo] = await Promise.all([getBrandingLive(), getContactInfoLive()]);
+  const logoSrc = branding?.logoUrl || "/images/brand/handyman-logo.jpg";
+  const logoAlt = branding?.logoAlt || "Handyman Services";
+  const socialLinks = liveContactInfo?.socialLinks?.length ? liveContactInfo.socialLinks : getContactInfo().socialLinks;
   const year = new Date().getFullYear();
 
   return (
@@ -78,8 +90,8 @@ export function Footer() {
             */}
             {/* eslint-disable-next-line @next/next/no-img-element -- official brand asset, full lockup, aspect ratio preserved via h-14/w-auto */}
             <img
-              src="/images/brand/handyman-logo.jpg"
-              alt="Handyman Services"
+              src={logoSrc}
+              alt={logoAlt}
               className="h-14 w-auto rounded-lg sm:h-16"
             />
             <p className="mt-3 text-sm text-neutral-400">

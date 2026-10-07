@@ -1,5 +1,10 @@
+/** One playable clip inside a Video Curation card's optional `clips` array (HOMEPAGE ADMIN REBUILD — multi-video showcase support). */
+export interface HomepageSectionItemClip {
+  [key: string]: string | number | null | undefined;
+}
+
 export interface HomepageSectionItem {
-  [key: string]: string | number | undefined;
+  [key: string]: string | number | HomepageSectionItemClip[] | undefined;
 }
 
 export interface HomepageSectionRow {

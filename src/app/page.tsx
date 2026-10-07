@@ -17,6 +17,26 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { VideoCurationRail } from "@/components/home/VideoCurationRail";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
+/**
+ * Converts a homepage_sections "hero" row's generic `items` array into the
+ * Hero image-collage override shape (HOMEPAGE ADMIN REBUILD — "Hero image
+ * gallery"). Each item is a flat `{ slot, url, alt }` record (same generic
+ * items column every other homepage collection already uses — see
+ * AdminHomepageContentPanel.tsx's HeroImagesEditor); `url`-less rows are
+ * dropped rather than rendered as a broken slot. Returns `undefined` (not
+ * an empty array) when there is nothing usable, so `HeroCollage` falls
+ * back to its own default scenes exactly as it did before this feature
+ * existed.
+ */
+function toHeroImages(items: { url?: string | number; alt?: string | number }[] | null | undefined) {
+  if (!items || items.length === 0) return undefined;
+  const images = items
+    .map((it) => ({ url: it.url != null ? String(it.url) : "", alt: it.alt != null ? String(it.alt) : "" }))
+    .filter((img) => img.url.length > 0);
+  return images.length > 0 ? images : undefined;
+}
+
+
 export const metadata: Metadata = {
   title: "Handyman Services — Home appliance installation, service, repair & AMC.",
   description:
@@ -77,6 +97,7 @@ export default async function HomePage() {
           subheading={heroSection.subheading ?? undefined}
           products={products}
           categories={categories}
+          heroImages={toHeroImages(heroSection.items)}
         />
       )}
 

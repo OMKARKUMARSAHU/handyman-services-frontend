@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { VideoCuration } from "@/types";
 import { Icon } from "@/lib/icons";
@@ -79,6 +79,22 @@ export function VideoCurationModal({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  // HOMEPAGE ADMIN REBUILD — multi-clip support: when a showcase card
+  // carries more than one real video (`curation.clips`), the viewer can
+  // switch between them without closing the modal. `clipIndex` resets to
+  // the first clip whenever a different card is opened (keyed off
+  // `curation?.id` below), so leaving the modal open while paging between
+  // cards (`onPrev`/`onNext`) never leaves a stale clip selected on the
+  // next card.
+  const [clipIndex, setClipIndex] = useState(0);
+  // Adjust-during-render (not a useEffect — see useDraftSave.ts's matching
+  // comment for why) so switching to a different card always starts on
+  // its first clip, without an extra commit/render pass.
+  const [lastCurationId, setLastCurationId] = useState(curation?.id);
+  if (curation?.id !== lastCurationId) {
+    setLastCurationId(curation?.id);
+    setClipIndex(0);
+  }
 
   useEffect(() => {
     if (!curation) return;
@@ -135,6 +151,18 @@ export function VideoCurationModal({
   const titleId = `video-modal-title-${curation.id}`;
   const showProgress = total != null && total > 1 && index != null;
 
+  // HOMEPAGE ADMIN REBUILD — multi-clip support: `clips` (when present and
+  // non-empty) takes over playback from the card's own top-level
+  // videoUrl/externalUrl/thumbnail, same as the type's own doc comment
+  // describes. A single-clip or no-clips card falls through to exactly the
+  // original fields/branching below — zero behavior change for every
+  // curation that doesn't use this feature.
+  const hasClips = Array.isArray(curation.clips) && curation.clips.length > 0;
+  const activeClip = hasClips ? curation.clips![Math.min(clipIndex, curation.clips!.length - 1)] : null;
+  const activeVideoUrl = activeClip ? activeClip.videoUrl ?? null : curation.videoUrl;
+  const activeExternalUrl = activeClip ? activeClip.externalUrl ?? null : curation.externalUrl ?? null;
+  const activeTitle = activeClip?.title || curation.title;
+
   return createPortal(
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-black/90 p-3 backdrop-blur-sm sm:p-6"
@@ -183,21 +211,21 @@ export function VideoCurationModal({
           overflowing or shrinking to a sliver on either.
         */}
         <div className="relative mx-auto aspect-[9/16] h-[min(78vh,640px)] w-auto shrink-0 bg-black">
-          {curation.videoUrl ? (
+          {activeVideoUrl ? (
             <video
-              key={curation.id}
-              src={curation.videoUrl}
+              key={`${curation.id}-${clipIndex}`}
+              src={activeVideoUrl}
               controls
               autoPlay
               className="h-full w-full object-contain"
             >
               Your browser does not support embedded video.
             </video>
-          ) : curation.externalUrl ? (
+          ) : activeExternalUrl ? (
             <iframe
-              key={curation.id}
-              src={curation.externalUrl}
-              title={curation.title}
+              key={`${curation.id}-${clipIndex}`}
+              src={activeExternalUrl}
+              title={activeTitle}
               className="h-full w-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -245,6 +273,54 @@ export function VideoCurationModal({
           </h2>
           {curation.description && (
             <p className="mt-1 text-sm text-white/70">{curation.description}</p>
+          )}
+
+          {/*
+            HOMEPAGE ADMIN REBUILD — multi-clip switcher. Only rendered
+            when this showcase item actually carries more than one real
+            video; a single-clip (or no-clips) card shows none of this,
+            unchanged from before. Each thumbnail is a plain button (not a
+            link/video element) so it never fights the player's own
+            focus/keyboard handling above.
+          */}
+          {hasClips && curation.clips!.length > 1 && (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/50">
+                {curation.clips!.length} videos in this showcase
+              </p>
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {curation.clips!.map((clip, i) => {
+                  const poster = clip.thumbnail || curation.thumbnail;
+                  return (
+                    <button
+                      key={clip.id || i}
+                      type="button"
+                      onClick={() => setClipIndex(i)}
+                      aria-label={`Play clip ${i + 1}: ${clip.title || curation.title}`}
+                      aria-current={i === clipIndex}
+                      className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-2 transition-colors ${
+                        i === clipIndex ? "ring-white" : "ring-white/15 hover:ring-white/40"
+                      }`}
+                    >
+                      {poster ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- small clip-picker thumbnail
+                        <img src={poster} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center bg-neutral-800 text-white/60">
+                          <Icon name="film" className="h-4 w-4" />
+                        </span>
+                      )}
+                      <span className="absolute bottom-0.5 right-0.5 rounded bg-black/70 px-1 text-[10px] font-semibold text-white">
+                        {i + 1}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {activeClip?.title && activeClip.title !== curation.title && (
+                <p className="mt-2 text-sm font-medium text-white">{activeClip.title}</p>
+              )}
+            </div>
           )}
         </div>
       </div>

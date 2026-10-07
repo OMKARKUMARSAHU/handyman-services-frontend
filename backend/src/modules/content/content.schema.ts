@@ -29,7 +29,20 @@ export const createFaqSchema = baseFaqSchema;
 export const updateFaqSchema = baseFaqSchema.partial();
 
 // --- Homepage sections ---
-const homepageSectionItemSchema = z.record(z.union([z.string(), z.number()]));
+// Each item in a homepage_sections.items array is normally a flat record of
+// string/number fields (trust-strip icon/title/description, hero image-slot
+// url/alt, etc). ONE extension, additive and backward-compatible: a value
+// may also be an array of "clip" records -- this is what lets a single
+// Video Curation card carry more than one playable video (HOMEPAGE ADMIN
+// REBUILD, "Video Showcase must support multiple real videos"). A clip
+// record is itself a flat record of string/number/null fields, same shape
+// discipline as every other item, just one level deeper -- not open-ended
+// z.any(). Every existing item shape (no "clips" key) validates exactly as
+// before.
+const homepageSectionClipSchema = z.record(z.union([z.string(), z.number(), z.null()]));
+const homepageSectionItemSchema = z.record(
+  z.union([z.string(), z.number(), z.array(homepageSectionClipSchema)])
+);
 const baseHomepageSectionSchema = z.object({
   key: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
   heading: z.string().min(1).max(255),

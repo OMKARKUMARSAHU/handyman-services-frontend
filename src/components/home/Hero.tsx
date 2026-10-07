@@ -1,6 +1,6 @@
 import { Container } from "@/components/ui/Container";
 import { HeroDiscoveryPanel } from "@/components/home/HeroDiscoveryPanel";
-import { HeroCollage } from "@/components/home/HeroCollage";
+import { HeroCollage, type HeroCollageImageOverride } from "@/components/home/HeroCollage";
 import type { Category, Product } from "@/types";
 
 /**
@@ -28,6 +28,7 @@ export function Hero({
   products,
   categories,
   citySlug,
+  heroImages,
 }: {
   eyebrow?: string;
   heading: string;
@@ -35,6 +36,8 @@ export function Hero({
   products: Product[];
   categories: Category[];
   citySlug?: string;
+  /** Admin-managed collage override (HOMEPAGE ADMIN REBUILD) — see HeroCollage.tsx. Falls back to the original fixed scenes when unset/empty. */
+  heroImages?: HeroCollageImageOverride[];
 }) {
   return (
     <section className="border-b border-neutral-200 bg-white py-10 sm:py-14">
@@ -60,12 +63,12 @@ export function Hero({
               desktop-only offset grid beside it — the collage still shows
               up on small screens, just in a layout that fits (item 20). */}
           <div className="mt-6 lg:hidden">
-            <HeroCollage compact />
+            <HeroCollage compact images={heroImages} />
           </div>
         </div>
 
         <div className="hidden lg:block">
-          <HeroCollage />
+          <HeroCollage images={heroImages} />
         </div>
       </Container>
     </section>

@@ -310,6 +310,16 @@ export interface ContactInfo {
   socialLinks: { platform: string; url: string }[];
 }
 
+// NOTE: deliberately NOT widened to include a `clips` array here — this
+// generic type is read broadly across many customer-facing components
+// (HowItWorks.tsx, TrustStrip.tsx, TrustCard.tsx, TrustStatsBand.tsx, …)
+// that render a field's value directly as text, so widening it here would
+// make every one of those reads a potential non-string ReactNode. The
+// multi-clip Video Showcase feature (HOMEPAGE ADMIN REBUILD) instead gives
+// `VideoCuration` its own, separately-typed `clips?: VideoCurationClip[]`
+// field below — see `getVideoCurationsLive` in `@/lib/data/live`, which is
+// what actually parses a raw clip record, using its own local types, not
+// this one.
 export interface HomepageSectionItem {
   [key: string]: string | number | undefined;
 }
@@ -379,6 +389,25 @@ export interface PromotionalBannerContent {
  * image or a broken embed. Swapping in real assets later is a data-file
  * edit only, same pattern as every other media field in this project.
  */
+/**
+ * One playable video inside a Video Showcase card's optional `clips` list
+ * (HOMEPAGE ADMIN REBUILD — "a single video card may contain a main video
+ * plus multiple related clips"). Shape mirrors the card's own single-video
+ * fields on purpose, so a clip is just "the same kind of video, one of
+ * several" rather than a different concept.
+ */
+export interface VideoCurationClip {
+  id: string;
+  title?: string | null;
+  /** Locally hosted / Media-Library video file URL. */
+  videoUrl?: string | null;
+  /** External video link, used when no uploaded file is set. */
+  externalUrl?: string | null;
+  /** Optional per-clip poster; falls back to the card's own `thumbnail` when unset. */
+  thumbnail?: string | null;
+  durationSeconds?: number | null;
+}
+
 export interface VideoCuration {
   id: string;
   title: string;
@@ -395,6 +424,14 @@ export interface VideoCuration {
   externalUrl?: string | null;
   /** Whole seconds, for an optional duration badge. `null`/unset hides the badge. */
   durationSeconds?: number | null;
+  /**
+   * Additional real videos under this same showcase item (HOMEPAGE ADMIN
+   * REBUILD). Empty/unset means "a single video," rendered exactly as
+   * before via the top-level `videoUrl`/`externalUrl`/`thumbnail` fields
+   * above — this is a purely additive, backward-compatible extension, never
+   * a replacement for them.
+   */
+  clips?: VideoCurationClip[];
   sortOrder: number;
   active: boolean;
 }

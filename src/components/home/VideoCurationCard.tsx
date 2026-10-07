@@ -57,6 +57,13 @@ export function VideoCurationCard({
         </span>
       )}
 
+      {/* HOMEPAGE ADMIN REBUILD — a small, honest "N videos" badge when this showcase item holds more than one real clip; absent entirely for an ordinary single-video card. */}
+      {Array.isArray(curation.clips) && curation.clips.length > 1 && (
+        <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+          {curation.clips.length} videos
+        </span>
+      )}
+
       <div className="absolute inset-x-0 bottom-0 p-3.5 sm:p-4">
         {tagLabel && (
           <span className="mb-1.5 inline-block rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-brand-700 shadow-sm">

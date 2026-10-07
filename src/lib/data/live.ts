@@ -1,4 +1,4 @@
-import type { Category, Product, Service, Offer, HomepageSection, VideoCuration } from "@/types";
+import type { Category, Product, Service, Offer, HomepageSection, HomepageSectionItem, VideoCuration, VideoCurationClip } from "@/types";
 import { getCategories as getCategoriesMock } from "./categories";
 import { getAllProductsSync as getAllProductsMock } from "./products";
 import {
@@ -145,6 +145,7 @@ interface BackendOffer {
   endDate: string | null;
   active: boolean;
 }
+type BackendHomepageSectionItemValue = string | number | Record<string, string | number | null>[];
 interface BackendHomepageSection {
   key: string;
   heading: string;
@@ -152,7 +153,7 @@ interface BackendHomepageSection {
   body: string | null;
   ctaText: string | null;
   ctaLink: string | null;
-  items: Record<string, string | number>[] | null;
+  items: Record<string, BackendHomepageSectionItemValue>[] | null;
   sortOrder: number;
   image: string | null;
   imageAlt: string | null;
@@ -500,10 +501,28 @@ export async function getHomepageSectionLive(key: string): Promise<HomepageSecti
     body: row.body,
     ctaText: row.ctaText,
     ctaLink: row.ctaLink,
-    items: row.items,
+    // Cast: `getHomepageSectionLive` is only ever called for "hero",
+    // "whyChooseUs" and "howItWorks" -- none of which ever carry a
+    // `clips` array (that shape is specific to "video-curations", read
+    // separately via `getVideoCurationsLive`/`parseVideoClip` above) --
+    // so every item here is actually a plain string/number record, just
+    // typed more broadly at the source to accommodate that other key.
+    items: row.items as unknown as HomepageSectionItem[] | null,
     sortOrder: row.sortOrder,
     image: row.image,
     imageAlt: row.imageAlt,
+  };
+}
+
+/** Parses one raw clip record (see backend content.schema.ts's `homepageSectionClipSchema`) into a typed `VideoCurationClip` — HOMEPAGE ADMIN REBUILD multi-video support. */
+function parseVideoClip(raw: Record<string, string | number | null | undefined>): VideoCurationClip {
+  return {
+    id: String(raw.id ?? ""),
+    title: raw.title != null ? String(raw.title) : null,
+    videoUrl: raw.videoUrl != null ? String(raw.videoUrl) : null,
+    externalUrl: raw.externalUrl != null ? String(raw.externalUrl) : null,
+    thumbnail: raw.thumbnail != null ? String(raw.thumbnail) : null,
+    durationSeconds: raw.durationSeconds != null ? Number(raw.durationSeconds) : null,
   };
 }
 
@@ -513,19 +532,60 @@ export async function getVideoCurationsLive(): Promise<VideoCuration[]> {
   const row = rows.find((r) => r.key === "video-curations");
   if (!row || !row.items) return getVideoCurationsMock();
   return row.items
-    .map((item) => ({
-      id: String(item.id ?? ""),
-      title: String(item.title ?? ""),
-      description: item.description != null ? String(item.description) : null,
-      categoryId: item.categoryId != null ? String(item.categoryId) : null,
-      serviceTypeId: item.serviceTypeId != null ? String(item.serviceTypeId) : null,
-      thumbnail: item.thumbnail != null ? String(item.thumbnail) : null,
-      videoUrl: item.videoUrl != null ? String(item.videoUrl) : null,
-      externalUrl: item.externalUrl != null ? String(item.externalUrl) : null,
-      durationSeconds: item.durationSeconds != null ? Number(item.durationSeconds) : null,
-      sortOrder: Number(item.sortOrder ?? 0),
-      active: item.active === undefined ? true : Number(item.active) === 1,
-    }))
+    .map((item) => {
+      const rawClips = item.clips;
+      const clips =
+        Array.isArray(rawClips) && rawClips.length > 0 ? rawClips.map((c) => parseVideoClip(c)) : undefined;
+      return {
+        id: String(item.id ?? ""),
+        title: String(item.title ?? ""),
+        description: item.description != null ? String(item.description) : null,
+        categoryId: item.categoryId != null ? String(item.categoryId) : null,
+        serviceTypeId: item.serviceTypeId != null ? String(item.serviceTypeId) : null,
+        thumbnail: item.thumbnail != null ? String(item.thumbnail) : null,
+        videoUrl: item.videoUrl != null ? String(item.videoUrl) : null,
+        externalUrl: item.externalUrl != null ? String(item.externalUrl) : null,
+        durationSeconds: item.durationSeconds != null ? Number(item.durationSeconds) : null,
+        clips,
+        sortOrder: Number(item.sortOrder ?? 0),
+        active: item.active === undefined ? true : Number(item.active) === 1,
+      };
+    })
     .filter((v) => v.active)
     .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+// ---------------------------------------------------------------------
+// Branding + Contact Info (HOMEPAGE ADMIN REBUILD — "Header and branding
+// if managed here"). Both tables + their admin CRUD already existed
+// (backend/src/modules/content/branding.* and contactInfo.*) but were
+// never read by any live page — Header/Footer hardcode the logo image
+// and the mock `contact.json`'s (always-empty) social links instead. Same
+// fallback contract as every other *Live function in this file: a missing/
+// unreachable/not-yet-configured value falls back to the existing default
+// so Header/Footer can never render blank or broken because of this.
+// ---------------------------------------------------------------------
+
+export interface LiveBranding {
+  logoUrl: string | null;
+  logoAlt: string | null;
+}
+
+export async function getBrandingLive(): Promise<LiveBranding | null> {
+  const dto = await backendGet<LiveBranding>("/branding");
+  if (!dto || !dto.logoUrl) return null;
+  return dto;
+}
+
+export interface LiveContactInfo {
+  phone: string;
+  whatsapp: string;
+  email: string | null;
+  address: string | null;
+  hours: string | null;
+  socialLinks: { platform: string; url: string }[];
+}
+
+export async function getContactInfoLive(): Promise<LiveContactInfo | null> {
+  return backendGet<LiveContactInfo>("/contact-info");
 }

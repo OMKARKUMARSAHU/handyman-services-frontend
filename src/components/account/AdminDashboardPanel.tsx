@@ -150,7 +150,7 @@ export function AdminDashboardPanel() {
               {tab === "orders" && <AdminOrdersTab />}
               {tab === "media" && <AdminMediaLibraryPanel />}
               {tab === "catalog" && <AdminCatalogPanel />}
-              {tab === "homepage" && <AdminHomepageContentPanel />}
+              {tab === "homepage" && <AdminHomepageContentPanel onNavigateToCatalog={() => setTab("catalog")} />}
             </div>
           </div>
         </Container>

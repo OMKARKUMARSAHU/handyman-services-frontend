@@ -16,8 +16,12 @@ import { apiRequest, AuthApiError } from "@/lib/auth/api";
  */
 export { AuthApiError };
 
+export interface HomepageSectionItemClip {
+  [key: string]: string | number | null | undefined;
+}
+
 export interface HomepageSectionItem {
-  [key: string]: string | number | undefined;
+  [key: string]: string | number | HomepageSectionItemClip[] | undefined;
 }
 
 export interface AdminHomepageSection {
@@ -67,3 +71,68 @@ export function updateHomepageSection(
 export function deleteHomepageSection(key: string): Promise<{ success: boolean }> {
   return apiRequest(`/admin/homepage-sections/${key}`, { method: "DELETE" });
 }
+
+// ---------------------------------------------------------------------
+// Branding + Contact Info (HOMEPAGE ADMIN REBUILD — "Header and
+// branding"). Thin wrappers around the backend's existing, already-built
+// `branding`/`contact_info` singleton endpoints (content.routes.ts) —
+// same admin-gated PATCH, public GET pattern as every other module here.
+// ---------------------------------------------------------------------
+
+export interface BrandAsset {
+  key: string;
+  url: string;
+  alt: string;
+}
+
+export interface AdminBranding {
+  logoUrl: string | null;
+  logoAlt: string | null;
+  brandAssets: BrandAsset[];
+}
+
+export interface BrandingInput {
+  logoUrl?: string | null;
+  logoAlt?: string | null;
+  brandAssets?: BrandAsset[];
+}
+
+export function getBrandingAdmin(): Promise<AdminBranding> {
+  return apiRequest<AdminBranding>("/branding", { method: "GET" });
+}
+
+export function updateBranding(input: BrandingInput): Promise<AdminBranding> {
+  return apiRequest<AdminBranding>("/admin/branding", { method: "PATCH", body: JSON.stringify(input) });
+}
+
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+export interface AdminContactInfo {
+  phone: string;
+  whatsapp: string;
+  email: string | null;
+  address: string | null;
+  hours: string | null;
+  socialLinks: SocialLink[];
+}
+
+export interface ContactInfoInput {
+  phone?: string;
+  whatsapp?: string;
+  email?: string | null;
+  address?: string | null;
+  hours?: string | null;
+  socialLinks?: SocialLink[];
+}
+
+export function getContactInfoAdmin(): Promise<AdminContactInfo | null> {
+  return apiRequest<AdminContactInfo | null>("/contact-info", { method: "GET" });
+}
+
+export function updateContactInfo(input: ContactInfoInput): Promise<AdminContactInfo> {
+  return apiRequest<AdminContactInfo>("/admin/contact-info", { method: "PATCH", body: JSON.stringify(input) });
+}
+

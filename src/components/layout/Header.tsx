@@ -5,6 +5,7 @@ import { SearchBox } from "./SearchBox";
 import { LocationSelector } from "./LocationSelector";
 import { AccountButton } from "./AccountButton";
 import { CartButton } from "./CartButton";
+import { getBrandingLive } from "@/lib/data/live";
 
 /**
  * Global marketplace header (Phase 3 header/footer revision).
@@ -35,7 +36,19 @@ import { CartButton } from "./CartButton";
  * icon row there is just [Cart] [Hamburger]. Desktop keeps Cart + Account
  * + (hidden) hamburger, unchanged.
  */
-export function Header() {
+export async function Header() {
+  // HOMEPAGE ADMIN REBUILD ("Header and branding"): an Admin-uploaded logo
+  // (backend's existing `branding` singleton table/API — previously built
+  // but never read anywhere) takes over this badge when set, falling back
+  // to the original fixed asset otherwise — same `admin value ?? default`
+  // fallback contract as every other live-wired field in this project
+  // (see HeroDiscoveryPanel.tsx, CategoryCard.tsx). Never blocks/breaks
+  // the header if the backend is slow or unreachable: getBrandingLive()
+  // already degrades to `null` in that case.
+  const branding = await getBrandingLive();
+  const logoSrc = branding?.logoUrl || "/images/brand/handyman-logo.jpg";
+  const logoAlt = branding?.logoAlt || "Handyman Services";
+
   return (
     <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
       <Container className="flex h-16 items-center gap-3">
@@ -67,8 +80,8 @@ export function Header() {
             */}
             {/* eslint-disable-next-line @next/next/no-img-element -- small fixed badge crop of the official brand asset; next/image's fixed sizing isn't needed here */}
             <img
-              src="/images/brand/handyman-logo.jpg"
-              alt="Handyman Services"
+              src={logoSrc}
+              alt={logoAlt}
               className="h-full w-full object-cover object-top"
             />
           </span>

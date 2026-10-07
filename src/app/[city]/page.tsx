@@ -23,6 +23,26 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { VideoCurationRail } from "@/components/home/VideoCurationRail";
 
 /**
+ * Converts a homepage_sections "hero" row's generic `items` array into the
+ * Hero image-collage override shape (HOMEPAGE ADMIN REBUILD — "Hero image
+ * gallery"). Each item is a flat `{ slot, url, alt }` record (same generic
+ * items column every other homepage collection already uses — see
+ * AdminHomepageContentPanel.tsx's HeroImagesEditor); `url`-less rows are
+ * dropped rather than rendered as a broken slot. Returns `undefined` (not
+ * an empty array) when there is nothing usable, so `HeroCollage` falls
+ * back to its own default scenes exactly as it did before this feature
+ * existed.
+ */
+function toHeroImages(items: { url?: string | number; alt?: string | number }[] | null | undefined) {
+  if (!items || items.length === 0) return undefined;
+  const images = items
+    .map((it) => ({ url: it.url != null ? String(it.url) : "", alt: it.alt != null ? String(it.alt) : "" }))
+    .filter((img) => img.url.length > 0);
+  return images.length > 0 ? images : undefined;
+}
+
+
+/**
  * BUILD-TIME FIX (Vercel build timeout -- "took more than 60 seconds ...
  * after 3 attempts ... Next.js build worker exited with code: 1"): this
  * previously returned every active city, forcing `next build` to eagerly
@@ -95,7 +115,7 @@ export default async function CityHomePage({ params }: { params: Promise<{ city:
   const city = getCityBySlugSync(citySlug);
   if (!city) notFound();
 
-  const [categories, products, featured, mostBooked, offers, whyChooseUsSection, howItWorksSection, videoCurations] =
+  const [categories, products, featured, mostBooked, offers, whyChooseUsSection, howItWorksSection, videoCurations, heroSection] =
     await Promise.all([
       getCategoriesLive(),
       getAllProductsLive(),
@@ -105,6 +125,7 @@ export default async function CityHomePage({ params }: { params: Promise<{ city:
       getHomepageSectionLive("whyChooseUs"),
       getHomepageSectionLive("howItWorks"),
       getVideoCurationsLive(),
+      getHomepageSectionLive("hero"),
     ]);
   const services = getAllServicesSync();
   const categoryRails = await Promise.all(
@@ -116,6 +137,18 @@ export default async function CityHomePage({ params }: { params: Promise<{ city:
 
   return (
     <>
+      {/*
+        HOMEPAGE ADMIN REBUILD: only the hero's image collage is shared
+        with the Admin-managed "hero" homepage_sections row here — the
+        heading/subheading stay the existing per-city-generated text
+        (`Home services in ${city.name}`, unchanged), never the global
+        "hero" row's heading/subheading, which is a single site-wide value
+        and would otherwise make every city's hero show identical text
+        and lose the "in {city.name}" personalization the moment an admin
+        edits the Hero section on "/". That text override is deliberately
+        NOT applied here — see app/page.tsx, where the city-agnostic
+        homepage (which has no per-city text to lose) does use it.
+      */}
       <Hero
         eyebrow="Now browsing"
         heading={`Home services in ${city.name}`}
@@ -123,6 +156,7 @@ export default async function CityHomePage({ params }: { params: Promise<{ city:
         products={products}
         categories={categories}
         citySlug={city.slug}
+        heroImages={toHeroImages(heroSection?.items)}
       />
 
       {whyChooseUsSection && <TrustStrip section={whyChooseUsSection} />}
