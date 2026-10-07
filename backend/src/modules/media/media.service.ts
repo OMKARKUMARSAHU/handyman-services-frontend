@@ -100,7 +100,36 @@ export function requireBucketName(): string {
  */
 export function buildPublicUrl(key: string): string {
   requireBucketName(); // keep the "is S3 actually configured" guard
-  return `${env.API_PUBLIC_BASE_URL}${env.API_BASE_PATH}/media/file/${key}`;
+  // PHASE 16 -- the EB environment this backend runs on has no HTTPS/TLS
+  // listener (see src/app/api/backend/[...path]/route.ts on the frontend
+  // for the full writeup of that limitation). An absolute
+  // `${API_PUBLIC_BASE_URL}` URL is therefore either an http:// origin
+  // (blocked as mixed content on the https:// frontend) or an https://
+  // one (nothing listens on 443 -- connection just times out), so EVERY
+  // absolute URL built here is unreachable from a browser regardless of
+  // hostname correctness. Returning a site-relative path instead routes
+  // the browser's image/video request back through the frontend's own
+  // already-working same-origin proxy (`/api/backend/*` ->
+  // DIRECT_BACKEND_BASE_URL), exactly like every other browser-side API
+  // call already does. Do not reintroduce an absolute, host-qualified
+  // URL here without first giving EB a real HTTPS listener.
+  //
+  // PHASE 16 CORRECTION (caught in local testing): do NOT prefix with
+  // `env.API_BASE_PATH` here. Every other browser-side call in this
+  // codebase (see request()/apiRequest() in src/lib/auth/api.ts) builds
+  // its proxy path as `${BROWSER_PROXY_BASE_PATH}${barePath}` with NO
+  // `/api/v1` segment, because the proxy route
+  // (src/app/api/backend/[...path]/route.ts) forwards
+  // `${DIRECT_BACKEND_BASE_URL}/${path}` and DIRECT_BACKEND_BASE_URL
+  // ALREADY ends in `/api/v1`. Including API_BASE_PATH here too produced
+  // `/api/backend/api/v1/media/file/<key>`, which the proxy turned into
+  // `.../api/v1/api/v1/media/file/<key>` -- a double-prefixed path that
+  // 404s on the real backend route (`/api/v1/media/file/<key>`). The
+  // first version of this fix was verified against a hand-typed test
+  // URL that happened to omit this prefix, then shipped with the bug
+  // anyway -- exactly why this needed a real local end-to-end test
+  // before going out again.
+  return `/api/backend/media/file/${key}`;
 }
 
 /**

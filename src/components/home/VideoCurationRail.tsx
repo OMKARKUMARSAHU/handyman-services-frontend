@@ -47,15 +47,29 @@ export function VideoCurationRail({
   if (curations.length === 0) return null;
 
   // AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline"): an
-  // Admin-uploaded thumbnail is a remote S3/CDN URL (http/https), which
-  // `fs.existsSync` can never find on this server's local disk — treat
-  // any remote URL as existing without the disk check, and keep the
-  // disk check only for the legacy local `/images/...` mock thumbnails.
+  // Admin-uploaded thumbnail used to always be a remote S3/CDN URL
+  // (http/https), which `fs.existsSync` can never find on this server's
+  // local disk — treat any remote URL as existing without the disk
+  // check, and keep the disk check only for the legacy local
+  // `/images/...` mock thumbnails.
+  //
+  // PHASE 16 FOLLOW-UP: buildPublicUrl() (backend/src/modules/media/
+  // media.service.ts) now returns a site-relative `/api/backend/...`
+  // path instead of an absolute URL (EB has no HTTPS listener, so an
+  // absolute URL is unreachable from a browser -- see that file's doc
+  // comment). Every CURRENT admin-uploaded thumbnail therefore no
+  // longer matches `/^https?:\/\//` and was silently falling through to
+  // the disk check -- which always fails for it, since it is a proxy
+  // route, not a file under `public/` -- making every new/updated Video
+  // Curation thumbnail render the "coming soon" placeholder even though
+  // the URL itself is perfectly valid. Recognize that proxy prefix as
+  // "admin-uploaded, always exists" too, same as the http(s) case.
   const items: VideoCurationGalleryItem[] = curations.map((curation) => ({
     curation,
     thumbnailExists:
       curation.thumbnail !== null &&
       (/^https?:\/\//.test(curation.thumbnail) ||
+        curation.thumbnail.startsWith("/api/backend/") ||
         fs.existsSync(path.join(process.cwd(), "public", curation.thumbnail))),
     tagLabel:
       (curation.serviceTypeId && getServiceTypeByIdSync(curation.serviceTypeId)?.label) ||
