@@ -30,7 +30,34 @@ export function createApp(): Express {
   app.set("trust proxy", true);
 
   app.disable("x-powered-by");
-  app.use(helmet());
+  // PRODUCTION INCIDENT FOLLOW-UP ("ERR_CONNECTION_TIMED_OUT" on the EB
+  // backend URL in every browser, while curl/Test-NetConnection succeed on
+  // the exact same host:80): helmet's own `hsts` middleware sets
+  // `Strict-Transport-Security` UNCONDITIONALLY on every response --
+  // including over this environment's plain-HTTP-only listener (security
+  // group only has port 80 open; nothing listens on 443 yet). The first
+  // time any browser received that header from this host over HTTP, it
+  // cached an HSTS policy telling itself to silently upgrade every future
+  // request to this exact host to https:// *before even opening a
+  // connection* -- and since nothing answers on 443, that upgraded request
+  // just hangs until the browser times out. Non-browser tools (curl,
+  // Test-NetConnection) have no such cache, which is exactly why they
+  // "worked" while every browser did not.
+  //
+  // Fix: disable helmet's unconditional hsts and only ever send the header
+  // when this exact request actually arrived over HTTPS end-to-end
+  // (`req.secure`, accurate now that `trust proxy` above makes Express
+  // honor the `X-Forwarded-Proto` header EB's nginx already sets). Once a
+  // real HTTPS listener/ACM cert is added in front of this environment,
+  // X-Forwarded-Proto will say "https" and this starts sending HSTS again
+  // automatically -- nothing else to change then.
+  app.use(helmet({ hsts: false }));
+  app.use((req, res, next) => {
+    if (req.secure) {
+      res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+    next();
+  });
   app.use(
     cors({
       origin(origin, callback) {
