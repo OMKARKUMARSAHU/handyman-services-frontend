@@ -2,6 +2,7 @@ import { createApp } from "./app";
 import { env } from "./config/env";
 import { logger } from "./shared/logger";
 import { getDb, closeDb } from "./database/db";
+import { startBlogScheduler, stopBlogScheduler } from "./modules/blog/blogScheduler";
 
 async function main(): Promise<void> {
   // Fail fast if the database is unreachable rather than starting and
@@ -17,8 +18,11 @@ async function main(): Promise<void> {
     logger.info({ port: env.PORT, basePath: env.API_BASE_PATH }, "backend_listening");
   });
 
+  startBlogScheduler(env.BLOG_SCHEDULER_INTERVAL_MS);
+
   const shutdown = async (signal: string): Promise<void> => {
     logger.info({ signal }, "backend_shutting_down");
+    stopBlogScheduler();
     server.close(() => {
       closeDb().finally(() => process.exit(0));
     });

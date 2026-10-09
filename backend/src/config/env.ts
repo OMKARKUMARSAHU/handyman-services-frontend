@@ -32,6 +32,8 @@ const envSchema = z.object({
   // (e.g. https://api.handymanservices.in) before production.
   API_PUBLIC_BASE_URL: z.string().default("http://localhost:4000"),
   LOG_LEVEL: z.string().default("info"),
+  /** How often (ms) the server-side scheduler publishes blog posts whose scheduled time has arrived. 0 disables the timer (read-time promotion still applies). */
+  BLOG_SCHEDULER_INTERVAL_MS: z.coerce.number().int().min(0).default(60_000),
 
   CORS_ALLOWED_ORIGINS: z.string().default("http://localhost:3000"),
 
@@ -57,6 +59,17 @@ const envSchema = z.object({
   S3_REGION: z.string().default("ap-south-1"),
   S3_UPLOAD_URL_TTL_SECONDS: z.coerce.number().int().positive().default(300),
   S3_MAX_UPLOAD_BYTES: z.coerce.number().int().positive().default(10 * 1024 * 1024),
+  // VIDEO SHOWCASE ADMIN FIX: the shared 10MB cap above was sized for
+  // images (PHASE_2_AWS_ARCHITECTURE.md §15) and is applied by
+  // media.service.ts to the Catalog's own per-service image uploads,
+  // left untouched here. It is far too small for real video clips (even
+  // a short, low-res clip routinely exceeds it), which in practice made
+  // "upload a video" in the Media Library fail every time it was tried
+  // with a real file -- the direct cause this variable fixes. Used only
+  // by the Central Media Library (media-library.service.ts) when the
+  // upload's content type is a video; image uploads through that same
+  // module keep using S3_MAX_UPLOAD_BYTES above, unchanged.
+  S3_MAX_VIDEO_UPLOAD_BYTES: z.coerce.number().int().positive().default(200 * 1024 * 1024),
   // Local-dev-only fallback credentials (.env.example's own note: "never set these in
   // production configuration" — ECS Fargate's task IAM role supplies credentials there
   // via the SDK's default provider chain instead).

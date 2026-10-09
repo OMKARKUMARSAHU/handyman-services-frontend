@@ -38,12 +38,22 @@ export async function createLibraryUploadUrl(input: {
       `Unsupported content type "${input.contentType}". Allowed types: ${[...ALLOWED_MEDIA_CONTENT_TYPES].join(", ")}.`
     );
   }
-  if (input.fileSizeBytes > env.S3_MAX_UPLOAD_BYTES) {
-    throw new ConflictError(`File is too large. Maximum allowed size is ${env.S3_MAX_UPLOAD_BYTES} bytes.`);
+
+  const type = inferMediaType(input.contentType);
+  // VIDEO SHOWCASE ADMIN FIX: videos get their own, much larger ceiling
+  // (env.ts has the full rationale) -- the single shared image-sized cap
+  // this used to enforce for every content type made uploading a real
+  // video effectively impossible.
+  const maxBytes = type === "video" ? env.S3_MAX_VIDEO_UPLOAD_BYTES : env.S3_MAX_UPLOAD_BYTES;
+  if (input.fileSizeBytes > maxBytes) {
+    const maxMb = (maxBytes / (1024 * 1024)).toFixed(0);
+    const gotMb = (input.fileSizeBytes / (1024 * 1024)).toFixed(1);
+    throw new ConflictError(
+      `This ${type} is ${gotMb}MB, which is over the ${maxMb}MB limit for ${type} uploads.`
+    );
   }
 
   const bucket = requireBucketName();
-  const type = inferMediaType(input.contentType);
   const key = `library/${type}/${randomUUID()}-${sanitizeFileName(input.fileName)}`;
 
   const uploadUrl = await getSignedUrl(

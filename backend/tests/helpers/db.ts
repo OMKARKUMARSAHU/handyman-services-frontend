@@ -9,6 +9,10 @@ import { getDb } from "../../src/database/db";
  * history is never touched by test runs.
  */
 const ALL_TABLES = [
+  "blog_post_tags",
+  "blog_posts",
+  "blog_tags",
+  "blog_categories",
   "payments",
   "order_items",
   "orders",

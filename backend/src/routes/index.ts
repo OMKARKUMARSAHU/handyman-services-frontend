@@ -17,6 +17,7 @@ import { mediaLibraryRouter } from "../modules/media-library/media-library.route
 import { contentRouter } from "../modules/content/content.routes";
 import { usersRouter } from "../modules/users/users.routes";
 import { authRouter } from "../modules/auth/auth.routes";
+import { blogRouter } from "../modules/blog/blog.routes";
 
 /**
  * Assembles every module's router under one mount point (`env.API_BASE_PATH`,
@@ -50,6 +51,7 @@ export function buildRouter(): Router {
   router.use(mediaLibraryRouter());
   router.use(contentRouter());
   router.use(usersRouter());
+  router.use(blogRouter());
 
   return router;
 }
