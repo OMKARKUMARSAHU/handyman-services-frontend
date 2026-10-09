@@ -41,6 +41,30 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  List,
+  ListOrdered,
+  Quote,
+  Link2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Undo2,
+  Redo2,
+  Heading1,
+  Heading2,
+  Video,
+  Image as ImageIcon,
+  Upload,
+  Tag,
+  Folder,
+  CalendarDays,
+  FileText,
+  ArrowLeft,
 } from "lucide-react";
 
 export type IconKey =
@@ -86,7 +110,31 @@ export type IconKey =
   | "eye-off"
   | "check-circle"
   | "x-circle"
-  | "clock";
+  | "clock"
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough"
+  | "list"
+  | "list-ordered"
+  | "quote"
+  | "link"
+  | "align-left"
+  | "align-center"
+  | "align-right"
+  | "align-justify"
+  | "undo"
+  | "redo"
+  | "heading-1"
+  | "heading-2"
+  | "video"
+  | "image"
+  | "upload"
+  | "tag"
+  | "folder"
+  | "calendar"
+  | "file-text"
+  | "arrow-left";
 
 /**
  * A single, consistent icon set (lucide-react) resolved from the string
@@ -188,6 +236,54 @@ export function Icon({
       return <XCircle {...props} />;
     case "clock":
       return <Clock {...props} />;
+    case "bold":
+      return <Bold {...props} />;
+    case "italic":
+      return <Italic {...props} />;
+    case "underline":
+      return <Underline {...props} />;
+    case "strikethrough":
+      return <Strikethrough {...props} />;
+    case "list":
+      return <List {...props} />;
+    case "list-ordered":
+      return <ListOrdered {...props} />;
+    case "quote":
+      return <Quote {...props} />;
+    case "link":
+      return <Link2 {...props} />;
+    case "align-left":
+      return <AlignLeft {...props} />;
+    case "align-center":
+      return <AlignCenter {...props} />;
+    case "align-right":
+      return <AlignRight {...props} />;
+    case "align-justify":
+      return <AlignJustify {...props} />;
+    case "undo":
+      return <Undo2 {...props} />;
+    case "redo":
+      return <Redo2 {...props} />;
+    case "heading-1":
+      return <Heading1 {...props} />;
+    case "heading-2":
+      return <Heading2 {...props} />;
+    case "video":
+      return <Video {...props} />;
+    case "image":
+      return <ImageIcon {...props} />;
+    case "upload":
+      return <Upload {...props} />;
+    case "tag":
+      return <Tag {...props} />;
+    case "folder":
+      return <Folder {...props} />;
+    case "calendar":
+      return <CalendarDays {...props} />;
+    case "file-text":
+      return <FileText {...props} />;
+    case "arrow-left":
+      return <ArrowLeft {...props} />;
     case "shield-check":
     default:
       return <ShieldCheck {...props} />;

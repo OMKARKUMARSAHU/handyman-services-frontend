@@ -119,3 +119,132 @@ html {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Blog Management System — shared rich-content styling, applied to BOTH
+ * the admin TipTap editor surface (`.tiptap-editor .ProseMirror`, wrapping
+ * `BlogRichTextEditor`'s `EditorContent`) and the public article body
+ * (`.blog-article-content`, wrapping the sanitized HTML rendered on
+ * `/blog/[slug]`). One rule set for both means what an admin sees while
+ * writing is the same typography/spacing a visitor sees after publish —
+ * never a surprise on either side. Only the placeholder rule is
+ * editor-only (nothing to show a placeholder for on a published page).
+ */
+.tiptap-editor .ProseMirror,
+.blog-article-content {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--color-neutral-800, #262626);
+}
+
+.tiptap-editor .ProseMirror p,
+.blog-article-content p {
+  margin: 0 0 1em;
+}
+
+.tiptap-editor .ProseMirror h1,
+.blog-article-content h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 1.4em 0 0.6em;
+  line-height: 1.25;
+}
+
+.tiptap-editor .ProseMirror h2,
+.blog-article-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1.3em 0 0.6em;
+  line-height: 1.3;
+}
+
+.tiptap-editor .ProseMirror h3,
+.blog-article-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.2em 0 0.5em;
+}
+
+.tiptap-editor .ProseMirror h4,
+.tiptap-editor .ProseMirror h5,
+.tiptap-editor .ProseMirror h6,
+.blog-article-content h4,
+.blog-article-content h5,
+.blog-article-content h6 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.1em 0 0.5em;
+}
+
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol,
+.blog-article-content ul,
+.blog-article-content ol {
+  margin: 0 0 1em;
+  padding-left: 1.5em;
+}
+
+.tiptap-editor .ProseMirror ul,
+.blog-article-content ul {
+  list-style: disc;
+}
+
+.tiptap-editor .ProseMirror ol,
+.blog-article-content ol {
+  list-style: decimal;
+}
+
+.tiptap-editor .ProseMirror blockquote,
+.blog-article-content blockquote {
+  margin: 1em 0;
+  padding-left: 1em;
+  border-left: 3px solid var(--color-brand-300, #99d8cd);
+  color: var(--color-neutral-600, #525252);
+  font-style: italic;
+}
+
+.tiptap-editor .ProseMirror a,
+.blog-article-content a {
+  color: var(--color-brand-700, #1f7267);
+  text-decoration: underline;
+  text-decoration-color: var(--color-brand-300, #99d8cd);
+}
+
+.tiptap-editor .ProseMirror img,
+.blog-article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1em 0;
+}
+
+.tiptap-editor .ProseMirror video,
+.tiptap-editor .ProseMirror iframe,
+.blog-article-content video,
+.blog-article-content iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.25em 0;
+  background: #0a0a0a;
+}
+
+/* TipTap's TextAlign extension writes `style="text-align: …"` directly on
+   the block element — this just makes sure that's honored (it already
+   would be, as inline style; stated here so it isn't accidentally
+   overridden by a more specific selector added later). */
+.tiptap-editor .ProseMirror [style*="text-align"],
+.blog-article-content [style*="text-align"] {
+  text-align: inherit;
+}
+
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--color-neutral-400, #a3a3a3);
+  pointer-events: none;
+}

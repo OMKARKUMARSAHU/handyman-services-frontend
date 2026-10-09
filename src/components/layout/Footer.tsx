@@ -47,8 +47,16 @@ import { getBrandingLive, getContactInfoLive } from "@/lib/data/live";
 export async function Footer() {
   const companyNav = getFooterCompanyNav();
   const contactLink = companyNav.find((item) => item.label === "Contact Us" || item.label === "Contact");
+  // Blog Management System (Task 4): the spec requires the Blog link to
+  // live ONLY in the footer's Company column — never the header, primary
+  // nav, homepage, or service cards, and never duplicated across footer
+  // columns. It's appended here as a plain static entry (not sourced from
+  // nav.json) rather than touching the shared NavItem data, so the header
+  // and MobileMenu (which both read independent, hardcoded route lists —
+  // see nav.ts's own comments) are provably unaffected by this addition.
   const companyLinks = [
     ...companyNav.filter((item) => item.label !== "FAQ"),
+    { label: "Blog", href: "/blog" },
     ...getFooterLegalNav(),
   ];
   // "For Customers": exactly Login, My Orders, Contact Us, per the client's spec

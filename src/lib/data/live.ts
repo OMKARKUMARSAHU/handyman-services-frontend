@@ -602,3 +602,103 @@ export interface LiveContactInfo {
 export async function getContactInfoLive(): Promise<LiveContactInfo | null> {
   return backendGet<LiveContactInfo>("/contact-info");
 }
+
+// ---------------------------------------------------------------------
+// Blog (Blog Management System — requirements 4/6/7). Unlike every read
+// above, there is no pre-existing mock blog content to fall back to —
+// this is a brand-new feature, not a migration of something that already
+// rendered from `src/lib/data/*.json`. A missing/unreachable backend (or
+// a backend not yet migrated — `blog_posts` doesn't exist pre-migration)
+// simply surfaces as an empty result here; the pages that call these
+// functions are responsible for their own empty/error states (requirement
+// 4's "useful loading, empty, and error states"), not this file.
+// ---------------------------------------------------------------------
+
+export interface LiveBlogCategory {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+}
+
+export interface LiveBlogTag {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+export interface LiveBlogImageRef {
+  mediaId: string;
+  url: string | null;
+  alt: string | null;
+}
+
+export interface LiveBlogPostSummary {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  featuredImage: LiveBlogImageRef | null;
+  category: LiveBlogCategory | null;
+  tags: LiveBlogTag[];
+  authorName: string;
+  publishedAt: string | null;
+  readingTimeMinutes: number | null;
+}
+
+export interface LiveBlogPostDetail extends LiveBlogPostSummary {
+  content: string;
+  ogImage: { mediaId: string; url: string | null } | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  canonicalUrl: string | null;
+  relatedPosts: LiveBlogPostSummary[];
+}
+
+export interface LiveBlogPostPage {
+  items: LiveBlogPostSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+/**
+ * Public blog reads go straight to the backend on every call (no
+ * `REVALIDATE_SECONDS` in-process cache like `getLiveCatalogContext`'s) —
+ * Next's own `fetch` cache (the `next: { revalidate }` option on
+ * `backendGet`'s server branch) already gives these the same 30-second
+ * ISR-style freshness window every other `*Live` read gets, and a
+ * client-side "Load more" click on the listing page must always go
+ * through `backendGet`'s browser branch (`cache: "no-store"`) rather than
+ * a server-only in-memory cache that a browser call could never populate
+ * or benefit from.
+ */
+export async function listBlogPostsLive(params: {
+  categorySlug?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<LiveBlogPostPage> {
+  const query = new URLSearchParams();
+  if (params.categorySlug) query.set("category", params.categorySlug);
+  if (params.search) query.set("search", params.search);
+  query.set("page", String(params.page ?? 1));
+  query.set("pageSize", String(params.pageSize ?? 9));
+  const result = await backendGet<LiveBlogPostPage>(`/blog/posts?${query.toString()}`);
+  return result ?? { items: [], total: 0, page: params.page ?? 1, pageSize: params.pageSize ?? 9 };
+}
+
+export async function getBlogPostBySlugLive(slug: string): Promise<LiveBlogPostDetail | null> {
+  return backendGet<LiveBlogPostDetail>(`/blog/posts/${encodeURIComponent(slug)}`);
+}
+
+export async function listBlogCategoriesLive(): Promise<LiveBlogCategory[]> {
+  const rows = await backendGet<LiveBlogCategory[]>("/blog/categories");
+  return rows ?? [];
+}
+
+/** Every published post's slug + dates — `src/app/sitemap.ts` only, see `GET /blog/sitemap-urls`'s own doc comment on the backend. */
+export async function listPublishedBlogSlugsLive(): Promise<Array<{ slug: string; updatedAt: string; publishedAt: string | null }>> {
+  const rows = await backendGet<Array<{ slug: string; updatedAt: string; publishedAt: string | null }>>("/blog/sitemap-urls");
+  return rows ?? [];
+}

@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/state/AuthProvider";
 import { AdminProviderQueue } from "@/components/account/AdminProviderQueue";
 import { AdminCatalogPanel } from "@/components/account/AdminCatalogPanel";
 import { AdminHomepageContentPanel } from "@/components/account/AdminHomepageContentPanel";
+import { AdminBlogPanel } from "@/components/account/AdminBlogPanel";
 import { AdminMediaLibraryPanel } from "@/components/account/AdminMediaLibraryPanel";
 import {
   AuthApiError,
@@ -27,7 +28,7 @@ import {
 
 // MEDIA LIBRARY FOLLOW-UP: "media" sits between Orders and Catalog per the
 // requested sidebar order.
-type Tab = "overview" | "providers" | "customers" | "orders" | "media" | "catalog" | "homepage";
+type Tab = "overview" | "providers" | "customers" | "orders" | "media" | "blog" | "catalog" | "homepage";
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "overview", label: "Overview", icon: "layout-grid" },
@@ -35,6 +36,7 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "customers", label: "Customers", icon: "user" },
   { key: "orders", label: "Orders", icon: "package" },
   { key: "media", label: "Media", icon: "film" },
+  { key: "blog", label: "Blog", icon: "file-text" },
   { key: "catalog", label: "Catalog", icon: "wrench" },
   { key: "homepage", label: "Homepage Content", icon: "layout-grid" },
 ];
@@ -149,6 +151,7 @@ export function AdminDashboardPanel() {
               {tab === "customers" && <AdminCustomersTab />}
               {tab === "orders" && <AdminOrdersTab />}
               {tab === "media" && <AdminMediaLibraryPanel />}
+              {tab === "blog" && <AdminBlogPanel />}
               {tab === "catalog" && <AdminCatalogPanel />}
               {tab === "homepage" && <AdminHomepageContentPanel onNavigateToCatalog={() => setTab("catalog")} />}
             </div>

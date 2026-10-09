@@ -47,6 +47,21 @@ export interface MediaMetadataInput {
 export const ACCEPTED_MEDIA_TYPES =
   "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime";
 
+/**
+ * Per-type size ceilings — kept in sync with the backend's
+ * S3_MAX_UPLOAD_BYTES / S3_MAX_VIDEO_UPLOAD_BYTES (env.ts defaults; a real
+ * deployment can override either). Used to reject an oversized file in
+ * the browser immediately, with a clear message, instead of only after a
+ * round trip to the server (which still enforces the real limit itself —
+ * this is a client-side convenience, not the authoritative check).
+ */
+export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
+export const MAX_VIDEO_UPLOAD_BYTES = 200 * 1024 * 1024;
+
+export function formatMegabytes(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
 export function listMedia(
   params: { type?: MediaType; search?: string; activeOnly?: boolean; page?: number; pageSize?: number } = {}
 ): Promise<{ items: Media[]; total: number; page: number; pageSize: number }> {

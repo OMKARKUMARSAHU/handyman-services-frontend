@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "@/lib/icons";
-import { ACCEPTED_MEDIA_TYPES, listMedia, uploadMedia, type Media, type MediaType } from "@/lib/admin/media-library-api";
+import {
+  ACCEPTED_MEDIA_TYPES,
+  formatMegabytes,
+  listMedia,
+  MAX_IMAGE_UPLOAD_BYTES,
+  MAX_VIDEO_UPLOAD_BYTES,
+  uploadMedia,
+  type Media,
+  type MediaType,
+} from "@/lib/admin/media-library-api";
 
 /**
  * Central Media Library — reusable Admin UI (Admin CMS follow-up, "Central
@@ -266,12 +275,23 @@ function UploadTab({ accept, onUploaded }: { accept: Accept; onUploaded: (m: Med
         : ACCEPTED_MEDIA_TYPES;
 
   function handleFileChange(f: File | null) {
-    setFile(f);
-    setError(null);
     setPreviewUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
-      return f && !f.type.startsWith("video/") ? URL.createObjectURL(f) : null;
+      return f ? URL.createObjectURL(f) : null;
     });
+    setError(null);
+    if (f) {
+      const isVideoFile = f.type.startsWith("video/");
+      const maxBytes = isVideoFile ? MAX_VIDEO_UPLOAD_BYTES : MAX_IMAGE_UPLOAD_BYTES;
+      if (f.size > maxBytes) {
+        setFile(null);
+        setError(
+          `This ${isVideoFile ? "video" : "image"} is ${formatMegabytes(f.size)}, which is over the ${formatMegabytes(maxBytes)} limit for ${isVideoFile ? "videos" : "images"}.`
+        );
+        return;
+      }
+    }
+    setFile(f);
   }
 
   async function handleSubmit() {
@@ -310,12 +330,17 @@ function UploadTab({ accept, onUploaded }: { accept: Accept; onUploaded: (m: Med
         />
         {file && (
           <div className="mt-2">
-            {isVideo || !previewUrl ? (
+            {!previewUrl ? (
               <p className="text-xs text-neutral-600">{file.name}</p>
+            ) : isVideo ? (
+              <video src={previewUrl} controls className="h-40 w-full max-w-xs rounded-lg bg-black object-contain" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element -- local file preview
               <img src={previewUrl} alt="" className="h-24 w-24 rounded-lg object-cover ring-1 ring-neutral-200" />
             )}
+            <p className="mt-1 text-xs text-neutral-500">
+              {file.name} · {formatMegabytes(file.size)}
+            </p>
           </div>
         )}
       </div>
