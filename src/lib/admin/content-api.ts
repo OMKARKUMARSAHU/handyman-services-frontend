@@ -51,7 +51,7 @@ export interface HomepageSectionInput {
 }
 
 export function listHomepageSectionsAdmin(): Promise<AdminHomepageSection[]> {
-  return apiRequest<AdminHomepageSection[]>("/homepage-sections", { method: "GET" });
+  return apiRequest<AdminHomepageSection[]>("/admin/homepage-sections", { method: "GET" });
 }
 
 export function createHomepageSection(input: HomepageSectionInput): Promise<AdminHomepageSection> {

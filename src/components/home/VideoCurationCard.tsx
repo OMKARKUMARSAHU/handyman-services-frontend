@@ -3,6 +3,7 @@
 import type { VideoCuration } from "@/types";
 import { formatDuration } from "@/lib/format";
 import { VideoCurationMedia } from "./VideoCurationMedia";
+import { buildPlaylist } from "@/lib/video/playlist";
 
 /**
  * One large vertical (reels-style, 9:16) card in the "Video Curations" rail
@@ -37,6 +38,8 @@ export function VideoCurationCard({
   tagLabel: string | null;
   onOpen: () => void;
 }) {
+  // Same list the popup plays (the card's own main video + its own clips).
+  const videoCount = buildPlaylist(curation).length;
   return (
     <button
       type="button"
@@ -58,9 +61,9 @@ export function VideoCurationCard({
       )}
 
       {/* HOMEPAGE ADMIN REBUILD — a small, honest "N videos" badge when this showcase item holds more than one real clip; absent entirely for an ordinary single-video card. */}
-      {Array.isArray(curation.clips) && curation.clips.length > 1 && (
+      {videoCount > 1 && (
         <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-white">
-          {curation.clips.length} videos
+          {videoCount} videos
         </span>
       )}
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { VideoCuration } from "@/types";
 import { Icon } from "@/lib/icons";
+import { resolveVideoEmbed } from "@/lib/video/embed";
+import { buildPlaylist, resolveActiveEntry, stepPlaylist } from "@/lib/video/playlist";
 
 /**
  * The video viewer opened by a Video Curations card.
@@ -24,6 +26,13 @@ import { Icon } from "@/lib/icons";
  * no `onPrev`/`onNext` passed (or a single curation), those controls and
  * the progress bar simply don't render — nothing here requires more than
  * one curation to work.
+ *
+ * VIDEO SHOWCASE PLAYLIST: a card with more than one video plays them one at
+ * a time in this single player; Previous/Next (buttons and ArrowLeft/Right)
+ * step through THAT card's own list only, wrapping at the ends, with a
+ * "Video 2 of 4" label and one progress segment per video. There is no row of
+ * clip thumbnails. A card with one video (or none) keeps the older
+ * previous/next-card arrows.
  *
  * The client's instruction was: the card must open a popup even before any
  * real video file/URL exists — and the same component must become a real
@@ -86,15 +95,51 @@ export function VideoCurationModal({
   // `curation?.id` below), so leaving the modal open while paging between
   // cards (`onPrev`/`onNext`) never leaves a stale clip selected on the
   // next card.
-  const [clipIndex, setClipIndex] = useState(0);
+  //
+  // VIDEO SHOWCASE FIX: the selection is the playlist ENTRY ID (which embeds
+  // the card id), not an index. An index is shared meaning across cards
+  // ("3rd video" of whichever card is open) and can point past the end of a
+  // shorter card; an id only ever matches an entry of its own card, so a
+  // selection can never carry over to a different card. The gallery also
+  // re-mounts this component per card (key={card.id}), so nothing else here
+  // survives a card change either.
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  // VIDEO SHOWCASE FIX — set once a <video> element actually fails to
+  // load (wrong/expired/unreachable file). An <iframe> can't be observed
+  // the same way (a cross-origin page that refuses to be framed doesn't
+  // fire a DOM error event here), which is exactly why every non-file
+  // external embed below is paired with a visible "Open video" link
+  // instead of relying on this flag.
+  const [mediaFailed, setMediaFailed] = useState(false);
   // Adjust-during-render (not a useEffect — see useDraftSave.ts's matching
-  // comment for why) so switching to a different card always starts on
-  // its first clip, without an extra commit/render pass.
-  const [lastCurationId, setLastCurationId] = useState(curation?.id);
-  if (curation?.id !== lastCurationId) {
-    setLastCurationId(curation?.id);
-    setClipIndex(0);
+  // comment for why) so switching to a different card, or a different
+  // clip within the same card, always starts from a clean error state and
+  // (for a card change) its first clip, without an extra commit/render
+  // pass.
+  const playlist = useMemo(() => (curation ? buildPlaylist(curation) : []), [curation]);
+  const activeEntry = resolveActiveEntry(playlist, selectedEntryId);
+  const mediaKey = curation ? `${activeEntry?.id ?? `${curation.id}::none`}|${activeEntry?.videoUrl ?? ""}|${activeEntry?.externalUrl ?? ""}` : null;
+  const [lastMediaKey, setLastMediaKey] = useState(mediaKey);
+  if (mediaKey !== lastMediaKey) {
+    setLastMediaKey(mediaKey);
+    if (mediaFailed) setMediaFailed(false);
   }
+
+  // Previous/Next move through THIS card's own videos whenever it has more
+  // than one. Only a card with a single video (or none) keeps the older
+  // "go to the neighbouring card" behaviour, so the arrows never mean two
+  // different things on the same card.
+  const hasPlaylistNav = playlist.length > 1;
+  const activeId = activeEntry?.id ?? null;
+  const goPrev = hasPlaylistNav ? () => setSelectedEntryId(stepPlaylist(playlist, activeId, -1)) : onPrev;
+  const goNext = hasPlaylistNav ? () => setSelectedEntryId(stepPlaylist(playlist, activeId, 1)) : onNext;
+  // The keyboard listener below is attached once per open card; it reads the
+  // latest handlers through this ref so stepping videos never re-runs the
+  // effect (which would move focus around).
+  const navRef = useRef<{ prev?: () => void; next?: () => void }>({});
+  useEffect(() => {
+    navRef.current = { prev: goPrev, next: goNext };
+  });
 
   useEffect(() => {
     if (!curation) return;
@@ -110,14 +155,14 @@ export function VideoCurationModal({
         onClose();
         return;
       }
-      if (e.key === "ArrowLeft" && onPrev) {
+      if (e.key === "ArrowLeft" && navRef.current.prev) {
         e.stopPropagation();
-        onPrev();
+        navRef.current.prev();
         return;
       }
-      if (e.key === "ArrowRight" && onNext) {
+      if (e.key === "ArrowRight" && navRef.current.next) {
         e.stopPropagation();
-        onNext();
+        navRef.current.next();
         return;
       }
       if (e.key !== "Tab" || !panelRef.current) return;
@@ -144,12 +189,17 @@ export function VideoCurationModal({
       document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus();
     };
-  }, [curation, onClose, onPrev, onNext]);
+  }, [curation, onClose]);
 
   if (!curation || typeof document === "undefined") return null;
 
   const titleId = `video-modal-title-${curation.id}`;
-  const showProgress = total != null && total > 1 && index != null;
+  // Progress segments: one per VIDEO of this card when it has a playlist,
+  // otherwise one per card (the older behaviour for single-video cards).
+  const activeIndex = Math.max(0, playlist.findIndex((e) => e.id === activeEntry?.id));
+  const showProgress = hasPlaylistNav || (total != null && total > 1 && index != null);
+  const progressCount = hasPlaylistNav ? playlist.length : (total ?? 0);
+  const progressIndex = hasPlaylistNav ? activeIndex : index;
 
   // HOMEPAGE ADMIN REBUILD — multi-clip support: `clips` (when present and
   // non-empty) takes over playback from the card's own top-level
@@ -157,11 +207,28 @@ export function VideoCurationModal({
   // describes. A single-clip or no-clips card falls through to exactly the
   // original fields/branching below — zero behavior change for every
   // curation that doesn't use this feature.
-  const hasClips = Array.isArray(curation.clips) && curation.clips.length > 0;
-  const activeClip = hasClips ? curation.clips![Math.min(clipIndex, curation.clips!.length - 1)] : null;
-  const activeVideoUrl = activeClip ? activeClip.videoUrl ?? null : curation.videoUrl;
-  const activeExternalUrl = activeClip ? activeClip.externalUrl ?? null : curation.externalUrl ?? null;
-  const activeTitle = activeClip?.title || curation.title;
+  const activeVideoUrl = activeEntry?.videoUrl ?? null;
+  const activeExternalUrl = activeEntry?.externalUrl ?? null;
+  const activeTitle = activeEntry?.title || curation.title;
+  const mediaElementKey = activeEntry?.id ?? `${curation.id}::none`;
+  // The poster belongs to the video being shown: its own thumbnail, else THIS card's thumbnail -- never another card's.
+  const posterUrl = activeEntry?.thumbnail ?? curation.thumbnail ?? undefined;
+
+  // VIDEO SHOWCASE FIX — root cause of "YouTube URLs don't reliably play":
+  // this used to drop `activeExternalUrl` straight into an <iframe> src,
+  // which only works for a URL that is already an embeddable path. A
+  // YouTube watch/Shorts/youtu.be link is not one (YouTube only allows
+  // framing its own "/embed/<id>" URL), so it rendered blank or got
+  // refused outright. `resolveVideoEmbed` (src/lib/video/embed.ts) is the
+  // single place that now decides, for every external link on this site,
+  // whether it's YouTube (-> build a real embed URL), a direct media file
+  // (-> play it with a native <video>, not an <iframe>), or something else
+  // (-> best-effort <iframe>, always paired with a visible "Open video"
+  // link below since a page that refuses to be framed fails silently from
+  // here). An uploaded file (`activeVideoUrl`) always wins over any
+  // external link, unchanged from before.
+  const externalEmbed = !activeVideoUrl ? resolveVideoEmbed(activeExternalUrl) : null;
+  const externalUrlLooksInvalid = !activeVideoUrl && Boolean(activeExternalUrl) && externalEmbed === null;
 
   return createPortal(
     <div
@@ -179,12 +246,12 @@ export function VideoCurationModal({
       >
         {showProgress && (
           <div className="absolute inset-x-3 top-3 z-10 flex items-center gap-1 pr-11">
-            {Array.from({ length: total }).map((_, i) => (
+            {Array.from({ length: progressCount }).map((_, i) => (
               <span
                 key={i}
                 aria-hidden="true"
                 className={`h-1 flex-1 rounded-full transition-colors ${
-                  i === index ? "bg-white" : "bg-white/30"
+                  i === progressIndex ? "bg-white" : "bg-white/30"
                 }`}
               />
             ))}
@@ -210,28 +277,102 @@ export function VideoCurationModal({
           both a short mobile viewport and a tall desktop one, rather than
           overflowing or shrinking to a sliver on either.
         */}
-        <div className="relative mx-auto aspect-[9/16] h-[min(78vh,640px)] w-auto shrink-0 bg-black">
-          {activeVideoUrl ? (
+        <div
+          className="relative mx-auto aspect-[9/16] h-[min(78vh,640px)] w-auto shrink-0 bg-black"
+          data-active-entry={activeEntry?.id ?? ""}
+        >
+          {mediaFailed ? (
+            // A real <video> element fired an error event — an uploaded
+            // file that's missing/corrupt, or a direct external file URL
+            // that's unreachable. Never a silent black box: say so, and
+            // offer the original link when there is one to open.
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-b from-neutral-900 to-neutral-950 px-12 text-center">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full border border-red-400/30 bg-red-500/10 text-red-300">
+                <Icon name="film" className="h-7 w-7" />
+              </span>
+              <p className="text-sm font-semibold uppercase tracking-wide text-white/60">
+                This video could not be played
+              </p>
+              <p className="max-w-[220px] text-xs text-white/40">
+                The file may be missing or temporarily unreachable.
+              </p>
+              {externalEmbed?.originalUrl && (
+                <a
+                  href={externalEmbed.originalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
+                >
+                  Open video directly ↗
+                </a>
+              )}
+            </div>
+          ) : activeVideoUrl ? (
             <video
-              key={`${curation.id}-${clipIndex}`}
+              key={mediaElementKey}
               src={activeVideoUrl}
               controls
               autoPlay
+              poster={posterUrl}
               className="h-full w-full object-contain"
+              onError={() => setMediaFailed(true)}
             >
               Your browser does not support embedded video.
             </video>
-          ) : activeExternalUrl ? (
-            <iframe
-              key={`${curation.id}-${clipIndex}`}
-              src={activeExternalUrl}
-              title={activeTitle}
-              className="h-full w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+          ) : externalEmbed?.kind === "file" ? (
+            // A direct external media file (e.g. a bare .mp4 link, not
+            // uploaded) — plays through a native <video>, same as an
+            // uploaded file, instead of the old behavior of dropping it
+            // into an <iframe> (inconsistent/broken for raw media URLs).
+            <video
+              key={mediaElementKey}
+              src={externalEmbed.embedUrl}
+              controls
+              autoPlay
+              poster={posterUrl}
+              className="h-full w-full object-contain"
+              onError={() => setMediaFailed(true)}
+            >
+              Your browser does not support embedded video.
+            </video>
+          ) : externalEmbed ? (
+            // YouTube ("kind: youtube", now a real /embed/<id> URL) or an
+            // unrecognized external link ("kind: generic", best-effort).
+            // A cross-origin page that refuses to be framed fails
+            // silently (no DOM error event reaches this component), which
+            // is exactly why the fallback link below is always shown
+            // alongside the iframe rather than only after a detected
+            // failure.
+            <>
+              <iframe
+                key={mediaElementKey}
+                src={externalEmbed.embedUrl}
+                title={activeTitle}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+              <a
+                href={externalEmbed.originalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-medium text-white/80 backdrop-blur-sm hover:bg-black/80 hover:text-white"
+              >
+                Can&rsquo;t see the video? Open it directly ↗
+              </a>
+            </>
+          ) : externalUrlLooksInvalid ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-b from-neutral-900 to-neutral-950 px-12 text-center">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full border border-red-400/30 bg-red-500/10 text-red-300">
+                <Icon name="film" className="h-7 w-7" />
+              </span>
+              <p className="text-sm font-semibold uppercase tracking-wide text-white/60">Video link isn&rsquo;t valid</p>
+              <p className="max-w-[220px] text-xs text-white/40">
+                The link saved for this video doesn&rsquo;t look like a working video URL.
+              </p>
+            </div>
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-b from-neutral-900 to-neutral-950 px-6 text-center">
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-b from-neutral-900 to-neutral-950 px-12 text-center">
               <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white">
                 <Icon name="film" className="h-7 w-7" />
               </span>
@@ -245,21 +386,23 @@ export function VideoCurationModal({
             </div>
           )}
 
-          {onPrev && (
+          {goPrev && (
             <button
               type="button"
-              onClick={onPrev}
-              aria-label="Previous video"
+              onClick={goPrev}
+              data-testid="player-prev"
+              aria-label={hasPlaylistNav ? "Previous video" : "Previous showcase"}
               className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <Icon name="chevron-left" className="h-5 w-5" />
             </button>
           )}
-          {onNext && (
+          {goNext && (
             <button
               type="button"
-              onClick={onNext}
-              aria-label="Next video"
+              onClick={goNext}
+              data-testid="player-next"
+              aria-label={hasPlaylistNav ? "Next video" : "Next showcase"}
               className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <Icon name="chevron-right" className="h-5 w-5" />
@@ -276,49 +419,18 @@ export function VideoCurationModal({
           )}
 
           {/*
-            HOMEPAGE ADMIN REBUILD — multi-clip switcher. Only rendered
-            when this showcase item actually carries more than one real
-            video; a single-clip (or no-clips) card shows none of this,
-            unchanged from before. Each thumbnail is a plain button (not a
-            link/video element) so it never fights the player's own
-            focus/keyboard handling above.
+            Playlist position for a card that holds more than one video.
+            There is deliberately NO row of per-clip thumbnails/icons: the
+            single player above is stepped with Previous/Next, which only
+            ever walk THIS card's own list (see stepPlaylist).
           */}
-          {hasClips && curation.clips!.length > 1 && (
-            <div className="mt-4">
+          {hasPlaylistNav && (
+            <div className="mt-3" data-testid="playlist-status">
               <p className="text-xs font-semibold uppercase tracking-wide text-white/50">
-                {curation.clips!.length} videos in this showcase
+                Video {activeIndex + 1} of {playlist.length}
               </p>
-              <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {curation.clips!.map((clip, i) => {
-                  const poster = clip.thumbnail || curation.thumbnail;
-                  return (
-                    <button
-                      key={clip.id || i}
-                      type="button"
-                      onClick={() => setClipIndex(i)}
-                      aria-label={`Play clip ${i + 1}: ${clip.title || curation.title}`}
-                      aria-current={i === clipIndex}
-                      className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-2 transition-colors ${
-                        i === clipIndex ? "ring-white" : "ring-white/15 hover:ring-white/40"
-                      }`}
-                    >
-                      {poster ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- small clip-picker thumbnail
-                        <img src={poster} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center bg-neutral-800 text-white/60">
-                          <Icon name="film" className="h-4 w-4" />
-                        </span>
-                      )}
-                      <span className="absolute bottom-0.5 right-0.5 rounded bg-black/70 px-1 text-[10px] font-semibold text-white">
-                        {i + 1}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {activeClip?.title && activeClip.title !== curation.title && (
-                <p className="mt-2 text-sm font-medium text-white">{activeClip.title}</p>
+              {activeEntry?.kind === "clip" && activeEntry.title && activeEntry.title !== curation.title && (
+                <p className="mt-1 text-sm font-medium text-white">{activeEntry.title}</p>
               )}
             </div>
           )}

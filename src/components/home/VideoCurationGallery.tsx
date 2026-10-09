@@ -88,6 +88,7 @@ export function VideoCurationGallery({
       />
 
       <VideoCurationModal
+        key={selected?.id ?? "closed"}
         curation={selected}
         onClose={() => setSelectedIndex(null)}
         index={selectedIndex ?? undefined}

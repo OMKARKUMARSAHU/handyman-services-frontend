@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createDirtyTracker, type DirtyTracker } from "./dirtyTracker";
 
 /**
  * Shared staged-draft/Done-Save/Cancel infrastructure for the Homepage
@@ -54,6 +55,13 @@ interface DirtyRegistryContextValue {
 
 const DirtyRegistryContext = createContext<DirtyRegistryContextValue | null>(null);
 
+/**
+ * The context value is created ONCE and never changes identity: `onChange`
+ * is swapped in an effect (the tracker keeps its identity), so a parent that passes a new inline callback every
+ * render can no longer cause every section to re-register (the cause of the
+ * "Maximum update depth exceeded" loop), and the tracker only notifies when
+ * the dirty set really changes (see dirtyTracker.ts).
+ */
 export function DirtyRegistryProvider({
   children,
   onChange,
@@ -61,19 +69,11 @@ export function DirtyRegistryProvider({
   children: React.ReactNode;
   onChange: (anyDirty: boolean, dirtyLabels: string[]) => void;
 }) {
-  const dirtyRef = useRef<Map<string, string>>(new Map());
-
-  const setDirty = useCallback(
-    (id: string, dirty: boolean, label: string) => {
-      const map = dirtyRef.current;
-      if (dirty) map.set(id, label);
-      else map.delete(id);
-      onChange(map.size > 0, Array.from(map.values()));
-    },
-    [onChange]
-  );
-
-  const value = useMemo(() => ({ setDirty }), [setDirty]);
+  const [value] = useState<DirtyTracker>(() => createDirtyTracker(onChange));
+  // Always notify the latest callback without changing the (stable) context value.
+  useEffect(() => {
+    value.setOnChange(onChange);
+  }, [value, onChange]);
 
   return <DirtyRegistryContext.Provider value={value}>{children}</DirtyRegistryContext.Provider>;
 }
@@ -148,10 +148,17 @@ export function useDraftSave<T>(id: string, label: string, serverValue: T, onSav
     }
   }
 
+  // Report the dirty state when it (or the label) changes. `registry` is
+  // stable for the life of the panel, and the tracker ignores repeats, so
+  // this effect can never ping-pong with the parent.
   useEffect(() => {
     registry?.setDirty(id, dirty, label);
-    return () => registry?.setDirty(id, false, label);
   }, [dirty, id, label, registry]);
+  // Forget this section only when it goes away (unmount / id change) --
+  // not on every dirty flip, which used to emit a spurious "clean" first.
+  useEffect(() => {
+    return () => registry?.setDirty(id, false, "");
+  }, [id, registry]);
 
   const setDraft = useCallback((next: T | ((prev: T) => T)) => {
     setDraftState((prev) => (typeof next === "function" ? (next as (p: T) => T)(prev) : next));

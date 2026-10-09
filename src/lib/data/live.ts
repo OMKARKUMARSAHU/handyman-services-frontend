@@ -11,6 +11,8 @@ import {
 import { getOffers as getOffersMock, getOffersForServiceSync as getOffersForServiceMock } from "./offers";
 import { getHomepageSection as getHomepageSectionMock } from "./homepageSections";
 import { getVideoCurations as getVideoCurationsMock } from "./videoCurations";
+import { cleanUrl } from "@/lib/video/playlist";
+import { makeUniqueId } from "@/lib/video/identity";
 
 /**
  * Live, backend-backed catalog + homepage-content reads (AUDIT FOLLOW-UP —
@@ -479,14 +481,16 @@ export async function getOffersLive(opts?: { citySlug?: string }): Promise<Offer
     }));
 }
 
-let sectionsCache: { value: BackendHomepageSection[]; expiresAt: number } | null = null;
-
+// VIDEO SHOWCASE FIX: this used to keep a second, module-level 30 s copy
+// of the response (`sectionsCache`) on top of the fetch Data Cache. An
+// admin save calls `revalidatePath()` (see the /api/backend proxy route),
+// which clears the Data Cache but can NOT clear a module variable -- so a
+// card toggled Active/Inactive or deleted kept showing (or staying hidden)
+// on the public homepage for up to 30 s after a successful save. The
+// fetch in `backendGet` is already cached and de-duplicated per request by
+// Next, so the extra layer added staleness and nothing else.
 async function getAllHomepageSectionsLive(): Promise<BackendHomepageSection[] | null> {
-  if (sectionsCache && sectionsCache.expiresAt > Date.now()) return sectionsCache.value;
-  const rows = await backendGet<BackendHomepageSection[]>("/homepage-sections");
-  if (!rows) return null;
-  sectionsCache = { value: rows, expiresAt: Date.now() + REVALIDATE_SECONDS * 1000 };
-  return rows;
+  return backendGet<BackendHomepageSection[]>("/homepage-sections");
 }
 
 export async function getHomepageSectionLive(key: string): Promise<HomepageSection | undefined> {
@@ -515,13 +519,14 @@ export async function getHomepageSectionLive(key: string): Promise<HomepageSecti
 }
 
 /** Parses one raw clip record (see backend content.schema.ts's `homepageSectionClipSchema`) into a typed `VideoCurationClip` — HOMEPAGE ADMIN REBUILD multi-video support. */
-function parseVideoClip(raw: Record<string, string | number | null | undefined>): VideoCurationClip {
+function parseVideoClip(raw: Record<string, string | number | null | undefined>, fallbackId: string): VideoCurationClip {
   return {
-    id: String(raw.id ?? ""),
+    id: String(raw.id ?? "").trim() || fallbackId,
     title: raw.title != null ? String(raw.title) : null,
-    videoUrl: raw.videoUrl != null ? String(raw.videoUrl) : null,
-    externalUrl: raw.externalUrl != null ? String(raw.externalUrl) : null,
-    thumbnail: raw.thumbnail != null ? String(raw.thumbnail) : null,
+    // cleanUrl: an emptied/removed URL is "no video", never the string "null"/"" (see lib/video/playlist.ts).
+    videoUrl: cleanUrl(raw.videoUrl),
+    externalUrl: cleanUrl(raw.externalUrl),
+    thumbnail: cleanUrl(raw.thumbnail),
     durationSeconds: raw.durationSeconds != null ? Number(raw.durationSeconds) : null,
   };
 }
@@ -531,20 +536,28 @@ export async function getVideoCurationsLive(): Promise<VideoCuration[]> {
   if (!rows) return getVideoCurationsMock();
   const row = rows.find((r) => r.key === "video-curations");
   if (!row || !row.items) return getVideoCurationsMock();
+  const seenCardIds = new Set<string>();
+  // Same rule as the Admin editor: clip ids are unique across the whole list.
+  const seenClipIds = new Set<string>();
   return row.items
-    .map((item) => {
+    .map((item, cardIndex) => {
+      // Stable, unique identity per card and per clip (never an array index
+      // used as a *shared* key): see lib/video/identity.ts.
+      const id = makeUniqueId(item.id, `video-curation-${cardIndex + 1}`, seenCardIds);
       const rawClips = item.clips;
       const clips =
-        Array.isArray(rawClips) && rawClips.length > 0 ? rawClips.map((c) => parseVideoClip(c)) : undefined;
+        Array.isArray(rawClips) && rawClips.length > 0
+          ? rawClips.map((c, clipIndex) => parseVideoClip(c, makeUniqueId(c.id, `${id}-clip-${clipIndex + 1}`, seenClipIds)))
+          : undefined;
       return {
-        id: String(item.id ?? ""),
+        id,
         title: String(item.title ?? ""),
         description: item.description != null ? String(item.description) : null,
         categoryId: item.categoryId != null ? String(item.categoryId) : null,
         serviceTypeId: item.serviceTypeId != null ? String(item.serviceTypeId) : null,
-        thumbnail: item.thumbnail != null ? String(item.thumbnail) : null,
-        videoUrl: item.videoUrl != null ? String(item.videoUrl) : null,
-        externalUrl: item.externalUrl != null ? String(item.externalUrl) : null,
+        thumbnail: cleanUrl(item.thumbnail),
+        videoUrl: cleanUrl(item.videoUrl),
+        externalUrl: cleanUrl(item.externalUrl),
         durationSeconds: item.durationSeconds != null ? Number(item.durationSeconds) : null,
         clips,
         sortOrder: Number(item.sortOrder ?? 0),

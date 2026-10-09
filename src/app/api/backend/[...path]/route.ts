@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { DIRECT_BACKEND_BASE_URL } from "@/lib/server/backend-url";
 
 /**
@@ -44,6 +45,28 @@ import { DIRECT_BACKEND_BASE_URL } from "@/lib/server/backend-url";
  * route's own fetch to the backend sends no `Origin` header, which the
  * backend's CORS config already allows -- see the `!origin` branch in
  * `backend/src/app.ts`).
+ *
+ * FULL WEBSITE AUDIT -- "changes are saved or published only after
+ * navigation or browser refresh": every public-facing page (home, city,
+ * category/product/service pages, /blog + article pages) is server-rendered
+ * through the `*Live` readers in `@/lib/data/live.ts`, whose `backendGet()`
+ * uses `next: { revalidate: 30 }` on the server -- a deliberate ISR-style
+ * cache so public pages don't re-hit the backend on every single request.
+ * The gap: nothing ever told Next to invalidate that cache (or the client
+ * Router Cache) the moment an admin actually changes something, so a publish/
+ * update/upload only became visible once that 30s window happened to lapse
+ * on its own -- exactly the "only after refresh/navigate away" symptom,
+ * site-wide, for every admin-authored surface (Blog, Catalog, Homepage
+ * Content, Media -- anything `*Live` reads). This proxy is the one choke
+ * point every admin write already passes through, so it's also the one
+ * place to fix this correctly: once a mutating (`non-GET`) call to an
+ * `/admin/*` or `/media/*` backend path succeeds, `revalidatePath("/",
+ * "layout")` below invalidates Next's Data Cache *and* Router Cache for the
+ * entire site, so the very next request -- including an in-app client
+ * navigation, not just a hard refresh -- gets fresh data. This is real
+ * server-side cache invalidation, not a forced full-page reload: nothing
+ * about the current page's own already-rendered state changes, only what a
+ * *subsequent* render/navigation fetches.
  */
 
 export const dynamic = "force-dynamic";
@@ -92,6 +115,19 @@ async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
   }
 
   const buf = await backendRes.arrayBuffer();
+
+  // See this file's top doc comment ("FULL WEBSITE AUDIT"). Only a
+  // successful write to an admin-authored path needs to bust the public
+  // cache -- a GET never needs to (nothing changed), and customer/provider
+  // self-service writes (cart, checkout, auth, `/me`, ...) never affect a
+  // publicly cached page, so leaving those un-revalidated avoids pointlessly
+  // invalidating the whole site's cache on every cart click.
+  const isMutation = req.method !== "GET" && req.method !== "HEAD";
+  const touchesAdminAuthoredContent = path[0] === "admin" || path[0] === "media";
+  if (isMutation && touchesAdminAuthoredContent && backendRes.status >= 200 && backendRes.status < 300) {
+    revalidatePath("/", "layout");
+  }
+
   return new NextResponse(buf, { status: backendRes.status, headers: resHeaders });
 }
 

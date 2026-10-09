@@ -24,6 +24,7 @@ import {
   createHomepageSection,
   deleteHomepageSection,
   listHomepageSections,
+  listPublicHomepageSections,
   updateHomepageSection,
 } from "./homepageSections.service";
 import { getContactInfo, upsertContactInfo } from "./contactInfo.service";
@@ -113,6 +114,14 @@ export function contentRouter(): Router {
   // --- Homepage sections ---
   router.get(
     "/homepage-sections",
+    asyncHandler(async (_req, res) => ok(res, await listPublicHomepageSections()))
+  );
+  // Unfiltered list for the admin editor (includes inactive items, which the
+  // public endpoint above deliberately strips).
+  router.get(
+    "/admin/homepage-sections",
+    authenticate(),
+    requireRole("admin"),
     asyncHandler(async (_req, res) => ok(res, await listHomepageSections()))
   );
   router.post(

@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/lib/icons";
 import { MediaPickerField } from "@/components/account/MediaPicker";
+import { resolveVideoEmbed } from "@/lib/video/embed";
+import {
+  buildVideoSavePayload,
+  countPlayableVideos,
+  toVideoDraftList,
+  type VideoClipDraft,
+  type VideoCurationDraft,
+} from "@/lib/admin/videoShowcaseDraft";
 import {
   AuthApiError,
   listHomepageSectionsAdmin,
@@ -15,7 +23,6 @@ import {
   updateContactInfo,
   type AdminHomepageSection,
   type HomepageSectionItem,
-  type HomepageSectionItemClip,
   type AdminBranding,
   type AdminContactInfo,
   type SocialLink,
@@ -208,6 +215,13 @@ export function AdminHomepageContentPanel({ onNavigateToCatalog }: { onNavigateT
   const [loadError, setLoadError] = useState<string | null>(null);
   const [dirtyLabels, setDirtyLabels] = useState<string[]>([]);
 
+  // Stable identity + no-op when nothing changed (see useDraftSave.tsx /
+  // dirtyTracker.ts) -- an inline callback here re-registered every section
+  // on every render and looped ("Maximum update depth exceeded").
+  const handleDirtyChange = useCallback((_anyDirty: boolean, labels: string[]) => {
+    setDirtyLabels((prev) => (prev.length === labels.length && prev.every((l, i) => l === labels[i]) ? prev : labels));
+  }, []);
+
   const load = useCallback(async () => {
     setLoadError(null);
     try {
@@ -260,7 +274,7 @@ export function AdminHomepageContentPanel({ onNavigateToCatalog }: { onNavigateT
   const howItWorks = sections?.find((s) => s.key === "howItWorks") ?? null;
 
   return (
-    <DirtyRegistryProvider onChange={(_, labels) => setDirtyLabels(labels)}>
+    <DirtyRegistryProvider onChange={handleDirtyChange}>
       <div className="space-y-6">
         <div>
           <h1 className="text-lg font-semibold text-neutral-900">Homepage Content</h1>
@@ -910,90 +924,91 @@ function PromotionalBannersSection({
 // 8. Real service visits on video — multi-clip Video Showcase
 // ---------------------------------------------------------------------
 
-interface VideoClipDraft {
-  id: string;
-  title: string;
-  videoUrl: string | null;
-  externalUrl: string;
-  thumbnail: string | null;
-  durationSeconds: string;
+/** True once the card has a main video (uploaded file or non-empty link) -- i.e. position 1 of its playlist is taken. */
+function cleanUrlForUi(videoUrl: string | null, externalUrl: string): boolean {
+  return Boolean(videoUrl) || externalUrl.trim().length > 0;
 }
 
-interface VideoCurationDraft {
-  id: string;
-  title: string;
-  description: string;
-  categoryId: string;
-  serviceTypeId: string;
-  thumbnail: string | null;
-  videoUrl: string | null;
-  externalUrl: string;
-  durationSeconds: string;
-  active: boolean;
-  clips: VideoClipDraft[];
+function blankClipDraft(): VideoClipDraft {
+  return { id: newId(), title: "", videoUrl: null, externalUrl: "", thumbnail: null, durationSeconds: "" };
 }
 
-function clipItemToDraft(raw: HomepageSectionItemClip): VideoClipDraft {
-  return {
-    id: String(raw.id ?? newId()),
-    title: raw.title != null ? String(raw.title) : "",
-    videoUrl: raw.videoUrl != null ? String(raw.videoUrl) : null,
-    externalUrl: raw.externalUrl != null ? String(raw.externalUrl) : "",
-    thumbnail: raw.thumbnail != null ? String(raw.thumbnail) : null,
-    durationSeconds: raw.durationSeconds != null ? String(raw.durationSeconds) : "",
-  };
+/** A clip "has a video" once either an uploaded file or a non-empty external link is set — the one thing Done requires before it will commit a clip. */
+function clipHasVideo(clip: VideoClipDraft): boolean {
+  return Boolean(clip.videoUrl) || clip.externalUrl.trim().length > 0;
 }
 
-function toVideoDraftList(items: HomepageSectionItem[] | null | undefined): VideoCurationDraft[] {
-  if (!items) return [];
-  return items.map((it) => {
-    const rawClips = it.clips;
-    const clips = Array.isArray(rawClips) ? rawClips.map(clipItemToDraft) : [];
-    return {
-      id: String(it.id ?? newId()),
-      title: String(it.title ?? ""),
-      description: it.description !== undefined ? String(it.description) : "",
-      categoryId: it.categoryId !== undefined ? String(it.categoryId) : "",
-      serviceTypeId: it.serviceTypeId !== undefined ? String(it.serviceTypeId) : "",
-      thumbnail: it.thumbnail !== undefined ? String(it.thumbnail) : null,
-      videoUrl: it.videoUrl !== undefined ? String(it.videoUrl) : null,
-      externalUrl: it.externalUrl !== undefined ? String(it.externalUrl) : "",
-      durationSeconds: it.durationSeconds !== undefined ? String(it.durationSeconds) : "",
-      active: it.active === undefined || Number(it.active) === 1,
-      clips,
-    };
-  });
+/**
+ * Shared status + live preview for one "video" field (a card's main
+ * video, or one clip) — used by both `VideoCard` and `ClipEditor` so a
+ * main video and a clip get the exact same behavior. Requirement:
+ * "the admin must be able to identify exactly which video belongs to
+ * which card" and "a clear indication of whether the video is an
+ * uploaded file or an external URL" and "a video preview and playback
+ * test before saving."
+ *
+ * An uploaded file always wins over an external link (same precedence
+ * the save payload and the public modal both use). For an external
+ * link, this runs it through the same `resolveVideoEmbed` the public
+ * homepage uses — so what the admin sees here previewing is exactly
+ * what a visitor will see, not just a raw URL the admin has to trust.
+ */
+function VideoFieldPreview({ videoUrl, externalUrl }: { videoUrl: string | null; externalUrl: string }) {
+  const trimmedExternal = externalUrl.trim();
+  const embed = !videoUrl && trimmedExternal ? resolveVideoEmbed(trimmedExternal) : null;
+  const invalid = !videoUrl && trimmedExternal.length > 0 && embed === null;
+
+  const statusLabel = videoUrl
+    ? "Uploaded video"
+    : embed?.kind === "youtube"
+      ? "External link — YouTube"
+      : embed?.kind === "file"
+        ? "External link — direct video file"
+        : embed
+          ? "External link"
+          : invalid
+            ? "External link — doesn't look like a valid video URL"
+            : "No video set — shows \"Video coming soon\" on the homepage";
+
+  return (
+    <div className="mt-3">
+      <p className={labelClasses}>
+        Status: <span className={`font-semibold ${invalid ? "text-red-600" : "text-neutral-700"}`}>{statusLabel}</span>
+      </p>
+      {videoUrl ? (
+        <video src={videoUrl} controls className="mt-1 h-40 rounded-lg bg-black" />
+      ) : embed?.kind === "file" ? (
+        <video src={embed.embedUrl} controls className="mt-1 h-40 rounded-lg bg-black" />
+      ) : embed ? (
+        <div className="mt-1">
+          <iframe
+            src={embed.embedUrl}
+            className="h-40 w-full max-w-xs rounded-lg bg-black"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+          <a href={embed.originalUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs text-brand-700 underline">
+            Can&rsquo;t see it embedded? Open directly ↗
+          </a>
+        </div>
+      ) : invalid ? (
+        <p className="mt-1 text-xs font-medium text-red-600">
+          That doesn&rsquo;t look like a playable video link — it needs to be a full http:// or https:// URL (a YouTube link, or a direct
+          .mp4/.webm/.mov link).
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 function VideoCurationsSection({ order, section, onSave }: { order: number; section: AdminHomepageSection | null; onSave: SaveSectionFn }) {
-  const serverValue = toVideoDraftList(section?.items);
+  const serverValue = useMemo(() => toVideoDraftList(section?.items), [section?.items]);
   const { draft, setDraft, dirty, status, error, save, cancel } = useDraftSave(
     "video-curations",
     "Real service visits, on video",
     serverValue,
     async (d) => {
-      const items: HomepageSectionItem[] = d.map((card, idx) => {
-        const out: HomepageSectionItem = { id: card.id, title: card.title, sortOrder: idx, active: card.active ? 1 : 0 };
-        if (card.description) out.description = card.description;
-        if (card.categoryId) out.categoryId = card.categoryId;
-        if (card.serviceTypeId) out.serviceTypeId = card.serviceTypeId;
-        if (card.thumbnail) out.thumbnail = card.thumbnail;
-        if (card.videoUrl) out.videoUrl = card.videoUrl;
-        if (card.externalUrl) out.externalUrl = card.externalUrl;
-        if (card.durationSeconds) out.durationSeconds = Number(card.durationSeconds);
-        if (card.clips.length > 0) {
-          out.clips = card.clips.map((clip) => {
-            const c: HomepageSectionItemClip = { id: clip.id };
-            if (clip.title) c.title = clip.title;
-            if (clip.videoUrl) c.videoUrl = clip.videoUrl;
-            if (clip.externalUrl) c.externalUrl = clip.externalUrl;
-            if (clip.thumbnail) c.thumbnail = clip.thumbnail;
-            if (clip.durationSeconds) c.durationSeconds = Number(clip.durationSeconds);
-            return c;
-          });
-        }
-        return out;
-      });
+      const items = buildVideoSavePayload(d);
       await onSave("video-curations", "Real service visits, on video", { items });
     }
   );
@@ -1012,6 +1027,7 @@ function VideoCurationsSection({ order, section, onSave }: { order: number; sect
         externalUrl: "",
         durationSeconds: "",
         active: true,
+        markedForDeletion: false,
         clips: [],
       },
     ]);
@@ -1019,33 +1035,32 @@ function VideoCurationsSection({ order, section, onSave }: { order: number; sect
   function updateCard(i: number, patch: Partial<VideoCurationDraft>) {
     setDraft((prev) => prev.map((d, idx) => (idx === i ? { ...d, ...patch } : d)));
   }
-  function removeCard(i: number) {
-    setDraft((prev) => prev.filter((_, idx) => idx !== i));
-  }
   function reorderCard(i: number, delta: number) {
     const j = i + delta;
     if (j < 0 || j >= draft.length) return;
     setDraft((prev) => move(prev, i, j));
   }
+  function setCardClips(i: number, clips: VideoClipDraft[]) {
+    updateCard(i, { clips });
+  }
 
-  function addClip(cardIndex: number) {
-    updateCard(cardIndex, {
-      clips: [...draft[cardIndex].clips, { id: newId(), title: "", videoUrl: null, externalUrl: "", thumbnail: null, durationSeconds: "" }],
-    });
+  const cardsMarkedForDeletion = draft.filter((c) => c.markedForDeletion);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  async function runSave() {
+    try {
+      await save();
+    } catch {
+      // `save()` already put the real failure message in `error` and left the
+      // draft (including any card flagged for deletion) untouched -- nothing
+      // more to do, but the rejection must not escape as an unhandled one.
+    }
   }
-  function updateClip(cardIndex: number, clipIndex: number, patch: Partial<VideoClipDraft>) {
-    const card = draft[cardIndex];
-    updateCard(cardIndex, { clips: card.clips.map((c, idx) => (idx === clipIndex ? { ...c, ...patch } : c)) });
-  }
-  function removeClip(cardIndex: number, clipIndex: number) {
-    const card = draft[cardIndex];
-    updateCard(cardIndex, { clips: card.clips.filter((_, idx) => idx !== clipIndex) });
-  }
-  function reorderClip(cardIndex: number, clipIndex: number, delta: number) {
-    const card = draft[cardIndex];
-    const j = clipIndex + delta;
-    if (j < 0 || j >= card.clips.length) return;
-    updateCard(cardIndex, { clips: move(card.clips, clipIndex, j) });
+  function requestSave() {
+    // Deleting is the one destructive thing this section can do, so it gets
+    // an explicit confirmation *at save time*, right before it becomes permanent.
+    if (cardsMarkedForDeletion.length > 0) setConfirmingDelete(true);
+    else void runSave();
   }
 
   return (
@@ -1056,155 +1071,438 @@ function VideoCurationsSection({ order, section, onSave }: { order: number; sect
       dirty={dirty}
       status={status}
       error={error}
-      onSave={() => void save()}
+      onSave={requestSave}
       onCancel={cancel}
     >
       <p className="mb-4 text-xs text-neutral-500">
         Each card below is one showcase item on the live site. A card with no video uploaded shows &ldquo;Video
         coming soon&rdquo; instead of breaking the layout — nothing fake is ever shown in its place. A card can hold
-        a single main video, or several real clips under one card (add them under &ldquo;Additional clips&rdquo;) —
-        visitors can switch between clips without leaving the popup.
+        a main video plus extra videos in its own playlist (add them under &ldquo;Playlist for this card&rdquo;) —
+        visitors step through that card&rsquo;s videos with Previous / Next in a single player. To hide a card from the live homepage but keep
+        it here, uncheck &ldquo;Active&rdquo;. To remove a card for good (together with all of its additional clips),
+        click &ldquo;Delete&rdquo; on it and then &ldquo;Done / Save changes&rdquo; — nothing is deleted until you save and confirm.
       </p>
       <div className="space-y-4">
         {draft.map((card, i) => (
-          <div key={card.id} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Card {i + 1}
-                {card.clips.length > 0 ? ` · ${card.clips.length + 1} videos` : ""}
-              </span>
-              <div className="flex items-center gap-1">
-                <button type="button" className="rounded-lg border border-neutral-300 p-2 hover:bg-neutral-100" disabled={i === 0} onClick={() => reorderCard(i, -1)} aria-label="Move up">
-                  <Icon name="chevron-left" className="h-3.5 w-3.5 rotate-90" />
-                </button>
-                <button type="button" className="rounded-lg border border-neutral-300 p-2 hover:bg-neutral-100" disabled={i === draft.length - 1} onClick={() => reorderCard(i, 1)} aria-label="Move down">
-                  <Icon name="chevron-right" className="h-3.5 w-3.5 rotate-90" />
-                </button>
-                <label className="flex items-center gap-1 px-1 text-xs text-neutral-700">
-                  <input type="checkbox" checked={card.active} onChange={(e) => updateCard(i, { active: e.target.checked })} />
-                  Active
-                </label>
-                <button type="button" className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50" onClick={() => removeCard(i)} aria-label="Remove card">
-                  <Icon name="trash" className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className={labelClasses}>Title</label>
-                <input className={inputClasses} value={card.title} onChange={(e) => updateCard(i, { title: e.target.value })} />
-              </div>
-              <div>
-                <label className={labelClasses}>Duration of main video (seconds, optional)</label>
-                <input type="number" className={inputClasses} value={card.durationSeconds} onChange={(e) => updateCard(i, { durationSeconds: e.target.value })} />
-              </div>
-              <div className="sm:col-span-2">
-                <label className={labelClasses}>Description (optional)</label>
-                <input className={inputClasses} value={card.description} onChange={(e) => updateCard(i, { description: e.target.value })} />
-              </div>
-              <div>
-                <label className={labelClasses}>Category key (optional, from Catalog)</label>
-                <input className={inputClasses} value={card.categoryId} onChange={(e) => updateCard(i, { categoryId: e.target.value })} />
-              </div>
-              <div>
-                <label className={labelClasses}>Service type key (optional)</label>
-                <input className={inputClasses} value={card.serviceTypeId} onChange={(e) => updateCard(i, { serviceTypeId: e.target.value })} />
-              </div>
-              <MediaPickerField label="Card thumbnail (poster image)" accept="image" value={card.thumbnail} onChange={(url) => updateCard(i, { thumbnail: url })} />
-              <MediaPickerField
-                label="Main video (optional — leave empty to show 'Video coming soon')"
-                accept="video"
-                value={card.videoUrl}
-                onChange={(url) => updateCard(i, { videoUrl: url })}
-              />
-              <div className="sm:col-span-2">
-                <label className={labelClasses}>Or an external link for the main video (used only if no file is uploaded above)</label>
-                <input className={inputClasses} value={card.externalUrl} onChange={(e) => updateCard(i, { externalUrl: e.target.value })} placeholder="https://…" />
-              </div>
-            </div>
-
-            {card.videoUrl && (
-              <div className="mt-3">
-                <p className={labelClasses}>Preview — main video</p>
-                <video src={card.videoUrl} controls className="h-40 rounded-lg bg-black" />
-              </div>
-            )}
-
-            <div className="mt-4 border-t border-neutral-200 pt-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Additional clips under this same card ({card.clips.length})
-              </p>
-              <p className="mt-1 text-xs text-neutral-500">
-                Use this when one showcase item is really several related videos — e.g. before/during/after footage
-                of the same job. Visitors viewing this card can switch between the main video and every clip below.
-              </p>
-
-              <div className="mt-3 space-y-3">
-                {card.clips.map((clip, ci) => (
-                  <div key={clip.id} className="rounded-lg border border-neutral-200 bg-white p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-neutral-600">Clip {ci + 1}</span>
-                      <div className="flex items-center gap-1">
-                        <button type="button" className="rounded border border-neutral-300 p-1.5 hover:bg-neutral-100" disabled={ci === 0} onClick={() => reorderClip(i, ci, -1)} aria-label="Move clip up">
-                          <Icon name="chevron-left" className="h-3 w-3 rotate-90" />
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded border border-neutral-300 p-1.5 hover:bg-neutral-100"
-                          disabled={ci === card.clips.length - 1}
-                          onClick={() => reorderClip(i, ci, 1)}
-                          aria-label="Move clip down"
-                        >
-                          <Icon name="chevron-right" className="h-3 w-3 rotate-90" />
-                        </button>
-                        <button type="button" className="rounded border border-red-200 p-1.5 text-red-600 hover:bg-red-50" onClick={() => removeClip(i, ci)} aria-label="Remove clip">
-                          <Icon name="trash" className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <div>
-                        <label className={labelClasses}>Clip title (optional)</label>
-                        <input className={inputClasses} value={clip.title} onChange={(e) => updateClip(i, ci, { title: e.target.value })} />
-                      </div>
-                      <div>
-                        <label className={labelClasses}>Clip duration (seconds, optional)</label>
-                        <input type="number" className={inputClasses} value={clip.durationSeconds} onChange={(e) => updateClip(i, ci, { durationSeconds: e.target.value })} />
-                      </div>
-                      <MediaPickerField label="Clip video" accept="video" value={clip.videoUrl} onChange={(url) => updateClip(i, ci, { videoUrl: url })} />
-                      <MediaPickerField
-                        label="Clip thumbnail (optional — falls back to the card thumbnail)"
-                        accept="image"
-                        value={clip.thumbnail}
-                        onChange={(url) => updateClip(i, ci, { thumbnail: url })}
-                      />
-                      <div className="sm:col-span-2">
-                        <label className={labelClasses}>Or an external link for this clip</label>
-                        <input className={inputClasses} value={clip.externalUrl} onChange={(e) => updateClip(i, ci, { externalUrl: e.target.value })} placeholder="https://…" />
-                      </div>
-                    </div>
-                    {clip.videoUrl && (
-                      <div className="mt-2">
-                        <p className={labelClasses}>Preview</p>
-                        <video src={clip.videoUrl} controls className="h-32 rounded-lg bg-black" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <Button type="button" variant="outline" size="md" className="mt-3" onClick={() => addClip(i)}>
-                + Add another clip to this card
-              </Button>
-            </div>
-          </div>
+          <VideoCard
+            key={card.id}
+            card={card}
+            isFirst={i === 0}
+            isLast={i === draft.length - 1}
+            onUpdateCard={(patch) => updateCard(i, patch)}
+            onReorderCard={(delta) => reorderCard(i, delta)}
+            onSetClips={(clips) => setCardClips(i, clips)}
+            onDelete={() => updateCard(i, { markedForDeletion: true })}
+            onUndoDelete={() => updateCard(i, { markedForDeletion: false })}
+          />
         ))}
         <Button type="button" variant="outline" size="md" onClick={addCard}>
           Add video card
         </Button>
       </div>
+      {confirmingDelete && (
+        <ConfirmDeleteCardsDialog
+          titles={cardsMarkedForDeletion.map((c) => c.title || "Untitled card")}
+          clipCount={cardsMarkedForDeletion.reduce((n, c) => n + c.clips.length, 0)}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => {
+            setConfirmingDelete(false);
+            void runSave();
+          }}
+        />
+      )}
     </SectionShell>
+  );
+}
+
+/**
+ * Save-time confirmation for permanently removing Video Showcase cards.
+ * Plain in-page dialog (not window.confirm) so it is keyboard accessible,
+ * styled like the rest of the panel, and does not block the page.
+ */
+function ConfirmDeleteCardsDialog({
+  titles,
+  clipCount,
+  onCancel,
+  onConfirm,
+}: {
+  titles: string[];
+  clipCount: number;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onCancel();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirm-delete-video-cards-title"
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+      >
+        <h3 id="confirm-delete-video-cards-title" className="text-base font-semibold text-neutral-900">
+          Permanently delete {titles.length === 1 ? "this video card" : `these ${titles.length} video cards`}?
+        </h3>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-neutral-700">
+          {titles.map((t, i) => (
+            <li key={i}>{t}</li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm text-neutral-600">
+          {clipCount > 0
+            ? `This also removes the ${clipCount} additional clip${clipCount === 1 ? " that belongs" : "s that belong"} to ${titles.length === 1 ? "it" : "them"}. `
+            : ""}
+          They will disappear from the live homepage and cannot be restored afterwards. Your other changes in this section are saved at the same time.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button type="button" variant="outline" size="md" onClick={onCancel}>
+            Keep editing
+          </Button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            onClick={onConfirm}
+            autoFocus
+          >
+            Delete and save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One Video Showcase card. Owns the "which clip is currently being
+ * edited" state, which is local-only and never leaves this component
+ * until Done commits it into `card.clips` (still just local draft state
+ * one level up, not persisted until the section's own Save) — this is
+ * what gives "Additional clips" its own Done step, distinct from the
+ * section-level Save/Cancel the brief is careful not to confuse it with.
+ */
+function VideoCard({
+  card,
+  isFirst,
+  isLast,
+  onUpdateCard,
+  onReorderCard,
+  onSetClips,
+  onDelete,
+  onUndoDelete,
+}: {
+  card: VideoCurationDraft;
+  isFirst: boolean;
+  isLast: boolean;
+  onUpdateCard: (patch: Partial<VideoCurationDraft>) => void;
+  onReorderCard: (delta: number) => void;
+  onSetClips: (clips: VideoClipDraft[]) => void;
+  onDelete: () => void;
+  onUndoDelete: () => void;
+}) {
+  // null = no clip editor open. index === null = adding a brand-new clip (not yet in card.clips).
+  // index === a number = editing that existing, already-committed clip in place.
+  const [editing, setEditing] = useState<{ index: number | null; draft: VideoClipDraft } | null>(null);
+  const [clipError, setClipError] = useState<string | null>(null);
+
+  function startAddClip() {
+    setClipError(null);
+    setEditing({ index: null, draft: blankClipDraft() });
+  }
+  function startEditClip(idx: number) {
+    setClipError(null);
+    setEditing({ index: idx, draft: { ...card.clips[idx] } });
+  }
+  function cancelClipEdit() {
+    // Discards only this one clip's in-progress edits (new or existing) —
+    // separate from, and much narrower than, the section's own Cancel.
+    setClipError(null);
+    setEditing(null);
+  }
+  function updateEditingDraft(patch: Partial<VideoClipDraft>) {
+    setEditing((prev) => (prev ? { ...prev, draft: { ...prev.draft, ...patch } } : prev));
+    setClipError(null);
+  }
+  function commitClipEdit() {
+    if (!editing) return;
+    if (!clipHasVideo(editing.draft)) {
+      setClipError("Add a video file or a video link for this clip before clicking Done.");
+      return;
+    }
+    // An uploaded file is always trusted (it came from the Media
+    // Library). A typed external link isn't — catch an unplayable one
+    // here, at Done, rather than letting it silently save and only
+    // break on the public homepage.
+    if (!editing.draft.videoUrl && resolveVideoEmbed(editing.draft.externalUrl) === null) {
+      setClipError("That video link doesn't look valid — it needs to be a full http:// or https:// URL.");
+      return;
+    }
+    if (editing.index === null) {
+      onSetClips([...card.clips, editing.draft]);
+    } else {
+      onSetClips(card.clips.map((c, idx) => (idx === editing.index ? editing.draft : c)));
+    }
+    setEditing(null);
+    setClipError(null);
+  }
+  function removeClip(idx: number) {
+    onSetClips(card.clips.filter((_, i) => i !== idx));
+    if (editing?.index === idx) {
+      setEditing(null);
+      setClipError(null);
+    }
+  }
+  function reorderClip(idx: number, delta: number) {
+    const j = idx + delta;
+    if (j < 0 || j >= card.clips.length) return;
+    onSetClips(move(card.clips, idx, j));
+  }
+
+  if (card.markedForDeletion) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4" data-testid="video-card-marked-for-deletion">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-red-800">{card.title || "Untitled card"}</p>
+            <p className="text-xs text-red-700">
+              Marked for deletion{card.clips.length > 0 ? `, along with its ${card.clips.length} additional clip${card.clips.length === 1 ? "" : "s"}` : ""}.
+              It is removed only when you click &ldquo;Done / Save changes&rdquo; and confirm; Cancel or Undo keeps it.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+            onClick={onUndoDelete}
+          >
+            Undo delete
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          {card.title || "Untitled card"}
+          {countPlayableVideos(card) > 1 ? ` · ${countPlayableVideos(card)} videos` : ""}
+        </span>
+        <div className="flex items-center gap-1">
+          <button type="button" className="rounded-lg border border-neutral-300 p-2 hover:bg-neutral-100" disabled={isFirst} onClick={() => onReorderCard(-1)} aria-label="Move up">
+            <Icon name="chevron-left" className="h-3.5 w-3.5 rotate-90" />
+          </button>
+          <button type="button" className="rounded-lg border border-neutral-300 p-2 hover:bg-neutral-100" disabled={isLast} onClick={() => onReorderCard(1)} aria-label="Move down">
+            <Icon name="chevron-right" className="h-3.5 w-3.5 rotate-90" />
+          </button>
+          <label className="flex items-center gap-1 px-1 text-xs text-neutral-700">
+            <input type="checkbox" checked={card.active} onChange={(e) => onUpdateCard({ active: e.target.checked })} />
+            Active
+          </label>
+          <button
+            type="button"
+            className="ml-1 rounded-lg border border-red-300 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+            onClick={onDelete}
+            aria-label={`Delete card ${card.title || "Untitled card"}`}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label className={labelClasses}>Title</label>
+          <input className={inputClasses} value={card.title} onChange={(e) => onUpdateCard({ title: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClasses}>Duration of main video (seconds, optional)</label>
+          <input type="number" className={inputClasses} value={card.durationSeconds} onChange={(e) => onUpdateCard({ durationSeconds: e.target.value })} />
+        </div>
+        <div className="sm:col-span-2">
+          <label className={labelClasses}>Description (optional)</label>
+          <input className={inputClasses} value={card.description} onChange={(e) => onUpdateCard({ description: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClasses}>Category key (optional, from Catalog)</label>
+          <input className={inputClasses} value={card.categoryId} onChange={(e) => onUpdateCard({ categoryId: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClasses}>Service type key (optional)</label>
+          <input className={inputClasses} value={card.serviceTypeId} onChange={(e) => onUpdateCard({ serviceTypeId: e.target.value })} />
+        </div>
+        <MediaPickerField label="Card thumbnail (poster image)" accept="image" value={card.thumbnail} onChange={(url) => onUpdateCard({ thumbnail: url })} />
+        <MediaPickerField
+          label="Main video (optional — leave empty to show 'Video coming soon')"
+          accept="video"
+          value={card.videoUrl}
+          onChange={(url) => onUpdateCard({ videoUrl: url })}
+        />
+        <div className="sm:col-span-2">
+          <label className={labelClasses}>Or an external link for the main video (used only if no file is uploaded above)</label>
+          <input className={inputClasses} value={card.externalUrl} onChange={(e) => onUpdateCard({ externalUrl: e.target.value })} placeholder="https://…" />
+        </div>
+      </div>
+
+      <VideoFieldPreview videoUrl={card.videoUrl} externalUrl={card.externalUrl} />
+
+      <div className="mt-4 border-t border-neutral-200 pt-3" data-testid="card-playlist" data-card-id={card.id}>
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          Playlist for this card ({countPlayableVideos(card)} {countPlayableVideos(card) === 1 ? "video" : "videos"})
+        </p>
+        <p className="mt-1 text-xs text-neutral-500">
+          Visitors watch these in one player, in the order listed here, using Previous / Next. The main video above
+          always plays first; the clips below follow it. Everything on this list belongs to{" "}
+          <strong>{card.title || "this card"}</strong> only &mdash; no other card can see or change it. A clip is added to this card&rsquo;s
+          draft only once you click <strong>Done</strong> on it; use <strong>Save changes</strong> at the top of this
+          whole section to publish.
+        </p>
+
+        {cleanUrlForUi(card.videoUrl, card.externalUrl) && (
+          <div className="mt-3 flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3" data-testid="playlist-row">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-xs font-semibold text-white">1</span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-neutral-800">Main video</p>
+              <p className="truncate text-xs text-neutral-500">
+                {card.videoUrl ? "Uploaded video" : "External link"} &middot; set in the Main video fields above
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3 space-y-2">
+          {card.clips.map((clip, ci) =>
+            editing?.index === ci ? (
+              <ClipEditor
+                key={clip.id}
+                heading={`Editing clip ${ci + 1}`}
+                draft={editing.draft}
+                error={clipError}
+                onChange={updateEditingDraft}
+                onDone={commitClipEdit}
+                onCancel={cancelClipEdit}
+              />
+            ) : (
+              <div key={clip.id} data-testid="playlist-row" className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-3">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-xs font-semibold text-white">
+                    {ci + 1 + (cleanUrlForUi(card.videoUrl, card.externalUrl) ? 1 : 0)}
+                  </span>
+                  <div className="truncate">
+                    <p className="truncate text-sm font-medium text-neutral-800">{clip.title || `Clip ${ci + 1}`}</p>
+                    <p className="truncate text-xs text-neutral-500">
+                      {clip.videoUrl ? "Uploaded video" : clip.externalUrl ? "External link" : "No video set"}
+                      {clip.durationSeconds ? ` · ${clip.durationSeconds}s` : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button type="button" className="rounded border border-neutral-300 p-1.5 hover:bg-neutral-100" disabled={ci === 0} onClick={() => reorderClip(ci, -1)} aria-label="Move clip up">
+                    <Icon name="chevron-left" className="h-3 w-3 rotate-90" />
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded border border-neutral-300 p-1.5 hover:bg-neutral-100"
+                    disabled={ci === card.clips.length - 1}
+                    onClick={() => reorderClip(ci, 1)}
+                    aria-label="Move clip down"
+                  >
+                    <Icon name="chevron-right" className="h-3 w-3 rotate-90" />
+                  </button>
+                  <button type="button" className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-100" onClick={() => startEditClip(ci)}>
+                    Edit
+                  </button>
+                  <button type="button" className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50" onClick={() => removeClip(ci)}>
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+
+          {editing?.index === null && (
+            <ClipEditor
+              heading="New clip"
+              draft={editing.draft}
+              error={clipError}
+              onChange={updateEditingDraft}
+              onDone={commitClipEdit}
+              onCancel={cancelClipEdit}
+            />
+          )}
+        </div>
+
+        {!editing && (
+          <Button type="button" variant="outline" size="md" className="mt-3" onClick={startAddClip}>
+            + Add a video to this card&rsquo;s playlist
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The clip-editing step itself: upload/select a video or an external
+ * link, preview it, set a thumbnail, then Done (commits into the card's
+ * local `clips` draft) or Cancel (discards just this clip's edit).
+ */
+function ClipEditor({
+  heading,
+  draft,
+  error,
+  onChange,
+  onDone,
+  onCancel,
+}: {
+  heading: string;
+  draft: VideoClipDraft;
+  error: string | null;
+  onChange: (patch: Partial<VideoClipDraft>) => void;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="rounded-lg border-2 border-brand-300 bg-brand-50/40 p-3">
+      <p className="mb-2 text-xs font-semibold text-neutral-700">{heading}</p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div>
+          <label className={labelClasses}>Clip title (optional)</label>
+          <input className={inputClasses} value={draft.title} onChange={(e) => onChange({ title: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClasses}>Clip duration (seconds, optional)</label>
+          <input type="number" className={inputClasses} value={draft.durationSeconds} onChange={(e) => onChange({ durationSeconds: e.target.value })} />
+        </div>
+        <MediaPickerField label="Clip video" accept="video" value={draft.videoUrl} onChange={(url) => onChange({ videoUrl: url })} />
+        <MediaPickerField
+          label="Clip thumbnail (optional — falls back to the card thumbnail)"
+          accept="image"
+          value={draft.thumbnail}
+          onChange={(url) => onChange({ thumbnail: url })}
+        />
+        <div className="sm:col-span-2">
+          <label className={labelClasses}>Or an external link for this clip (used only if no file is uploaded above)</label>
+          <input className={inputClasses} value={draft.externalUrl} onChange={(e) => onChange({ externalUrl: e.target.value })} placeholder="https://…" />
+        </div>
+      </div>
+      <VideoFieldPreview videoUrl={draft.videoUrl} externalUrl={draft.externalUrl} />
+      {error && <p className="mt-2 text-xs font-medium text-red-600">{error}</p>}
+      <div className="mt-3 flex items-center gap-2">
+        <Button type="button" variant="primary" size="md" onClick={onDone}>
+          Done
+        </Button>
+        <Button type="button" variant="outline" size="md" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 }
 
