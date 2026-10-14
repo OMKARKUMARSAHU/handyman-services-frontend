@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { CartItem } from "@/types";
 import { getServiceByIdSync } from "@/lib/data/services";
-import { getCityBySlugSync } from "@/lib/data/cities";
+import { useLocation } from "@/lib/state/LocationProvider";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/lib/state/CartProvider";
 import { Icon } from "@/lib/icons";
@@ -24,7 +24,8 @@ import { Icon } from "@/lib/icons";
 export function CartLineItem({ item, compact = false }: { item: CartItem; compact?: boolean }) {
   const { updateCartItemQuantity, removeFromCart } = useCart();
   const service = getServiceByIdSync(item.serviceId);
-  const city = getCityBySlugSync(item.cityId);
+  const { getCity } = useLocation();
+  const city = getCity(item.cityId);
 
   if (!service) {
     // Data-driven mock catalog changed under an existing cart item — an honest

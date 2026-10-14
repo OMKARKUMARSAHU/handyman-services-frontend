@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/shop/ShopOrderStatusBadge";
+import { displayName } from "@/components/shop/shopFormat";
 import {
   AuthApiError,
   getAdminShopOrder,
@@ -261,7 +262,7 @@ function OrderDetail({ orderId, onBack }: { orderId: string; onBack: () => void 
           <tbody className="divide-y divide-neutral-100">
             {order.items.map((i) => (
               <tr key={i.id}>
-                <td className="px-3 py-2">{i.productName}<span className="block text-xs text-neutral-500">{i.productSku}</span></td>
+                <td className="px-3 py-2">{displayName(i.productName)}<span className="block text-xs text-neutral-500">{i.productSku}</span></td>
                 <td className="px-3 py-2 text-right">{inr(i.unitPrice)}</td>
                 <td className="px-3 py-2 text-right">{i.quantity}</td>
                 <td className="px-3 py-2 text-right">{inr(i.lineTotal)}</td>

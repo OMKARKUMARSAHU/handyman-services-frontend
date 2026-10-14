@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { HeaderModal } from "@/components/layout/HeaderActionModal";
 import { useLocation } from "@/lib/state/LocationProvider";
-import { getAllCitiesSync } from "@/lib/data/cities";
 import { CitySearchInput } from "./CitySearchInput";
 import { PopularCityGrid } from "./PopularCityGrid";
 import { CityList } from "./CityList";
@@ -14,10 +13,8 @@ import { CityList } from "./CityList";
  * it via useLocation().openCitySelector(), not just the header's own button.
  */
 export function CitySelectorModal() {
-  const { citySelectorOpen, closeCitySelector, resolveCitySelection } = useLocation();
+  const { citySelectorOpen, closeCitySelector, resolveCitySelection, cities: allCities } = useLocation();
   const [query, setQuery] = useState("");
-
-  const allCities = useMemo(() => getAllCitiesSync(), []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCityBySlugSync } from "@/lib/data/cities";
 import { getAllServicesSync } from "@/lib/data/services";
 import {
   getCategoriesLive,
@@ -11,6 +10,7 @@ import {
   getOffersLive,
   getHomepageSectionLive,
   getVideoCurationsLive,
+  getCityBySlugLive,
 } from "@/lib/data/live";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Hero } from "@/components/home/Hero";
@@ -21,6 +21,7 @@ import { SpotlightBanners } from "@/components/home/SpotlightBanners";
 import { ServiceRail } from "@/components/catalog/ServiceRail";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { VideoCurationRail } from "@/components/home/VideoCurationRail";
+import { ShopProductsSection } from "@/components/shop/ShopProductsSection";
 
 /**
  * Converts a homepage_sections "hero" row's generic `items` array into the
@@ -77,7 +78,7 @@ export async function generateMetadata({
   params: Promise<{ city: string }>;
 }): Promise<Metadata> {
   const { city: citySlug } = await params;
-  const city = getCityBySlugSync(citySlug);
+  const city = await getCityBySlugLive(citySlug);
   if (!city) return {};
   return {
     title: `Home Services in ${city.name}`,
@@ -112,7 +113,7 @@ export async function generateMetadata({
  */
 export default async function CityHomePage({ params }: { params: Promise<{ city: string }> }) {
   const { city: citySlug } = await params;
-  const city = getCityBySlugSync(citySlug);
+  const city = await getCityBySlugLive(citySlug);
   if (!city) notFound();
 
   const [categories, products, featured, mostBooked, offers, whyChooseUsSection, howItWorksSection, videoCurations, heroSection] =
@@ -157,6 +158,7 @@ export default async function CityHomePage({ params }: { params: Promise<{ city:
         categories={categories}
         citySlug={city.slug}
         heroImages={toHeroImages(heroSection?.items)}
+        panelFooter={<ShopProductsSection citySlug={city.slug} />}
       />
 
       {whyChooseUsSection && <TrustStrip section={whyChooseUsSection} />}

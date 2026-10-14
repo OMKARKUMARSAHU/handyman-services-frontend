@@ -74,8 +74,6 @@ export const getShopOverview = () => apiRequest<ShopOverview>("/admin/shop/overv
 export const getAdminShopSettings = () => apiRequest<ShopSettings>("/admin/shop/settings");
 export const updateAdminShopSettings = (input: Partial<ShopSettings>) =>
   apiRequest<ShopSettings>("/admin/shop/settings", { method: "PUT", ...json(input) });
-export const seedShopDemoData = () =>
-  apiRequest<{ categoriesCreated: number; productsCreated: number }>("/admin/shop/seed-demo", { method: "POST" });
 
 // categories
 export const listAdminShopCategories = () => apiRequest<ShopCategory[]>("/admin/shop/categories");

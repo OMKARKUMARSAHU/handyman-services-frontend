@@ -71,11 +71,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           <ShopCityNotice className="mb-3" />
           <ShopFilters category={sp.category} search={sp.search} sort={sort} inStock={inStock} />
 
-          {!result.ok ? (
-            <p role="alert" className="mt-8 rounded-lg bg-red-50 px-4 py-6 text-center text-sm text-red-700">
-              Products are temporarily unavailable. Please try again in a moment.
-            </p>
-          ) : result.items.length === 0 ? (
+          {result.ok && result.items.length === 0 ? (
             <div className="mt-10 rounded-2xl border border-dashed border-neutral-300 px-6 py-14 text-center">
               <p className="text-base font-semibold text-neutral-900">No products found</p>
               <p className="mt-1 text-sm text-neutral-500">
@@ -92,6 +88,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               <ShopProductGrid
                 initialItems={result.items}
                 initialMeta={result.meta}
+                initialOk={result.ok}
                 query={{ category: sp.category, search: sp.search, sort, inStock, page, pageSize: PAGE_SIZE }}
                 paginationParams={{ category: sp.category, search: sp.search, sort: sort === "newest" ? undefined : sort, inStock: inStock ? "true" : undefined }}
                 showCount

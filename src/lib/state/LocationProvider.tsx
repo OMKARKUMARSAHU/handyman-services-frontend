@@ -9,10 +9,18 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import type { City } from "@/types";
 
 const STORAGE_KEY = "handyman:selectedCitySlug";
 
 interface LocationContextValue {
+  /**
+   * Every city the site currently offers — read from the backend (the cities Admin manages) by the root layout,
+   * not from a bundled list, so a city an administrator adds shows up here with no code change.
+   */
+  cities: City[];
+  /** Looks a city up by slug in `cities`; undefined for an unknown / disabled city. */
+  getCity: (slug: string | null | undefined) => City | undefined;
   /** "Last selected city" convenience value — a UX convenience layer on top of the URL, not the source of truth. See PHASE_2_SYSTEM_ARCHITECTURE.md §4. */
   lastCitySlug: string | null;
   setLastCitySlug: (slug: string) => void;
@@ -26,7 +34,7 @@ interface LocationContextValue {
 
 const LocationContext = createContext<LocationContextValue | null>(null);
 
-export function LocationProvider({ children }: { children: React.ReactNode }) {
+export function LocationProvider({ children, cities }: { children: React.ReactNode; cities: City[] }) {
   const router = useRouter();
   const [lastCitySlug, setLastCitySlugState] = useState<string | null>(null);
   const [citySelectorOpen, setCitySelectorOpen] = useState(false);
@@ -80,8 +88,12 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     [pendingCallback, setLastCitySlug, router]
   );
 
+  const getCity = useCallback((slug: string | null | undefined) => (slug ? cities.find((c) => c.slug === slug) : undefined), [cities]);
+
   const value = useMemo(
     () => ({
+      cities,
+      getCity,
       lastCitySlug,
       setLastCitySlug,
       citySelectorOpen,
@@ -89,7 +101,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       closeCitySelector,
       resolveCitySelection,
     }),
-    [lastCitySlug, setLastCitySlug, citySelectorOpen, openCitySelector, closeCitySelector, resolveCitySelection]
+    [cities, getCity, lastCitySlug, setLastCitySlug, citySelectorOpen, openCitySelector, closeCitySelector, resolveCitySelection]
   );
 
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;

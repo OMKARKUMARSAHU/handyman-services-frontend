@@ -1,9 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getCategories } from "@/lib/data";
-import { getAllCitiesSync } from "@/lib/data/cities";
 import { getAllProductsSync } from "@/lib/data/products";
 import { getAllServicesSync } from "@/lib/data/services";
-import { listPublishedBlogSlugsLive } from "@/lib/data/live";
+import { listPublishedBlogSlugsLive, getCitiesLive } from "@/lib/data/live";
 import { getShopSitemapData } from "@/lib/shop/api";
 
 const BASE_URL = "https://handymanservices.in";
@@ -35,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // now that /[city]/[category] is the canonical, linked equivalent, to
   // avoid submitting duplicate/superseded URLs for indexing.
 
-  const cities = getAllCitiesSync();
+  const cities = await getCitiesLive();
   const categories = getCategories();
   const products = getAllProductsSync();
   const services = getAllServicesSync();
@@ -67,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const serviceRoutes: MetadataRoute.Sitemap = cities.flatMap((city) =>
     services
-      .filter((s) => s.availableCityIds.includes(city.id))
+      .filter((s) => s.availableCityIds.includes(city.slug))
       .map((service) => ({
         url: `${BASE_URL}/${city.slug}/service/${service.slug}`,
         changeFrequency: "weekly" as const,

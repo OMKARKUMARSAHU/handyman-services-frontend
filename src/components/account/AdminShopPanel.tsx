@@ -15,12 +15,12 @@ import {
   listAdminShopCategories,
   listAdminShopProducts,
   reorderAdminShopCategories,
-  seedShopDemoData,
   updateAdminShopCategory,
   updateAdminShopProduct,
   updateAdminShopSettings,
 } from "@/lib/admin/shop-api";
 import { AdminShopCityPricing } from "@/components/account/AdminShopCityPricing";
+import { displayName } from "@/components/shop/shopFormat";
 import type { PageMeta, ShopAdminProduct, ShopCategory, ShopOverview, ShopSettings } from "@/lib/shop/types";
 
 type SubTab = "products" | "categories" | "orders" | "settings";
@@ -104,7 +104,7 @@ export function AdminShopPanel() {
       {subTab === "products" && <ProductsView onFlash={setFlash} onChanged={refreshOverview} />}
       {subTab === "categories" && <CategoriesView onFlash={setFlash} />}
       {subTab === "orders" && <AdminShopOrdersView onChanged={refreshOverview} />}
-      {subTab === "settings" && <SettingsView onFlash={setFlash} onChanged={refreshOverview} />}
+      {subTab === "settings" && <SettingsView onFlash={setFlash} />}
     </div>
   );
 }
@@ -163,7 +163,7 @@ function ProductsView({ onFlash, onChanged }: { onFlash: (m: string | null) => v
   }
 
   async function restock(p: ShopAdminProduct) {
-    const raw = window.prompt(`Set stock for "${p.name}" (current ${p.stockQuantity}). Enter the new total quantity:`, String(p.stockQuantity));
+    const raw = window.prompt(`Set stock for "${displayName(p.name)}" (current ${p.stockQuantity}). Enter the new total quantity:`, String(p.stockQuantity));
     if (raw === null) return;
     const n = Number(raw);
     if (!Number.isInteger(n) || n < 0) {
@@ -184,7 +184,7 @@ function ProductsView({ onFlash, onChanged }: { onFlash: (m: string | null) => v
   }
 
   async function remove(p: ShopAdminProduct) {
-    if (!window.confirm(`Delete "${p.name}"? This cannot be undone. Past customer orders keep their own copy of the item details. To just hide it, unpublish it instead.`)) return;
+    if (!window.confirm(`Delete "${displayName(p.name)}"? This cannot be undone. Past customer orders keep their own copy of the item details. To just hide it, unpublish it instead.`)) return;
     setBusyId(p.id);
     try {
       await deleteAdminShopProduct(p.id);
@@ -256,7 +256,7 @@ function ProductsView({ onFlash, onChanged }: { onFlash: (m: string | null) => v
         <p className="text-sm text-neutral-500">Loading…</p>
       ) : items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-500">
-          No products found. Add one, or load demo data from Settings.
+          No products found. Add one to get started.
         </p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-neutral-200">
@@ -276,8 +276,7 @@ function ProductsView({ onFlash, onChanged }: { onFlash: (m: string | null) => v
                 <tr key={p.id} className={busyId === p.id ? "opacity-60" : ""}>
                   <td className="px-3 py-2">
                     <p className="font-medium text-neutral-900">
-                      {p.name}
-                      {p.isDemo && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">DEMO</span>}
+                      {displayName(p.name)}
                       {p.featured && <span className="ml-2 rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">FEATURED</span>}
                     </p>
                     <p className="text-xs text-neutral-500">{p.sku}</p>
@@ -452,11 +451,10 @@ function CategoriesView({ onFlash }: { onFlash: (m: string | null) => void }) {
 // ---------------------------------------------------------------------------
 // Settings
 // ---------------------------------------------------------------------------
-function SettingsView({ onFlash, onChanged }: { onFlash: (m: string | null) => void; onChanged: () => void }) {
+function SettingsView({ onFlash }: { onFlash: (m: string | null) => void }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [seeding, setSeeding] = useState(false);
   const [deliveryCharge, setDeliveryCharge] = useState("0");
   const [freeThreshold, setFreeThreshold] = useState("");
   const [deliveryInfo, setDeliveryInfo] = useState("");
@@ -505,21 +503,6 @@ function SettingsView({ onFlash, onChanged }: { onFlash: (m: string | null) => v
     }
   }
 
-  async function seed() {
-    if (!window.confirm("Load demo categories and products? They are clearly marked DEMO with placeholder prices, and re-running this never duplicates them.")) return;
-    setSeeding(true);
-    setError(null);
-    try {
-      const r = await seedShopDemoData();
-      onFlash(`Demo data loaded: ${r.categoriesCreated} categories and ${r.productsCreated} products created. They are published and labelled DEMO with placeholder prices — edit or unpublish them before going live.`);
-      onChanged();
-    } catch (e) {
-      setError(errMsg(e, "Could not load demo data."));
-    } finally {
-      setSeeding(false);
-    }
-  }
-
   if (!loaded) return <p className="text-sm text-neutral-500">Loading…</p>;
 
   return (
@@ -552,16 +535,6 @@ function SettingsView({ onFlash, onChanged }: { onFlash: (m: string | null) => v
       </button>
 
       <AdminShopCityPricing onFlash={onFlash} />
-
-      <section className="rounded-lg border border-neutral-200 p-4">
-        <h3 className="text-sm font-semibold text-neutral-900">Demo data</h3>
-        <p className="mt-1 text-xs text-neutral-600">
-          Loads sample categories and products (water purifiers, filters, AC accessories, cleaning, pest control, tools) so the shop can be reviewed. They go live immediately, labelled DEMO with placeholder prices — edit, unpublish or delete them from the Products tab.
-        </p>
-        <button type="button" disabled={seeding} onClick={seed} className="mt-3 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium hover:bg-neutral-50 disabled:opacity-50">
-          {seeding ? "Loading…" : "Load demo data"}
-        </button>
-      </section>
     </div>
   );
 }

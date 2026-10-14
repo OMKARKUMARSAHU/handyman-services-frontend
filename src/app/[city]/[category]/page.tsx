@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCityBySlugSync } from "@/lib/data/cities";
 import { getCategoryById } from "@/lib/data/categories";
-import { getCategoriesLive, getAllProductsLive } from "@/lib/data/live";
+import { getCategoriesLive, getAllProductsLive, getCityBySlugLive } from "@/lib/data/live";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container } from "@/components/ui/Container";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
@@ -44,7 +43,7 @@ export async function generateMetadata({
   params: Promise<{ city: string; category: string }>;
 }): Promise<Metadata> {
   const { city: citySlug, category: categoryId } = await params;
-  const city = getCityBySlugSync(citySlug);
+  const city = await getCityBySlugLive(citySlug);
   const category = getCategoryById(categoryId);
   if (!city || !category) return {};
   return {
@@ -69,7 +68,7 @@ export default async function CategoryPage({
   params: Promise<{ city: string; category: string }>;
 }) {
   const { city: citySlug, category: categoryId } = await params;
-  const city = getCityBySlugSync(citySlug);
+  const city = await getCityBySlugLive(citySlug);
   const [categories, allProducts] = await Promise.all([getCategoriesLive(), getAllProductsLive()]);
   const category = categories.find((c) => c.id === categoryId);
   if (!city || !category) notFound();

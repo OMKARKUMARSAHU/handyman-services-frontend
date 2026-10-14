@@ -16,10 +16,11 @@ export function jsonLdString(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-// ---- Customer-facing display clean-up for placeholder (demo) catalogue data -------------------------
-// Stored data is never changed. These helpers only decide what a CUSTOMER sees: the "(Demo)" suffix on
-// names, placeholder "Demo listing …" text and DEMO-… SKUs are not shown. (Admin screens keep showing the
-// stored values so staff can still tell placeholder records apart and replace them.)
+// ---- Customer-facing display clean-up for legacy placeholder catalogue data -------------------------
+// Stored data is never changed here. Older sample records may still carry a "(Demo)" name suffix, a
+// "Demo listing …" sentence or a DEMO-… SKU (see backend/scripts/sql/clean-demo-product-names.*.sql for
+// the reviewed, reversible clean-up). Until that has been applied these helpers keep such text from
+// reaching customers; once the data is clean they simply return the values unchanged.
 
 /** "Refrigerator (Demo)" -> "Refrigerator". */
 export function displayName(name: string): string {

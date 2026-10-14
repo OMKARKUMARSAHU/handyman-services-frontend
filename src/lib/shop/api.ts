@@ -75,9 +75,9 @@ export async function getShopProductLive(slug: string): Promise<{ product: ShopP
 
 // ---- Browser-side, city-aware readers (the city lives in the browser, so server-cached pages
 // render the base-price view and these refine it once the visitor's city is known).
-export async function fetchShopProductsForCity(q: ProductListQuery) {
+export async function fetchShopProductsForCity(q: ProductListQuery, init?: RequestInit) {
   const query = toQuery({ ...q, inStock: q.inStock ? "true" : undefined, featured: q.featured ? "true" : undefined });
-  return requestPaged<ShopProductSummary[]>(`/shop/products${query}`);
+  return requestPaged<ShopProductSummary[]>(`/shop/products${query}`, init);
 }
 
 export function fetchShopProductForCity(slug: string, city: string) {

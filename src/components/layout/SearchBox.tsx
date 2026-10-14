@@ -7,7 +7,7 @@ import { HeaderModal } from "./HeaderActionModal";
 import { getCategories } from "@/lib/data/categories";
 import { getAllProductsSync } from "@/lib/data/products";
 import { getAllServicesSync } from "@/lib/data/services";
-import { getCityBySlugSync } from "@/lib/data/cities";
+import { useLocation } from "@/lib/state/LocationProvider";
 import { getCategoryById } from "@/lib/data/categories";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,8 @@ export function SearchBox({ className }: { className?: string }) {
   const [query, setQuery] = useState("");
   const params = useParams<{ city?: string }>();
   const citySlug = typeof params?.city === "string" ? params.city : undefined;
-  const city = citySlug ? getCityBySlugSync(citySlug) : undefined;
+  const { getCity } = useLocation();
+  const city = getCity(citySlug);
 
   const categories = useMemo(() => getCategories(), []);
   const products = useMemo(() => getAllProductsSync(), []);
@@ -46,7 +47,7 @@ export function SearchBox({ className }: { className?: string }) {
       products: products.filter((p) => p.name.toLowerCase().includes(q)),
       services: city
         ? services.filter(
-            (s) => s.name.toLowerCase().includes(q) && s.availableCityIds.includes(city.id)
+            (s) => s.name.toLowerCase().includes(q) && s.availableCityIds.includes(city.slug)
           )
         : [],
     };

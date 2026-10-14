@@ -1,4 +1,5 @@
-import type { Category, Product, Service, Offer, HomepageSection, HomepageSectionItem, VideoCuration, VideoCurationClip } from "@/types";
+import type { Category, City, Product, Service, Offer, HomepageSection, HomepageSectionItem, VideoCuration, VideoCurationClip } from "@/types";
+import { getAllCitiesSync as getBundledCities } from "./cities";
 import { getCategories as getCategoriesMock } from "./categories";
 import { getAllProductsSync as getAllProductsMock } from "./products";
 import {
@@ -304,6 +305,114 @@ function mapService(dto: BackendService, ctx: LiveCatalogContext): Service {
 }
 
 /**
+ * CITY-SWITCHING FIX: resolves a city slug to the backend city UUID, or null when the backend does not
+ * serve that city (unknown, or disabled in Admin).
+ *
+ * Previously a slug missing from the cached city map simply dropped the `cityId` filter, so the caller got
+ * the UNFILTERED catalog (every service, base prices) instead of that city's — silently wrong, and exactly
+ * what happens right after an Admin adds a city (the cached map is up to 30s old). Now a miss re-checks the
+ * backend for that one slug, and callers treat a still-unknown city as "nothing available there", never as
+ * "everything".
+ */
+async function resolveCityBackendId(ctx: LiveCatalogContext, citySlug: string): Promise<string | null> {
+  const known = ctx.cityBackendIdBySlug.get(citySlug);
+  if (known) return known;
+  const fresh = await backendGet<{ id: string; slug: string; active: boolean }>(`/cities/${encodeURIComponent(citySlug)}`);
+  return fresh && fresh.active !== false ? fresh.id : null;
+}
+
+interface BackendCityFull {
+  id: string;
+  name: string;
+  state: string;
+  slug: string;
+  isPopular: boolean;
+  active: boolean;
+  sortOrder: number;
+  iconUrl?: string | null;
+  iconAlt?: string | null;
+}
+
+/**
+ * The cities the site offers, from the same backend Admin's City management writes to — so a city an
+ * administrator adds (or disables) appears in / disappears from the selector and the /[city] routes with no
+ * code change. The bundled list is used ONLY when the backend cannot be reached or returns no cities at all
+ * (same "never blank" contract as every other reader in this file); a reachable backend is authoritative.
+ */
+export async function getCitiesLive(): Promise<City[]> {
+  const rows = await backendGet<BackendCityFull[]>("/cities");
+  if (!rows || rows.length === 0) return getBundledCities();
+  return rows
+    .filter((c) => c.active)
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      state: c.state,
+      slug: c.slug,
+      isPopular: c.isPopular,
+      active: c.active,
+      sortOrder: c.sortOrder,
+      iconUrl: c.iconUrl ?? null,
+      iconAlt: c.iconAlt ?? null,
+    }))
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+export async function getCityBySlugLive(slug: string): Promise<City | undefined> {
+  return (await getCitiesLive()).find((c) => c.slug === slug);
+}
+
+export interface CityRailsData {
+  citySlug: string;
+  featured: Service[];
+  mostBooked: Service[];
+  byCategory: Record<string, Service[]>;
+}
+
+export type CityRailsResult =
+  | { status: "ok"; data: CityRailsData }
+  /** The backend answered but does not serve this city. */
+  | { status: "unknown_city" }
+  /** The backend (or the catalog context) could not be reached / answered an error (incl. HTTP 429). */
+  | { status: "unavailable" };
+
+/**
+ * Strict variant of the three rail readers for the `/api/home-rails` route. The ordinary `*Live` readers
+ * deliberately fall back to the bundled mock catalog on ANY backend problem (right for server-rendered pages
+ * that must never be blank) — but behind a cached JSON route that would publish mock services/prices as if
+ * they were this city's live ones, and cache them. Here a failure is reported as a failure instead.
+ */
+export async function getCityRailsStrict(citySlug: string): Promise<CityRailsResult> {
+  const ctx = await getLiveCatalogContext();
+  if (!ctx) return { status: "unavailable" };
+  const cityBackendId = await resolveCityBackendId(ctx, citySlug);
+  if (!cityBackendId) return { status: "unknown_city" };
+
+  const fetchRows = (extra: Record<string, string>) =>
+    backendGet<BackendService[]>(`/services?${new URLSearchParams({ ...extra, cityId: cityBackendId }).toString()}`);
+  const [featured, mostBooked, ...perCategory] = await Promise.all([
+    fetchRows({ featured: "true", pageSize: "20" }),
+    fetchRows({ mostBooked: "true", pageSize: "20" }),
+    ...ctx.categories.map((c) => fetchRows({ categoryId: ctx.categoryBackendIdBySlug.get(c.id) ?? "", pageSize: "10" })),
+  ]);
+  if (!featured || !mostBooked || perCategory.some((r) => r === null)) return { status: "unavailable" };
+
+  const byCategory: Record<string, Service[]> = {};
+  ctx.categories.forEach((c, i) => {
+    byCategory[c.id] = (perCategory[i] as BackendService[]).map((r) => mapService(r, ctx)).slice(0, 10);
+  });
+  return {
+    status: "ok",
+    data: {
+      citySlug,
+      featured: featured.map((r) => mapService(r, ctx)),
+      mostBooked: mostBooked.map((r) => mapService(r, ctx)),
+      byCategory,
+    },
+  };
+}
+
+/**
  * RAZORPAY/CHECKOUT FOLLOW-UP ("The request failed validation" —
  * `items[0].cityId`/`items[0].serviceId` not UUIDs): every *Live mapper in
  * this file deliberately maps an entity's frontend-facing `id` to its
@@ -319,7 +428,7 @@ function mapService(dto: BackendService, ctx: LiveCatalogContext): Service {
  */
 export async function getCityBackendIdBySlugLive(citySlug: string): Promise<string | null> {
   const ctx = await getLiveCatalogContext();
-  return ctx?.cityBackendIdBySlug.get(citySlug) ?? null;
+  return ctx ? resolveCityBackendId(ctx, citySlug) : null;
 }
 
 /** Lightweight id-only lookup (distinct from getServiceDetailLive's full detail+offers fetch) — checkout may need to resolve several distinct services at once. */
@@ -342,8 +451,11 @@ export async function getFeaturedServicesLive(citySlug?: string): Promise<Servic
   const ctx = await getLiveCatalogContext();
   if (!ctx) return getFeaturedServicesMock(citySlug);
   const params = new URLSearchParams({ featured: "true", pageSize: "20" });
-  const cityBackendId = citySlug ? ctx.cityBackendIdBySlug.get(citySlug) : undefined;
-  if (cityBackendId) params.set("cityId", cityBackendId);
+  if (citySlug) {
+    const cityBackendId = await resolveCityBackendId(ctx, citySlug);
+    if (!cityBackendId) return [];
+    params.set("cityId", cityBackendId);
+  }
   const rows = await backendGet<BackendService[]>(`/services?${params.toString()}`);
   if (!rows) return getFeaturedServicesMock(citySlug);
   return rows.map((r) => mapService(r, ctx));
@@ -353,8 +465,11 @@ export async function getMostBookedServicesLive(citySlug?: string): Promise<Serv
   const ctx = await getLiveCatalogContext();
   if (!ctx) return getMostBookedServicesMock(citySlug);
   const params = new URLSearchParams({ mostBooked: "true", pageSize: "20" });
-  const cityBackendId = citySlug ? ctx.cityBackendIdBySlug.get(citySlug) : undefined;
-  if (cityBackendId) params.set("cityId", cityBackendId);
+  if (citySlug) {
+    const cityBackendId = await resolveCityBackendId(ctx, citySlug);
+    if (!cityBackendId) return [];
+    params.set("cityId", cityBackendId);
+  }
   const rows = await backendGet<BackendService[]>(`/services?${params.toString()}`);
   if (!rows) return getMostBookedServicesMock(citySlug);
   return rows.map((r) => mapService(r, ctx));
@@ -369,8 +484,11 @@ export async function getServicesByCategoryLive(
   const categoryBackendId = ctx.categoryBackendIdBySlug.get(categorySlug);
   if (!categoryBackendId) return [];
   const params = new URLSearchParams({ categoryId: categoryBackendId, pageSize: String(opts?.limit ?? 20) });
-  const cityBackendId = opts?.citySlug ? ctx.cityBackendIdBySlug.get(opts.citySlug) : undefined;
-  if (cityBackendId) params.set("cityId", cityBackendId);
+  if (opts?.citySlug) {
+    const cityBackendId = await resolveCityBackendId(ctx, opts.citySlug);
+    if (!cityBackendId) return [];
+    params.set("cityId", cityBackendId);
+  }
   const rows = await backendGet<BackendService[]>(`/services?${params.toString()}`);
   if (!rows) return getServicesByCategoryMock(categorySlug, { cityId: opts?.citySlug, limit: opts?.limit });
   const mapped = rows.map((r) => mapService(r, ctx));
@@ -395,9 +513,12 @@ export async function getServiceDetailLive(
 ): Promise<{ service: Service; offers: Offer[] } | null> {
   const ctx = await getLiveCatalogContext();
   if (ctx) {
-    const cityBackendId = opts?.citySlug ? ctx.cityBackendIdBySlug.get(opts.citySlug) : undefined;
     const params = new URLSearchParams();
-    if (cityBackendId) params.set("cityId", cityBackendId);
+    if (opts?.citySlug) {
+      const cityBackendId = await resolveCityBackendId(ctx, opts.citySlug);
+      if (!cityBackendId) return null;
+      params.set("cityId", cityBackendId);
+    }
     const query = params.toString();
     const dto = await backendGet<BackendService>(`/services/${encodeURIComponent(slug)}${query ? `?${query}` : ""}`);
     if (dto) {
@@ -434,8 +555,11 @@ export async function getServicesByProductLive(
   const productBackendId = ctx.productBackendIdBySlug.get(productSlug);
   if (!productBackendId) return [];
   const params = new URLSearchParams({ productId: productBackendId, pageSize: "50" });
-  const cityBackendId = opts?.citySlug ? ctx.cityBackendIdBySlug.get(opts.citySlug) : undefined;
-  if (cityBackendId) params.set("cityId", cityBackendId);
+  if (opts?.citySlug) {
+    const cityBackendId = await resolveCityBackendId(ctx, opts.citySlug);
+    if (!cityBackendId) return [];
+    params.set("cityId", cityBackendId);
+  }
   const rows = await backendGet<BackendService[]>(`/services?${params.toString()}`);
   if (!rows) return getServicesByProductMock(productSlug, { cityId: opts?.citySlug });
   return rows.map((r) => mapService(r, ctx)).sort((a, b) => a.sortOrder - b.sortOrder);
@@ -455,8 +579,11 @@ export async function getServicesByProductLive(
 export async function getOffersLive(opts?: { citySlug?: string }): Promise<Offer[]> {
   const ctx = await getLiveCatalogContext();
   const params = new URLSearchParams();
-  const cityBackendId = ctx && opts?.citySlug ? ctx.cityBackendIdBySlug.get(opts.citySlug) : undefined;
-  if (cityBackendId) params.set("cityId", cityBackendId);
+  if (ctx && opts?.citySlug) {
+    const cityBackendId = await resolveCityBackendId(ctx, opts.citySlug);
+    if (!cityBackendId) return [];
+    params.set("cityId", cityBackendId);
+  }
   const query = params.toString();
   const rows = await backendGet<BackendOffer[]>(`/offers${query ? `?${query}` : ""}`);
   if (!rows || !ctx) return getOffersMock(opts?.citySlug ? { cityId: opts.citySlug } : undefined);

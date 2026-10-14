@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getCityBySlugSync } from "@/lib/data/cities";
 import { getServiceBySlug } from "@/lib/data/services";
 import { getServiceTypeByIdSync } from "@/lib/data/serviceTypes";
-import { getServiceDetailLive, getAllProductsLive, getCategoriesLive } from "@/lib/data/live";
+import { getServiceDetailLive, getAllProductsLive, getCategoriesLive, getCityBySlugLive } from "@/lib/data/live";
 import { Container } from "@/components/ui/Container";
 import { ServiceGallery } from "@/components/service/ServiceGallery";
 import { ServicePriceBlock } from "@/components/service/ServicePriceBlock";
@@ -49,9 +48,9 @@ export async function generateMetadata({
   params: Promise<{ city: string; serviceSlug: string }>;
 }): Promise<Metadata> {
   const { city: citySlug, serviceSlug } = await params;
-  const city = getCityBySlugSync(citySlug);
+  const city = await getCityBySlugLive(citySlug);
   if (!city) return {};
-  const service = await getServiceBySlug(serviceSlug, { cityId: city.id });
+  const service = await getServiceBySlug(serviceSlug, { cityId: city.slug });
   if (!service) return {};
   return {
     title: `${service.name} in ${city.name}`,
@@ -78,7 +77,7 @@ export default async function ServiceDetailPage({
   params: Promise<{ city: string; serviceSlug: string }>;
 }) {
   const { city: citySlug, serviceSlug } = await params;
-  const city = getCityBySlugSync(citySlug);
+  const city = await getCityBySlugLive(citySlug);
   if (!city) notFound();
 
   const [detail, products, categories] = await Promise.all([

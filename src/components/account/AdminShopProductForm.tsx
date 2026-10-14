@@ -89,7 +89,6 @@ export function AdminShopProductForm({
   const [seoDescription, setSeoDescription] = useState("");
   const [images, setImages] = useState<ImageRow[]>([]);
   const [videos, setVideos] = useState<VideoRow[]>([]);
-  const [isDemo, setIsDemo] = useState(false);
   const [cityRows, setCityRows] = useState<CityRow[] | null>(null);
   const [picker, setPicker] = useState<null | "image" | "video">(null);
   const [youtubeDraft, setYoutubeDraft] = useState("");
@@ -120,7 +119,6 @@ export function AdminShopProductForm({
         setReturnInfo(p.returnInfo ?? "");
         setSeoTitle(p.seoTitle ?? "");
         setSeoDescription(p.seoDescription ?? "");
-        setIsDemo(p.isDemo);
         setImages(p.images.map((i) => ({ mediaId: i.mediaId, url: i.url, altText: i.altText ?? "", isPrimary: i.isPrimary })));
         setVideos(
           p.videos.map((v) => ({
@@ -256,11 +254,6 @@ export function AdminShopProductForm({
           ← Back to products
         </button>
       </div>
-      {isDemo && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          This is a demo product with placeholder pricing. Update the price, MRP and details before publishing for real customers.
-        </p>
-      )}
       {categories.length === 0 && (
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">Create a category first (Shop → Categories) — every product needs one.</p>
       )}

@@ -7,6 +7,7 @@ import { LocationProvider } from "@/lib/state/LocationProvider";
 import { AuthProvider } from "@/lib/state/AuthProvider";
 import { ShopCartProvider } from "@/lib/shop/cart";
 import { CitySelectorModal } from "@/components/location/CitySelectorModal";
+import { getCitiesLive } from "@/lib/data/live";
 import "./globals.css";
 
 // Note: this build environment could not reach fonts.googleapis.com to
@@ -36,7 +37,9 @@ export const metadata: Metadata = {
     "Browse services by category, compare options, and book installation, service, repair or AMC for your home appliances — AC, washing machine, refrigerator, and more.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // The cities Admin manages (30s data cache, refreshed immediately after any Admin save). Bundled list only if the backend is unreachable.
+  const cities = await getCitiesLive();
   return (
     <html lang="en" className="h-full antialiased">
       <body className="flex min-h-full flex-col">
@@ -46,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <LocationProvider>
+        <LocationProvider cities={cities}>
           <CartProvider>
             <AuthProvider>
               <ShopCartProvider>

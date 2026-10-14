@@ -335,7 +335,7 @@ describe("shop catalogue — admin", () => {
     expect((await testAgent().put("/api/v1/admin/shop/settings").set("Authorization", bearer(adminToken)).send({ deliveryCharge: -1 })).status).toBe(400);
   });
 
-  it("seeds labelled demo data idempotently", async () => {
+  it("seeds sample data idempotently, with no 'Demo' wording in names or descriptions", async () => {
     const first = await testAgent().post("/api/v1/admin/shop/seed-demo").set("Authorization", bearer(adminToken));
     expect(first.status).toBe(200);
     expect(first.body.data.productsCreated).toBeGreaterThan(10);
@@ -343,5 +343,16 @@ describe("shop catalogue — admin", () => {
     expect(second.body.data).toEqual({ categoriesCreated: 0, productsCreated: 0 });
     const list = await testAgent().get("/api/v1/shop/products").query({ pageSize: 100 });
     expect(list.body.data.every((p: { isDemo: boolean }) => p.isDemo)).toBe(true);
+    // The internal flag stays (it enables the placeholder image) but no seeded text may say "demo".
+    const texts = list.body.data.flatMap((p: { name: string; shortDescription: string | null; description?: string | null; category: { name: string; description?: string | null } }) => [
+      p.name,
+      p.shortDescription ?? "",
+      p.description ?? "",
+      p.category.name,
+      p.category.description ?? "",
+    ]);
+    expect(texts.filter((t: string) => /demo/i.test(t))).toEqual([]);
+    const cats = await testAgent().get("/api/v1/shop/categories");
+    expect(JSON.stringify(cats.body.data)).not.toMatch(/demo/i);
   });
 });

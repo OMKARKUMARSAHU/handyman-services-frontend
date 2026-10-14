@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation";
 import { useLocation } from "@/lib/state/LocationProvider";
-import { getCityBySlugSync } from "@/lib/data/cities";
 import { Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
@@ -18,11 +17,11 @@ import { cn } from "@/lib/utils";
  */
 export function LocationSelector({ className }: { className?: string }) {
   const params = useParams<{ city?: string }>();
-  const { lastCitySlug, openCitySelector } = useLocation();
+  const { lastCitySlug, openCitySelector, getCity } = useLocation();
 
   const urlCitySlug = typeof params?.city === "string" ? params.city : undefined;
   const activeSlug = urlCitySlug ?? lastCitySlug ?? undefined;
-  const activeCity = activeSlug ? getCityBySlugSync(activeSlug) : undefined;
+  const activeCity = getCity(activeSlug);
   const label = activeCity ? `Location: ${activeCity.name}. Change city` : "Select your city";
 
   return (
