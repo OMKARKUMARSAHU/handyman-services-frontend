@@ -6,7 +6,12 @@ import type { PaginationParams } from "../../shared/response";
 import { getOwnAddressById } from "../customers/addresses.service";
 import { resolveEffectiveOffer } from "../offers/offers.service";
 import type { OfferDto } from "../offers/offers.types";
-import { getServiceCategoryId, getServiceRowById, isServicePurchasableInCity } from "../services/services.service";
+import {
+  getServiceCategoryId,
+  getServiceRowById,
+  isServicePurchasableInCity,
+  resolveServicePrice,
+} from "../services/services.service";
 import { clearCart } from "../cart/cart.service";
 import type { CartItemRow, CartRow } from "../cart/cart.types";
 import { toOrderDto, type OrderDto, type OrderItemRow, type OrderRow, type OrderStatus } from "./orders.types";
@@ -105,8 +110,10 @@ export async function createOrder(customerId: string, input: CreateOrderInput): 
       throw new ConflictError(`"${service.name}" is no longer available in the selected city. Please update your cart.`);
     }
 
-    const mrp = Number(service.mrp);
-    const offerPrice = Number(service.offer_price);
+    // CITY-WISE PRICING: re-derived here from the database for THIS item's
+    // city (custom city price if configured, else the base price). The
+    // request body carries no price, so nothing client-side can influence it.
+    const { mrp, offerPrice } = await resolveServicePrice(service, item.city_id);
     const categoryId = await getServiceCategoryId(item.service_id);
     const effectiveOffer = await resolveEffectiveOffer(item.city_id, item.service_id, categoryId);
     const pricing = computeFinalPricing(mrp, offerPrice, effectiveOffer);

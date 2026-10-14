@@ -40,6 +40,30 @@ export function errorHandler() {
       return;
     }
 
+    // Schema out of date (a table/column the code needs does not exist in the connected database):
+    // this is a deployment/setup problem, not a bug in the request. Say so clearly instead of a
+    // bare 500, and log exactly what to do. Never echoes SQL or the DB error to the client.
+    const dbCode = (err as { code?: string } | null)?.code;
+    if (dbCode === "ER_NO_SUCH_TABLE" || dbCode === "ER_BAD_FIELD_ERROR") {
+      logger.error(
+        {
+          requestId,
+          err,
+          hint: "The connected database is missing a table/column this code needs. Check which database the backend is using (npm run db:check) and apply pending migrations to THAT database only if it is the local development database (npm run migrate:local).",
+        },
+        "database_schema_out_of_date"
+      );
+      res.status(503).json({
+        success: false,
+        error: {
+          code: "DATABASE_NOT_MIGRATED",
+          message: "This feature needs a database update that has not been applied yet. Please ask the site administrator to run the pending database migrations.",
+        },
+        requestId,
+      });
+      return;
+    }
+
     // Unexpected error: log full detail server-side, return a generic body.
     logger.error({ requestId, err }, "unhandled_error");
     res.status(500).json({

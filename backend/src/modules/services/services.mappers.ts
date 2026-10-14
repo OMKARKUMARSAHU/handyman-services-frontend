@@ -1,6 +1,6 @@
 import { computeFinalPricing } from "../../shared/pricing";
 import type { OfferDto } from "../offers/offers.types";
-import type { ManagedServiceDto, PublicServiceDto, ServiceRow } from "./services.types";
+import type { ManagedServiceDto, PublicServiceDto, ServiceCityPriceDto, ServiceRow } from "./services.types";
 
 // MEDIA LIBRARY FOLLOW-UP: media_type lets a service mix photos and videos
 // in its gallery; defaults to "image" in the database for every
@@ -39,14 +39,21 @@ function toImages(rows: ServiceImageRow[]) {
     }));
 }
 
+/** A city's own price for one service (already numeric); null/absent = use the service's base prices. */
+export interface CityPriceOverride {
+  mrp: number;
+  offerPrice: number;
+}
+
 export function toPublicServiceDto(
   row: ServiceRow,
   images: ServiceImageRow[],
   availableCityIds: string[],
-  effectiveOffer: OfferDto | null = null
+  effectiveOffer: OfferDto | null = null,
+  cityPrice: CityPriceOverride | null = null
 ): PublicServiceDto {
-  const mrp = Number(row.mrp);
-  const offerPrice = Number(row.offer_price);
+  const mrp = cityPrice ? cityPrice.mrp : Number(row.mrp);
+  const offerPrice = cityPrice ? cityPrice.offerPrice : Number(row.offer_price);
   const pricing = computeFinalPricing(mrp, offerPrice, effectiveOffer);
 
   return {
@@ -74,16 +81,19 @@ export function toPublicServiceDto(
     featured: Boolean(row.featured),
     active: Boolean(row.active),
     sortOrder: row.sort_order,
+    priceSource: cityPrice ? "city" : "base",
   };
 }
 
 export function toManagedServiceDto(
   row: ServiceRow,
   images: ServiceImageRow[],
-  availableCityIds: string[]
+  availableCityIds: string[],
+  cityPrices: ServiceCityPriceDto[] = []
 ): ManagedServiceDto {
   return {
     ...toPublicServiceDto(row, images, availableCityIds),
+    cityPrices,
     approvalStatus: row.approval_status,
     rejectionReason: row.rejection_reason,
     approvedByUserId: row.approved_by_user_id,

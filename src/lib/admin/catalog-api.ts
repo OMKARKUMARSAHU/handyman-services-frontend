@@ -222,6 +222,8 @@ export interface AdminService {
   createdByRole: "admin" | "provider";
   createdByUserId: string;
   createdAt: string;
+  /** Cities with a custom price; any city not listed uses the base `mrp`/`offerPrice`. */
+  cityPrices: { cityId: string; mrp: number; offerPrice: number }[];
 }
 
 export interface ServiceInput {
@@ -267,6 +269,18 @@ export function setServiceCityAvailability(
   cities: { cityId: string; active: boolean }[]
 ): Promise<{ serviceId: string; availableCityIds: string[] }> {
   return apiRequest(`/admin/services/${id}/city-availability`, { method: "PUT", body: JSON.stringify({ cities }) });
+}
+
+/**
+ * Per-city custom MRP/offer price. A city sent with both values `null`
+ * clears its custom price (it then uses the base price). Never changes
+ * availability — that stays on `setServiceCityAvailability`.
+ */
+export function setServiceCityPricing(
+  id: string,
+  cities: { cityId: string; mrp: number | null; offerPrice: number | null }[]
+): Promise<{ cityId: string; mrp: number; offerPrice: number }[]> {
+  return apiRequest(`/admin/services/${id}/city-pricing`, { method: "PUT", body: JSON.stringify({ cities }) });
 }
 
 export function approveListing(id: string): Promise<AdminService> {

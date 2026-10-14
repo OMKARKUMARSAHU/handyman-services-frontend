@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Refrigerator illustration">
+  <rect width="400" height="400" fill="#f1f5f9"/>
+  <ellipse cx="200" cy="358" rx="88" ry="9" fill="#cbd5e1"/>
+  <rect x="120" y="28" width="160" height="324" rx="14" fill="#f8fafc" stroke="#64748b" stroke-width="4"/>
+  <line x1="120" y1="136" x2="280" y2="136" stroke="#64748b" stroke-width="4"/>
+  <rect x="136" y="76" width="9" height="38" rx="4" fill="#94a3b8"/>
+  <rect x="136" y="170" width="9" height="86" rx="4" fill="#94a3b8"/>
+  <rect x="150" y="48" width="50" height="8" rx="4" fill="#e2e8f0"/>
+</svg>

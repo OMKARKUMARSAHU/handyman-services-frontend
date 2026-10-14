@@ -23,9 +23,12 @@ const FIELD_CLASS =
 export function AddressStep({
   initialAddressId,
   onContinue,
+  continueLabel = "Continue to schedule",
 }: {
   initialAddressId: string | null;
   onContinue: (addressId: string, address: CustomerAddress) => void;
+  /** Label of the confirm button. Defaults to the service-booking wording; the shop checkout passes its own. */
+  continueLabel?: string;
 }) {
   const [addresses, setAddresses] = useState<CustomerAddress[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -148,7 +151,7 @@ export function AddressStep({
             + Add a new address
           </button>
           <Button type="button" size="lg" className="w-full sm:w-auto" onClick={handleContinueWithSelected}>
-            Continue to schedule
+            {continueLabel}
           </Button>
         </div>
       )}

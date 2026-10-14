@@ -58,6 +58,35 @@ export const ownListingsQuerySchema = z.object({
   pageSize: z.coerce.number().int().positive().optional(),
 });
 
+/**
+ * Per-city custom MRP / offer price for a service. A city entry with BOTH
+ * values `null` clears its custom price (the city then uses the service's
+ * base prices). Exactly one value set is invalid, values must be >= 0, and the
+ * offer price may not exceed the MRP. Cities not listed are left untouched.
+ */
+const cityPriceEntrySchema = z
+  .object({
+    cityId: z.string().uuid(),
+    mrp: z.number().finite().nonnegative().max(99999999.99).nullable(),
+    offerPrice: z.number().finite().nonnegative().max(99999999.99).nullable(),
+  })
+  .superRefine((v, ctx) => {
+    if ((v.mrp === null) !== (v.offerPrice === null)) {
+      ctx.addIssue({ code: "custom", path: ["offerPrice"], message: "Enter both MRP and offer price for a city, or leave both empty to use the base prices." });
+      return;
+    }
+    if (v.mrp !== null && v.offerPrice !== null && v.offerPrice > v.mrp) {
+      ctx.addIssue({ code: "custom", path: ["offerPrice"], message: "Offer price cannot exceed MRP." });
+    }
+  });
+
+export const setCityPricingSchema = z.object({
+  cities: z
+    .array(cityPriceEntrySchema)
+    .min(1)
+    .refine((list) => new Set(list.map((c) => c.cityId)).size === list.length, { message: "Each city may appear only once." }),
+});
+
 export const setCityAvailabilitySchema = z.object({
   cities: z.array(z.object({ cityId: z.string().uuid(), active: z.boolean() })).min(1),
 });

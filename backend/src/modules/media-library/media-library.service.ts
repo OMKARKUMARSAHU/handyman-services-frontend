@@ -197,6 +197,23 @@ export async function findMediaReferences(media: MediaDto): Promise<MediaReferen
     refs.push({ entityType: "service", entityId: row.service_id, label: `Service image/video (row ${row.id})` });
   }
 
+  // E-commerce shop: product images / uploaded videos reference media by FK, and shop
+  // category images are stored by URL. Deleting any of these in-use media must be blocked.
+  const shopImages: Array<{ product_id: string; name: string }> = await db("shop_product_images as i")
+    .join("shop_products as p", "p.id", "i.product_id")
+    .where("i.media_id", media.id)
+    .select("i.product_id", "p.name");
+  for (const row of shopImages) refs.push({ entityType: "shop_product", entityId: row.product_id, label: `Shop product image — "${row.name}"` });
+
+  const shopVideos: Array<{ product_id: string; name: string }> = await db("shop_product_videos as v")
+    .join("shop_products as p", "p.id", "v.product_id")
+    .where("v.media_id", media.id)
+    .select("v.product_id", "p.name");
+  for (const row of shopVideos) refs.push({ entityType: "shop_product", entityId: row.product_id, label: `Shop product video — "${row.name}"` });
+
+  const shopCategories: Array<{ id: string; name: string }> = await db("shop_categories").select("id", "name").where({ image_url: media.url });
+  for (const row of shopCategories) refs.push({ entityType: "shop_category", entityId: row.id, label: `Shop category "${row.name}"` });
+
   const categories: Array<{ id: string; name: string }> = await db("categories").select("id", "name").where({ image: media.url });
   for (const row of categories) refs.push({ entityType: "category", entityId: row.id, label: `Category "${row.name}"` });
 

@@ -4,8 +4,15 @@ import { getDb } from "../../database/db";
 import { ConflictError, ForbiddenError, NotFoundError } from "../../shared/errors";
 import { buildPageMeta, type PaginationParams } from "../../shared/response";
 import { getActiveOffersForCity, pickEffectiveOffer, resolveEffectiveOffer } from "../offers/offers.service";
-import { toManagedServiceDto, toPublicServiceDto, type ServiceImageRow } from "./services.mappers";
-import type { ApprovalStatus, CreatedByRole, ManagedServiceDto, PublicServiceDto, ServiceRow } from "./services.types";
+import { toManagedServiceDto, toPublicServiceDto, type CityPriceOverride, type ServiceImageRow } from "./services.mappers";
+import type {
+  ApprovalStatus,
+  CreatedByRole,
+  ManagedServiceDto,
+  PublicServiceDto,
+  ServiceCityPriceDto,
+  ServiceRow,
+} from "./services.types";
 
 const TABLE = "services";
 const IMAGES_TABLE = "service_images";
@@ -48,6 +55,69 @@ async function availableCityIdsFor(serviceIds: string[]): Promise<Map<string, st
     map.set(row.service_id, list);
   }
   return map;
+}
+
+interface CityPriceRow {
+  service_id: string;
+  city_id: string;
+  mrp: string | null;
+  offer_price: string | null;
+}
+
+/** Only rows that actually carry a custom price (both columns set — the DB CHECK guarantees they come as a pair). */
+function hasCustomPrice(row: CityPriceRow): row is CityPriceRow & { mrp: string; offer_price: string } {
+  return row.mrp !== null && row.mrp !== undefined && row.offer_price !== null && row.offer_price !== undefined;
+}
+
+/** Custom prices for ONE city across many services — one query for a whole result page. */
+async function cityPricesForCity(serviceIds: string[], cityId: string): Promise<Map<string, CityPriceOverride>> {
+  if (serviceIds.length === 0) return new Map();
+  const rows = await getDb()<CityPriceRow>(AVAILABILITY_TABLE)
+    .whereIn("service_id", serviceIds)
+    .andWhere({ city_id: cityId })
+    .select("service_id", "city_id", "mrp", "offer_price");
+  const map = new Map<string, CityPriceOverride>();
+  for (const row of rows) {
+    if (hasCustomPrice(row)) map.set(row.service_id, { mrp: Number(row.mrp), offerPrice: Number(row.offer_price) });
+  }
+  return map;
+}
+
+/** Every city's custom price for many services (admin/management shape) — one query. */
+async function allCityPricesFor(serviceIds: string[]): Promise<Map<string, ServiceCityPriceDto[]>> {
+  if (serviceIds.length === 0) return new Map();
+  const rows = await getDb()<CityPriceRow>(AVAILABILITY_TABLE)
+    .whereIn("service_id", serviceIds)
+    .whereNotNull("mrp")
+    .whereNotNull("offer_price")
+    .select("service_id", "city_id", "mrp", "offer_price");
+  const map = new Map<string, ServiceCityPriceDto[]>();
+  for (const row of rows) {
+    if (!hasCustomPrice(row)) continue;
+    const list = map.get(row.service_id) ?? [];
+    list.push({ cityId: row.city_id, mrp: Number(row.mrp), offerPrice: Number(row.offer_price) });
+    map.set(row.service_id, list);
+  }
+  return map;
+}
+
+export interface ResolvedServicePrice {
+  mrp: number;
+  offerPrice: number;
+  source: "base" | "city";
+}
+
+/**
+ * THE one server-side rule for "what does this service cost in this city":
+ * the city's own MRP/offer price when one is configured, otherwise the
+ * service's base prices. Cart display, cart add and order creation all go
+ * through this so they can never disagree with what the catalog showed.
+ * Nothing here reads a price from the request.
+ */
+export async function resolveServicePrice(service: ServiceRow, cityId: string): Promise<ResolvedServicePrice> {
+  const custom = (await cityPricesForCity([service.id], cityId)).get(service.id);
+  if (custom) return { mrp: custom.mrp, offerPrice: custom.offerPrice, source: "city" };
+  return { mrp: Number(service.mrp), offerPrice: Number(service.offer_price), source: "base" };
 }
 
 interface ServiceCategoryRow {
@@ -119,13 +189,17 @@ export async function listServicesPublic(
 
   const sortColumn =
     filters.sort === "name" ? "name" : filters.sort === "offerPrice" ? "offer_price" : "sort_order";
-  const rows = await base
-    .clone()
-    .select(`${TABLE}.*`)
-    .distinct(`${TABLE}.id`)
-    .orderBy(`${TABLE}.${sortColumn}`, filters.order ?? "asc")
-    .offset((pagination.page - 1) * pagination.pageSize)
-    .limit(pagination.pageSize);
+  let rowsQuery = base.clone().select(`${TABLE}.*`).distinct(`${TABLE}.id`);
+  if (filters.sort === "offerPrice" && filters.cityId) {
+    // Sort by the price the customer actually sees in that city (custom price
+    // if configured, else base). Selected as a column so DISTINCT + ORDER BY stay valid.
+    rowsQuery = rowsQuery
+      .select(db.raw(`COALESCE(sca.offer_price, ${TABLE}.offer_price) as effective_offer_price`))
+      .orderBy("effective_offer_price", filters.order ?? "asc");
+  } else {
+    rowsQuery = rowsQuery.orderBy(`${TABLE}.${sortColumn}`, filters.order ?? "asc");
+  }
+  const rows = await rowsQuery.offset((pagination.page - 1) * pagination.pageSize).limit(pagination.pageSize);
 
   const ids = rows.map((r) => r.id);
   const [imagesMap, cityMap] = await Promise.all([imagesFor(ids), availableCityIdsFor(ids)]);
@@ -138,8 +212,13 @@ export async function listServicesPublic(
   // CORRECTION — see offers.service.ts's getActiveOffersForCity).
   let offerPool: Awaited<ReturnType<typeof getActiveOffersForCity>> | null = null;
   let categoryMap = new Map<string, string>();
+  let cityPriceMap = new Map<string, CityPriceOverride>();
   if (filters.cityId) {
-    [offerPool, categoryMap] = await Promise.all([getActiveOffersForCity(filters.cityId), categoryIdsFor(ids)]);
+    [offerPool, categoryMap, cityPriceMap] = await Promise.all([
+      getActiveOffersForCity(filters.cityId),
+      categoryIdsFor(ids),
+      cityPricesForCity(ids, filters.cityId),
+    ]);
   }
 
   return {
@@ -147,7 +226,7 @@ export async function listServicesPublic(
       const offer = offerPool
         ? pickEffectiveOffer(offerPool, { serviceId: row.id, categoryId: categoryMap.get(row.id) ?? null })
         : null;
-      return toPublicServiceDto(row, imagesMap.get(row.id) ?? [], cityMap.get(row.id) ?? [], offer);
+      return toPublicServiceDto(row, imagesMap.get(row.id) ?? [], cityMap.get(row.id) ?? [], offer, cityPriceMap.get(row.id) ?? null);
     }),
     total,
   };
@@ -164,12 +243,14 @@ export async function getServiceBySlugPublic(slug: string, cityId?: string): Pro
   const images = (await imagesFor([row.id])).get(row.id) ?? [];
 
   let offer = null;
+  let cityPrice: CityPriceOverride | null = null;
   if (cityId) {
     const categoryId = await getServiceCategoryId(row.id);
     offer = await resolveEffectiveOffer(cityId, row.id, categoryId);
+    cityPrice = (await cityPricesForCity([row.id], cityId)).get(row.id) ?? null;
   }
 
-  return toPublicServiceDto(row, images, cityIds, offer);
+  return toPublicServiceDto(row, images, cityIds, offer, cityPrice);
 }
 
 async function toManagedById(id: string): Promise<ManagedServiceDto | null> {
@@ -177,7 +258,8 @@ async function toManagedById(id: string): Promise<ManagedServiceDto | null> {
   if (!row) return null;
   const images = (await imagesFor([id])).get(id) ?? [];
   const cityIds = (await availableCityIdsFor([id])).get(id) ?? [];
-  return toManagedServiceDto(row, images, cityIds);
+  const cityPrices = (await allCityPricesFor([id])).get(id) ?? [];
+  return toManagedServiceDto(row, images, cityIds, cityPrices);
 }
 
 export async function getManagedServiceById(id: string): Promise<ManagedServiceDto | null> {
@@ -370,8 +452,10 @@ export async function listApprovalQueue(
     .limit(pagination.pageSize);
 
   const ids = rows.map((r) => r.id);
-  const [imagesMap, cityMap] = await Promise.all([imagesFor(ids), availableCityIdsFor(ids)]);
-  const items = rows.map((row) => toManagedServiceDto(row, imagesMap.get(row.id) ?? [], cityMap.get(row.id) ?? []));
+  const [imagesMap, cityMap, priceMap] = await Promise.all([imagesFor(ids), availableCityIdsFor(ids), allCityPricesFor(ids)]);
+  const items = rows.map((row) =>
+    toManagedServiceDto(row, imagesMap.get(row.id) ?? [], cityMap.get(row.id) ?? [], priceMap.get(row.id) ?? [])
+  );
   return { items, total, meta: buildPageMeta(pagination, total) };
 }
 
@@ -393,9 +477,11 @@ export async function listOwnListings(
     .limit(pagination.pageSize);
 
   const ids = rows.map((r) => r.id);
-  const [imagesMap, cityMap] = await Promise.all([imagesFor(ids), availableCityIdsFor(ids)]);
+  const [imagesMap, cityMap, priceMap] = await Promise.all([imagesFor(ids), availableCityIdsFor(ids), allCityPricesFor(ids)]);
   return {
-    items: rows.map((row) => toManagedServiceDto(row, imagesMap.get(row.id) ?? [], cityMap.get(row.id) ?? [])),
+    items: rows.map((row) =>
+      toManagedServiceDto(row, imagesMap.get(row.id) ?? [], cityMap.get(row.id) ?? [], priceMap.get(row.id) ?? [])
+    ),
     total,
   };
 }

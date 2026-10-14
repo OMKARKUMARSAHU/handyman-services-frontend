@@ -321,12 +321,12 @@ export function AdminHomepageContentPanel({ onNavigateToCatalog }: { onNavigateT
                 <strong>Display order</strong> field for the category-wise rails beneath them.
               </p>
               <p className="mt-2">
-                Manage which services appear, and in what order, from <strong>Catalog → Services</strong> — edited
+                Manage which services appear, and in what order, from <strong>Services → Services tab</strong> — edited
                 there so this stays the exact same data the rest of the catalog uses, with nothing to keep in sync.
               </p>
               {onNavigateToCatalog && (
                 <Button type="button" size="md" variant="outline" className="mt-3" onClick={onNavigateToCatalog}>
-                  Go to Catalog → Services
+                  Go to Services → Services tab
                 </Button>
               )}
             </InfoShell>
@@ -339,11 +339,11 @@ export function AdminHomepageContentPanel({ onNavigateToCatalog }: { onNavigateT
               <p>
                 This grid shows every active <strong>Category</strong> — its name, description, and image. Manage
                 categories (including each one&rsquo;s photo and display order) from{" "}
-                <strong>Catalog → Categories</strong>.
+                <strong>Services → Categories tab</strong>.
               </p>
               {onNavigateToCatalog && (
                 <Button type="button" size="md" variant="outline" className="mt-3" onClick={onNavigateToCatalog}>
-                  Go to Catalog → Categories
+                  Go to Services → Categories tab
                 </Button>
               )}
             </InfoShell>
@@ -747,7 +747,7 @@ function OfferFields({
       </div>
       {draft.appliesTo.scope !== "all" && (
         <div>
-          <label className={labelClasses}>{draft.appliesTo.scope === "category" ? "Category ID" : "Service ID"} (from Catalog)</label>
+          <label className={labelClasses}>{draft.appliesTo.scope === "category" ? "Category ID" : "Service ID"} (from Services)</label>
           <input
             className={inputClasses}
             value={draft.appliesTo.ids[0] ?? ""}
@@ -1330,7 +1330,7 @@ function VideoCard({
           <input className={inputClasses} value={card.description} onChange={(e) => onUpdateCard({ description: e.target.value })} />
         </div>
         <div>
-          <label className={labelClasses}>Category key (optional, from Catalog)</label>
+          <label className={labelClasses}>Category key (optional, from Services)</label>
           <input className={inputClasses} value={card.categoryId} onChange={(e) => onUpdateCard({ categoryId: e.target.value })} />
         </div>
         <div>

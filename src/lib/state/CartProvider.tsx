@@ -30,7 +30,7 @@ interface CartContextValue {
   itemCount: number;
   subtotal: number;
   /** cityId is the city the service is being added under (from the current URL) — see CartItem.cityId doc comment for the unresolved multi-city question this is structural for, not a resolution of it. */
-  addToCart: (serviceId: string, cityId: string, quantity?: number) => void;
+  addToCart: (serviceId: string, cityId: string, quantity?: number, unitPrice?: number) => void;
   updateCartItemQuantity: (cartItemId: string, quantity: number) => void;
   removeFromCart: (cartItemId: string) => void;
   clearCart: () => void;
@@ -70,7 +70,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cart, hydrated]);
 
-  const addToCart = useCallback((serviceId: string, cityId: string, quantity = 1) => {
+  // CITY-WISE PRICING: `unitPrice` is the price the shopper was just shown for THIS city (a live,
+  // city-resolved service price) and is used only for the cart's display. It is never sent to the
+  // backend — checkout merges {serviceId, cityId, quantity} and the server re-derives the real price.
+  const addToCart = useCallback((serviceId: string, cityId: string, quantity = 1, unitPrice?: number) => {
     const service = getServiceByIdSync(serviceId);
     if (!service) return;
     setCart((prev) => {
@@ -91,7 +94,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         id: `ci-${serviceId}-${cityId}-${Date.now()}`,
         serviceId,
         quantity,
-        unitPriceAtAdd: service.offerPrice,
+        unitPriceAtAdd: typeof unitPrice === "number" && Number.isFinite(unitPrice) && unitPrice >= 0 ? unitPrice : service.offerPrice,
         cityId,
       };
       return { ...prev, items: [...prev.items, newItem] };

@@ -39,8 +39,10 @@ export function ServiceCard({ service, citySlug }: { service: Service; citySlug?
   }
 
   function handleAddToCart() {
+    // `service.offerPrice` is that city's price only when this card was rendered for a known city (`citySlug`);
+    // a city-agnostic card shows base prices, so no display price is passed and the cart falls back as before.
     if (effectiveCitySlug) {
-      addToCart(service.id, effectiveCitySlug);
+      addToCart(service.id, effectiveCitySlug, 1, citySlug && citySlug === effectiveCitySlug ? service.offerPrice : undefined);
     } else {
       openCitySelector((selectedCitySlug) => addToCart(service.id, selectedCitySlug));
     }

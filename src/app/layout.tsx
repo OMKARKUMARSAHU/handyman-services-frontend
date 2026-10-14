@@ -5,6 +5,7 @@ import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { CartProvider } from "@/lib/state/CartProvider";
 import { LocationProvider } from "@/lib/state/LocationProvider";
 import { AuthProvider } from "@/lib/state/AuthProvider";
+import { ShopCartProvider } from "@/lib/shop/cart";
 import { CitySelectorModal } from "@/components/location/CitySelectorModal";
 import "./globals.css";
 
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <LocationProvider>
           <CartProvider>
             <AuthProvider>
+              <ShopCartProvider>
               <Header />
               <main id="main-content" className="flex-1">
                 {children}
@@ -73,6 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 <WhatsAppButton variant="floating" />
               </div>
               <CitySelectorModal />
+              </ShopCartProvider>
             </AuthProvider>
           </CartProvider>
         </LocationProvider>

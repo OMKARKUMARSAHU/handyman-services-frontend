@@ -18,6 +18,8 @@
     "migrate:rollback": "knex --knexfile src/database/knexfile.ts migrate:rollback",
     "migrate:status": "knex --knexfile src/database/knexfile.ts migrate:status",
     "migrate:make": "knex --knexfile src/database/knexfile.ts migrate:make",
+    "db:check": "cross-env NODE_ENV=development tsx scripts/db-check.ts",
+    "migrate:local": "cross-env NODE_ENV=development tsx scripts/migrate-local.ts",
     "seed:run": "knex --knexfile src/database/knexfile.ts seed:run",
     "test": "cross-env NODE_ENV=test LOG_LEVEL=silent jest --runInBand",
     "test:watch": "cross-env NODE_ENV=test LOG_LEVEL=silent jest --runInBand --watch"

@@ -44,7 +44,8 @@ export function LoginForm() {
       await login({ email, password });
       await refresh();
       const next = searchParams.get("next");
-      router.push(next && next.startsWith("/account") ? next : "/account");
+      // Only same-site, customer-facing paths are honored: the account area and the shop's own cart/checkout/orders.
+      router.push(next && (next.startsWith("/account") || next.startsWith("/shop/")) ? next : "/account");
     } catch (err) {
       setStatus("error");
       setErrorMessage(err instanceof AuthApiError ? err.message : "Something went wrong. Please try again.");

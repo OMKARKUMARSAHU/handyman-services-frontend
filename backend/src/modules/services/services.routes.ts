@@ -11,6 +11,7 @@ import {
   serviceIdParamsSchema,
   serviceSlugParamsSchema,
   setCityAvailabilitySchema,
+  setCityPricingSchema,
   updateServiceSchema,
 } from "./services.schema";
 import {
@@ -20,7 +21,7 @@ import {
   updateService,
   type PublicServiceFilters,
 } from "./services.service";
-import { setServiceCityAvailability } from "../availability/availability.service";
+import { setServiceCityAvailability, setServiceCityPricing } from "../availability/availability.service";
 
 export function servicesRouter(): Router {
   const router = Router();
@@ -79,6 +80,18 @@ export function servicesRouter(): Router {
     validateBody(setCityAvailabilitySchema),
     asyncHandler(async (req, res) => {
       const result = await setServiceCityAvailability(req.params.id!, req.body.cities);
+      ok(res, result);
+    })
+  );
+
+  router.put(
+    "/admin/services/:id/city-pricing",
+    authenticate(),
+    requireRole("admin"),
+    validateParams(serviceIdParamsSchema),
+    validateBody(setCityPricingSchema),
+    asyncHandler(async (req, res) => {
+      const result = await setServiceCityPricing(req.params.id!, req.body.cities);
       ok(res, result);
     })
   );

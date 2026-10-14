@@ -9,6 +9,17 @@ import { getDb } from "../../src/database/db";
  * history is never touched by test runs.
  */
 const ALL_TABLES = [
+  "shop_payment_events",
+  "shop_payments",
+  "shop_order_items",
+  "shop_orders",
+  "shop_settings",
+  "shop_product_cities",
+  "shop_city_pricing",
+  "shop_product_videos",
+  "shop_product_images",
+  "shop_products",
+  "shop_categories",
   "blog_post_tags",
   "blog_posts",
   "blog_tags",

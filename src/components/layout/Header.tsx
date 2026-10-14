@@ -90,6 +90,20 @@ export async function Header() {
           </span>
         </Link>
 
+        {/*
+          E-COMMERCE PRODUCTS: a single top-level "Products" tab beside the logo
+          (the slot a marketplace store/"products" tab normally occupies). Desktop only here;
+          mobile gets the same entry in the hamburger menu. The services navigation is untouched.
+        */}
+        <nav aria-label="Main navigation" className="hidden shrink-0 md:block">
+          <Link
+            href="/products"
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 hover:text-brand-700"
+          >
+            Products
+          </Link>
+        </nav>
+
         <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
           <LocationSelector className="max-w-[180px]" />
           <SearchBox className="w-full max-w-sm lg:max-w-md" />

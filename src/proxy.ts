@@ -33,6 +33,14 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const accessToken = request.cookies.get("hs_at")?.value;
 
+  // Shop checkout & customer order pages (the cart itself stays public — guests can fill it).
+  if (pathname.startsWith("/shop/checkout") || pathname.startsWith("/shop/orders")) {
+    if (!accessToken) {
+      return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathname)}`, request.url));
+    }
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/account")) {
     if (!accessToken) {
       return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathname)}`, request.url));
@@ -60,5 +68,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/account", "/account/:path*", "/provider", "/provider/:path*", "/admin", "/admin/:path*"],
+  matcher: ["/shop/checkout", "/shop/orders", "/shop/orders/:path*", "/account", "/account/:path*", "/provider", "/provider/:path*", "/admin", "/admin/:path*"],
 };

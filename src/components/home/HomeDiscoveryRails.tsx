@@ -1,13 +1,10 @@
 "use client";
 
-import type { Category } from "@/types";
+import { useEffect, useState } from "react";
+import type { Category, Service } from "@/types";
 import { useLocation } from "@/lib/state/LocationProvider";
 import { getCityBySlugSync } from "@/lib/data/cities";
-import {
-  getFeaturedServicesSync,
-  getMostBookedServicesSync,
-  getServicesByCategorySync,
-} from "@/lib/data/services";
+import { getFeaturedServicesSync, getMostBookedServicesSync, getServicesByCategorySync } from "@/lib/data/services";
 import { ServiceRail } from "@/components/catalog/ServiceRail";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
@@ -27,9 +24,49 @@ import { Button } from "@/components/ui/Button";
  * explanation — consistent with the project's existing empty-state
  * practice (see ServiceList's "Not yet available in this city").
  */
+interface LiveRails {
+  citySlug: string;
+  featured: Service[];
+  mostBooked: Service[];
+  byCategory: Record<string, Service[]>;
+}
+
 export function HomeDiscoveryRails({ categories }: { categories: Category[] }) {
   const { lastCitySlug, openCitySelector } = useLocation();
   const city = lastCitySlug ? getCityBySlugSync(lastCitySlug) : undefined;
+  const citySlug = city?.slug;
+  const categoryKey = categories.map((c) => c.id).join(",");
+  const [live, setLive] = useState<LiveRails | null>(null);
+
+  // CITY-WISE PRICING: the rails show the same live, city-resolved services the city homepage
+  // (/[city]) renders server-side, so every price here is the selected city's price (or the base
+  // price where that city has none) and updates when the visitor changes city. They are fetched
+  // through /api/home-rails (server-side, 30s shared cache) rather than by the browser directly.
+  useEffect(() => {
+    if (!citySlug) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/home-rails?city=${encodeURIComponent(citySlug)}`);
+        if (!res.ok) throw new Error(`home-rails ${res.status}`);
+        const data = (await res.json()) as LiveRails;
+        if (!cancelled) setLive(data);
+      } catch {
+        // Fall back to the bundled catalog so the rails never disappear.
+        if (!cancelled) {
+          setLive({
+            citySlug,
+            featured: getFeaturedServicesSync(citySlug),
+            mostBooked: getMostBookedServicesSync(citySlug),
+            byCategory: Object.fromEntries(categoryKey.split(",").filter(Boolean).map((id) => [id, getServicesByCategorySync(id, { cityId: citySlug, limit: 10 })])),
+          });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [citySlug, categoryKey]);
 
   if (!city) {
     return (
@@ -60,8 +97,11 @@ export function HomeDiscoveryRails({ categories }: { categories: Category[] }) {
     );
   }
 
-  const featured = getFeaturedServicesSync(city.id);
-  const mostBooked = getMostBookedServicesSync(city.id);
+  // Until this city's live prices have loaded, hold the space rather than flashing stale/base prices.
+  if (!live || live.citySlug !== city.slug) {
+    return <section aria-busy="true" aria-label="Loading services for your city" className="min-h-[24rem]" />;
+  }
+  const { featured, mostBooked } = live;
 
   return (
     <>
@@ -87,7 +127,7 @@ export function HomeDiscoveryRails({ categories }: { categories: Category[] }) {
         citySlug={city.slug}
       />
       {categories.map((category) => {
-        const services = getServicesByCategorySync(category.id, { cityId: city.id, limit: 10 });
+        const services = live.byCategory[category.id] ?? [];
         return (
           <ServiceRail
             key={category.id}

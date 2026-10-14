@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Container } from "@/components/ui/Container";
 import { HeroDiscoveryPanel } from "@/components/home/HeroDiscoveryPanel";
 import { HeroCollage, type HeroCollageImageOverride } from "@/components/home/HeroCollage";
@@ -29,6 +30,7 @@ export function Hero({
   categories,
   citySlug,
   heroImages,
+  panelFooter,
 }: {
   eyebrow?: string;
   heading: string;
@@ -38,10 +40,12 @@ export function Hero({
   citySlug?: string;
   /** Admin-managed collage override (HOMEPAGE ADMIN REBUILD) — see HeroCollage.tsx. Falls back to the original fixed scenes when unset/empty. */
   heroImages?: HeroCollageImageOverride[];
+  /** Optional block rendered inside the service box, below the service tiles (homepage "Products"). */
+  panelFooter?: ReactNode;
 }) {
   return (
     <section className="border-b border-neutral-200 bg-white py-10 sm:py-14">
-      <Container className="grid items-start gap-8 lg:grid-cols-2 lg:gap-12">
+      <Container className="grid items-start gap-8 lg:grid-cols-2 lg:items-center lg:gap-12">
         <div className="min-w-0">
           {eyebrow && (
             <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-600">
@@ -56,7 +60,9 @@ export function Hero({
           )}
 
           <div className="mt-6">
-            <HeroDiscoveryPanel products={products} categories={categories} citySlug={citySlug} />
+            <HeroDiscoveryPanel products={products} categories={categories} citySlug={citySlug}>
+              {panelFooter}
+            </HeroDiscoveryPanel>
           </div>
 
           {/* Mobile/tablet: a compact collage below the panel instead of the
@@ -67,7 +73,7 @@ export function Hero({
           </div>
         </div>
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:block lg:pb-6">
           <HeroCollage images={heroImages} />
         </div>
       </Container>

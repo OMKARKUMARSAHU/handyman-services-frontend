@@ -63,14 +63,14 @@ export function HeroCollage({ compact = false, images }: { compact?: boolean; im
   const [a, b, c, d] = resolveSlots(4, images);
 
   return (
-    <div className="relative mx-auto grid w-full max-w-md grid-cols-2 gap-3">
+    <div className="relative mx-auto grid w-full max-w-[30rem] xl:max-w-[33rem] grid-cols-2 gap-3">
       <div className="flex flex-col gap-3">
-        <HeroCollageImage src={a.src} alt={a.alt} fallbackIcon={a.fallbackIcon} className="aspect-[4/5] w-full rounded-2xl shadow-sm" />
-        <HeroCollageImage src={b.src} alt={b.alt} fallbackIcon={b.fallbackIcon} className="aspect-square w-full rounded-2xl shadow-sm" />
+        <HeroCollageImage src={a.src} alt={a.alt} fallbackIcon={a.fallbackIcon} className="aspect-[4/5] w-full rounded-2xl xl:aspect-[8/9] shadow-sm" />
+        <HeroCollageImage src={b.src} alt={b.alt} fallbackIcon={b.fallbackIcon} className="aspect-square w-full rounded-2xl xl:aspect-[9/8] shadow-sm" />
       </div>
       <div className="flex translate-y-6 flex-col gap-3">
-        <HeroCollageImage src={c.src} alt={c.alt} fallbackIcon={c.fallbackIcon} className="aspect-square w-full rounded-2xl shadow-sm" />
-        <HeroCollageImage src={d.src} alt={d.alt} fallbackIcon={d.fallbackIcon} className="aspect-[4/5] w-full rounded-2xl shadow-sm" />
+        <HeroCollageImage src={c.src} alt={c.alt} fallbackIcon={c.fallbackIcon} className="aspect-square w-full rounded-2xl xl:aspect-[9/8] shadow-sm" />
+        <HeroCollageImage src={d.src} alt={d.alt} fallbackIcon={d.fallbackIcon} className="aspect-[4/5] w-full rounded-2xl xl:aspect-[8/9] shadow-sm" />
       </div>
     </div>
   );

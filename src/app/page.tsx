@@ -16,6 +16,7 @@ import { HomeDiscoveryRails } from "@/components/home/HomeDiscoveryRails";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { VideoCurationRail } from "@/components/home/VideoCurationRail";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { ShopProductsSection } from "@/components/shop/ShopProductsSection";
 
 /**
  * Converts a homepage_sections "hero" row's generic `items` array into the
@@ -98,6 +99,7 @@ export default async function HomePage() {
           products={products}
           categories={categories}
           heroImages={toHeroImages(heroSection.items)}
+          panelFooter={<ShopProductsSection />}
         />
       )}
 

@@ -23,7 +23,7 @@ const PAYMENTS = "payments";
  * needs it fails, with a clear message, instead of the whole process.
  */
 let client: Razorpay | null = null;
-function getRazorpayClient(): Razorpay {
+export function getRazorpayClient(): Razorpay {
   if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
     throw new AppError(
       503,

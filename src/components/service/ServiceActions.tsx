@@ -12,15 +12,16 @@ export function ServiceActions({ service, citySlug }: { service: Service; citySl
   const router = useRouter();
   const [shareState, setShareState] = useState<"idle" | "copied" | "unsupported">("idle");
 
+  // The service was loaded for this city, so its offerPrice is this city's price (display only; the server re-prices at checkout).
   function handleAddToCart() {
-    addToCart(service.id, citySlug);
+    addToCart(service.id, citySlug, 1, service.offerPrice);
   }
 
   function handleBuyNow() {
     // Adds this service without clearing any other items already in the
     // cart (PHASE_2_UI_UX_DESIGN.md §9 / Phase 4 test spec §10), then goes
     // straight to checkout.
-    addToCart(service.id, citySlug);
+    addToCart(service.id, citySlug, 1, service.offerPrice);
     router.push("/checkout");
   }
 

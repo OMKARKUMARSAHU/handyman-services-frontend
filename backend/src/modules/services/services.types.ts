@@ -42,6 +42,19 @@ export interface PublicServiceDto {
   featured: boolean;
   active: boolean;
   sortOrder: number;
+  /**
+   * Where `mrp`/`offerPrice` above came from: "city" when the request's
+   * `cityId` has its own price configured for this service, otherwise "base"
+   * (the service's own prices — also the answer whenever no `cityId` was given).
+   */
+  priceSource: "base" | "city";
+}
+
+/** One service x city custom price (only cities that actually have one are listed). */
+export interface ServiceCityPriceDto {
+  cityId: string;
+  mrp: number;
+  offerPrice: number;
 }
 
 /** Admin/Provider management shape — adds the approval-workflow fields (PHASE_2_BACKEND_DATABASE_SCHEMA.md §9). */
@@ -53,6 +66,8 @@ export interface ManagedServiceDto extends PublicServiceDto {
   createdByRole: CreatedByRole;
   createdByUserId: string;
   createdAt: string;
+  /** Cities with a custom price. A city absent from this list uses the base `mrp`/`offerPrice`. `mrp`/`offerPrice` on a managed DTO are always the BASE prices. */
+  cityPrices: ServiceCityPriceDto[];
 }
 
 export interface ServiceRow {

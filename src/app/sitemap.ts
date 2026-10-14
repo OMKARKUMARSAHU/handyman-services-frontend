@@ -4,6 +4,7 @@ import { getAllCitiesSync } from "@/lib/data/cities";
 import { getAllProductsSync } from "@/lib/data/products";
 import { getAllServicesSync } from "@/lib/data/services";
 import { listPublishedBlogSlugsLive } from "@/lib/data/live";
+import { getShopSitemapData } from "@/lib/shop/api";
 
 const BASE_URL = "https://handymanservices.in";
 
@@ -26,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/faq`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE_URL}/contact`, changeFrequency: "yearly", priority: 0.7 },
     { url: `${BASE_URL}/blog`, changeFrequency: "daily", priority: 0.7 },
+    { url: `${BASE_URL}/products`, changeFrequency: "daily", priority: 0.7 },
   ];
 
   // Legacy category routes (still live, unlinked from primary nav — see
@@ -38,6 +40,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = getAllProductsSync();
   const services = getAllServicesSync();
   const publishedBlogPosts = await listPublishedBlogSlugsLive();
+  // E-commerce: published + active products and active categories only (the backend filters; drafts never appear).
+  const shop = await getShopSitemapData();
 
   const cityRoutes: MetadataRoute.Sitemap = cities.map((city) => ({
     url: `${BASE_URL}/${city.slug}`,
@@ -78,6 +82,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  const shopRoutes: MetadataRoute.Sitemap = [
+    ...shop.categories.map((c) => ({
+      url: `${BASE_URL}/products?category=${encodeURIComponent(c.slug)}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
+    ...shop.products.map((p) => ({
+      url: `${BASE_URL}/products/${p.slug}`,
+      lastModified: p.updatedAt ? new Date(p.updatedAt) : undefined,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
+  ];
+
   return [
     ...staticRoutes,
     ...cityRoutes,
@@ -85,5 +103,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...productRoutes,
     ...serviceRoutes,
     ...blogPostRoutes,
+    ...shopRoutes,
   ];
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Category, Product } from "@/types";
@@ -35,10 +35,13 @@ export function HeroDiscoveryPanel({
   products,
   categories,
   citySlug,
+  children,
 }: {
   products: Product[];
   categories: Category[];
   citySlug?: string;
+  /** Optional extra block rendered inside the same card, below the service tiles (e.g. the shop "Products" block). */
+  children?: ReactNode;
 }) {
   const router = useRouter();
   const { lastCitySlug, openCitySelector } = useLocation();
@@ -95,25 +98,25 @@ export function HeroDiscoveryPanel({
   }
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+    <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
       <p className="px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
         What do you need serviced?
       </p>
-      <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="mt-2.5 grid grid-cols-3 gap-2">
         {tiles.map((tile) => {
           const tileClassName =
-            "group flex flex-col items-center gap-2 rounded-xl border border-neutral-100 bg-white px-2 py-3 text-center transition-colors hover:border-brand-200 hover:bg-brand-50/40";
+            "group flex flex-col items-center gap-1.5 rounded-xl border border-neutral-100 bg-white px-2 py-2.5 text-center transition-colors hover:border-brand-200 hover:bg-brand-50/40";
           // AUDIT FOLLOW-UP ("Admin CMS/content-management pipeline"): an
           // Admin-uploaded image takes over this tile's visual, falling
           // back to the existing icon when none was ever uploaded — the
           // same `image ?? Icon` pattern already used by CategoryCard.tsx.
           const iconWrap = tile.image ? (
-            <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-neutral-50 ring-1 ring-neutral-100 transition-colors group-hover:bg-brand-100">
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-neutral-50 ring-1 ring-neutral-100 transition-colors group-hover:bg-brand-100">
               {/* eslint-disable-next-line @next/next/no-img-element -- Admin-uploaded business image, same plain-<img> pattern as CategoryCard.tsx */}
               <img src={tile.image} alt="" className="h-full w-full object-cover" />
             </span>
           ) : (
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-50 text-brand-600 ring-1 ring-neutral-100 transition-colors group-hover:bg-brand-100">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-50 text-brand-600 ring-1 ring-neutral-100 transition-colors group-hover:bg-brand-100">
               <Icon name={tile.icon} className="h-5 w-5" />
             </span>
           );
@@ -158,6 +161,7 @@ export function HeroDiscoveryPanel({
           );
         })}
       </div>
+      {children}
     </div>
   );
 }

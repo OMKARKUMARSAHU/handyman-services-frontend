@@ -29,7 +29,9 @@ import type { Role } from "@/lib/auth/types";
 const BASE_NAV = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
+  { label: "Products", href: "/products" },
   { label: "My Orders", href: "/account/orders" },
+  { label: "Product Orders", href: "/shop/orders" },
 ];
 
 const TRAILING_NAV = [

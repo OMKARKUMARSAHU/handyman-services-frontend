@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Water purifier illustration">
+  <rect width="400" height="400" fill="#f1f5f9"/>
+  <ellipse cx="200" cy="352" rx="96" ry="10" fill="#cbd5e1"/>
+  <rect x="112" y="64" width="176" height="276" rx="22" fill="#e2e8f0" stroke="#64748b" stroke-width="4"/>
+  <rect x="112" y="64" width="176" height="104" rx="22" fill="#1f2937"/>
+  <rect x="112" y="146" width="176" height="22" fill="#1f2937"/>
+  <circle cx="160" cy="116" r="7" fill="#38bdf8"/><circle cx="200" cy="116" r="7" fill="#94a3b8"/><circle cx="240" cy="116" r="7" fill="#94a3b8"/>
+  <rect x="176" y="196" width="48" height="26" rx="6" fill="#94a3b8"/>
+  <rect x="193" y="222" width="14" height="30" rx="3" fill="#64748b"/>
+  <rect x="150" y="276" width="100" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/>
+</svg>

@@ -4,7 +4,12 @@ import { getDb } from "../../database/db";
 import { ConflictError, NotFoundError } from "../../shared/errors";
 import { computeFinalPricing } from "../../shared/pricing";
 import { resolveEffectiveOffer } from "../offers/offers.service";
-import { getServiceCategoryId, getServiceRowById, isServicePurchasableInCity } from "../services/services.service";
+import {
+  getServiceCategoryId,
+  getServiceRowById,
+  isServicePurchasableInCity,
+  resolveServicePrice,
+} from "../services/services.service";
 import type { CartDto, CartItemDto, CartItemRow, CartRow, MergeSkipped } from "./cart.types";
 
 const CARTS = "carts";
@@ -81,15 +86,19 @@ async function upsertCartItem(
 async function toItemDto(row: CartItemRow): Promise<CartItemDto> {
   const service = await getServiceRowById(row.service_id);
   const unitPriceAtAdd = Number(row.unit_price_at_add);
-  const currentOfferPrice = service ? Number(service.offer_price) : null;
+  // CITY-WISE PRICING: the price this item's own city charges (that city's
+  // custom price if configured, else the service's base price) — never the
+  // base price blindly, and never a client-supplied figure.
+  const cityPrice = service ? await resolveServicePrice(service, row.city_id) : null;
+  const currentOfferPrice = cityPrice ? cityPrice.offerPrice : null;
   const isAvailable = service ? await isServicePurchasableInCity(row.service_id, row.city_id) : false;
 
   let pricing: ReturnType<typeof computeFinalPricing> | null = null;
   let effectiveOffer: Awaited<ReturnType<typeof resolveEffectiveOffer>> = null;
-  if (service && isAvailable) {
+  if (service && cityPrice && isAvailable) {
     const categoryId = await getServiceCategoryId(row.service_id);
     effectiveOffer = await resolveEffectiveOffer(row.city_id, row.service_id, categoryId);
-    pricing = computeFinalPricing(Number(service.mrp), Number(service.offer_price), effectiveOffer);
+    pricing = computeFinalPricing(cityPrice.mrp, cityPrice.offerPrice, effectiveOffer);
   }
 
   const finalUnitPrice = pricing ? pricing.finalPrice : unitPriceAtAdd;
@@ -105,7 +114,7 @@ async function toItemDto(row: CartItemRow): Promise<CartItemDto> {
     currentOfferPrice,
     priceChanged: currentOfferPrice !== null && currentOfferPrice !== unitPriceAtAdd,
     isAvailable,
-    mrp: service ? Number(service.mrp) : null,
+    mrp: cityPrice ? cityPrice.mrp : null,
     serviceDiscountAmount: pricing?.serviceDiscountAmount ?? 0,
     effectiveOffer,
     offerDiscountAmount: pricing?.offerDiscountAmount ?? 0,
@@ -146,8 +155,9 @@ export async function addCartItem(
   await assertPurchasable(input.serviceId, input.cityId);
   const service = await getServiceRowById(input.serviceId);
   const cartId = await getOrCreateCartId(customerId);
+  const price = await resolveServicePrice(service!, input.cityId);
 
-  await upsertCartItem(getDb(), cartId, input, service!.offer_price);
+  await upsertCartItem(getDb(), cartId, input, String(price.offerPrice));
   return getCart(customerId);
 }
 
@@ -208,7 +218,8 @@ export async function mergeLocalCart(
         continue;
       }
 
-      await upsertCartItem(trx, cartId, item, service.offer_price);
+      const price = await resolveServicePrice(service, item.cityId);
+      await upsertCartItem(trx, cartId, item, String(price.offerPrice));
     }
   });
 

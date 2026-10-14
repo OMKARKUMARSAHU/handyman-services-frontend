@@ -20,3 +20,21 @@ export function defaultRateLimiter() {
     },
   });
 }
+
+/**
+ * Tighter per-route limiter layered on top of the global one, for endpoints that
+ * create money-relevant state (shop order creation, payment-attempt creation).
+ * Keyed by client IP (the app runs behind the Beanstalk proxy with trust proxy on).
+ */
+export function strictRateLimiter(max: number, windowMs = 60_000) {
+  return rateLimit({
+    windowMs,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      error: { code: "RATE_LIMITED", message: "Too many requests. Please slow down and try again shortly." },
+    },
+  });
+}

@@ -85,6 +85,13 @@ const envSchema = z.object({
   // (untracked) at runtime, test-mode keys only.
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
+  // Shop webhook signature secret (Razorpay Dashboard -> Webhooks -> secret). Optional at boot;
+  // the webhook endpoint answers 503 until it is set. Never log or echo it.
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+
+  // E-commerce: unpaid shop orders older than this are cancelled and their stock released.
+  SHOP_ORDER_EXPIRY_MINUTES: z.coerce.number().int().positive().default(60),
+  SHOP_SCHEDULER_INTERVAL_MS: z.coerce.number().int().min(0).default(300_000),
 
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(120),

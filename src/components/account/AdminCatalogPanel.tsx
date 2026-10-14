@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/lib/icons";
 import { MediaPicker, MediaPickerField } from "@/components/account/MediaPicker";
@@ -30,6 +30,7 @@ import {
   createService,
   updateService,
   setServiceCityAvailability,
+  setServiceCityPricing,
   approveListing,
   rejectListing,
   type AdminService,
@@ -45,6 +46,8 @@ import {
   type AdminServiceImage,
   deleteServiceImage,
 } from "@/lib/admin/catalog-api";
+import { ServiceCityPricingEditor } from "@/components/account/ServiceCityPricingEditor";
+import { buildInitialRows, diffRows, validateRows, type CityChanges, type CityRows } from "@/lib/admin/serviceCityPricing";
 
 /**
  * Admin Catalog Management — replaces the old "Catalog management is
@@ -99,11 +102,16 @@ const CATALOG_TABS: { key: CatalogTab; label: string; icon: string }[] = [
 ];
 
 export function AdminCatalogPanel() {
-  const [tab, setTab] = useState<CatalogTab>("cities");
+  // The sidebar entry is now called "Services", so it opens on the Services tab.
+  const [tab, setTab] = useState<CatalogTab>("services");
 
   return (
     <div className="space-y-5">
-      <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Catalog sections">
+      <p className="text-sm text-neutral-600">
+        Manage your <strong>handyman services</strong> here — service prices (including city-wise pricing), city availability, images, offers and the cities,
+        categories and appliance types they belong to. Physical products for sale are managed separately under <strong>Shop</strong>.
+      </p>
+      <nav className="flex gap-2 overflow-x-auto pb-1" aria-label="Service management sections">
         {CATALOG_TABS.map((t) => (
           <button
             key={t.key}
@@ -837,6 +845,8 @@ function ServicesManager() {
   const [editing, setEditing] = useState<AdminService | null>(null);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Set when a NEW service was created but its city availability/prices failed to save, so pressing Save again updates it instead of creating a duplicate.
+  const [createdDraft, setCreatedDraft] = useState<AdminService | null>(null);
 
   useEffect(() => {
     Promise.all([listCategoriesAdmin(), listCitiesAdmin(), listServiceTypesAdmin()])
@@ -866,20 +876,39 @@ function ServicesManager() {
     await load(statusFilter);
   }
 
-  async function handleSubmit(input: ServiceInput) {
+  async function handleSubmit(input: ServiceInput, cityChanges: CityChanges) {
     setSaving(true);
     setError(null);
+    let saved: AdminService | null = editing ?? createdDraft;
     try {
-      if (editing) await updateService(editing.id, input);
-      else await createService(input);
-      setShowForm(false);
-      setEditing(null);
-      await refresh();
+      if (saved) {
+        saved = await updateService(saved.id, input);
+      } else {
+        saved = await createService(input);
+        setCreatedDraft(saved);
+      }
     } catch (err) {
       setError(errorMessage(err, "Could not save this service."));
-    } finally {
       setSaving(false);
+      return;
     }
+    // City availability (existing endpoint) and city-wise prices (new endpoint) are saved after the
+    // service itself; only what the admin changed is sent. If either fails the form stays open.
+    try {
+      if (cityChanges.availability.length > 0) await setServiceCityAvailability(saved.id, cityChanges.availability);
+      if (cityChanges.pricing.length > 0) await setServiceCityPricing(saved.id, cityChanges.pricing);
+    } catch (err) {
+      setError(
+        `The service was saved, but its city availability/prices could not be saved: ${errorMessage(err, "please try again.")} Fix this and press Save again.`
+      );
+      setSaving(false);
+      return;
+    }
+    setShowForm(false);
+    setEditing(null);
+    setCreatedDraft(null);
+    await refresh();
+    setSaving(false);
   }
 
   async function handleApprove(id: string) {
@@ -933,6 +962,7 @@ function ServicesManager() {
           disabled={categories.length === 0 || serviceTypes.length === 0}
           onClick={() => {
             setEditing(null);
+            setCreatedDraft(null);
             setShowForm((v) => !v);
           }}
         >
@@ -962,11 +992,13 @@ function ServicesManager() {
           key={editing?.id ?? "new"}
           categories={categories}
           serviceTypes={serviceTypes}
+          cities={cities}
           initial={editing}
           saving={saving}
           onCancel={() => {
             setShowForm(false);
             setEditing(null);
+            setCreatedDraft(null);
           }}
           onSubmit={handleSubmit}
         />
@@ -987,8 +1019,10 @@ function ServicesManager() {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-neutral-900">{s.name}</p>
                   <p className="mt-0.5 text-xs text-neutral-500">
-                    /{s.slug} · MRP ₹{s.mrp.toFixed(2)} · Offer ₹{s.offerPrice.toFixed(2)} · Final ₹{s.finalPrice.toFixed(2)}
+                    /{s.slug} · Base MRP ₹{s.mrp.toFixed(2)} · Base offer ₹{s.offerPrice.toFixed(2)} · Final ₹{s.finalPrice.toFixed(2)}
                     {s.effectiveOffer && ` (offer: ${s.effectiveOffer.title})`}
+                    {s.cityPrices && s.cityPrices.length > 0 &&
+                      ` · ${s.cityPrices.length} ${s.cityPrices.length === 1 ? "city has" : "cities have"} custom prices`}
                   </p>
                   <p className="mt-0.5 text-xs text-neutral-500">Created by {s.createdByRole}</p>
                 </div>
@@ -1043,6 +1077,7 @@ function ServicesManager() {
 function ServiceForm({
   categories,
   serviceTypes,
+  cities,
   initial,
   saving,
   onCancel,
@@ -1050,10 +1085,11 @@ function ServiceForm({
 }: {
   categories: AdminCategory[];
   serviceTypes: AdminServiceType[];
+  cities: AdminCity[];
   initial: AdminService | null;
   saving: boolean;
   onCancel: () => void;
-  onSubmit: (input: ServiceInput) => void;
+  onSubmit: (input: ServiceInput, cityChanges: CityChanges) => void;
 }) {
   const [categorySlug, setCategorySlug] = useState(categories[0]?.slug ?? "");
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -1068,6 +1104,19 @@ function ServiceForm({
   const [featured, setFeatured] = useState(initial?.featured ?? false);
   const [isMostBooked, setIsMostBooked] = useState(initial?.isMostBooked ?? false);
   const [sortOrder, setSortOrder] = useState(initial?.sortOrder?.toString() ?? "0");
+  // City-wise pricing + availability: one row per city from the city-management list (never a hardcoded list).
+  const cityIdsKey = cities.map((c) => c.id).join(",");
+  const [initialCityRows] = useState<CityRows>(() => buildInitialRows(cities.map((c) => c.id), initial));
+  const [cityRows, setCityRows] = useState<CityRows>(initialCityRows);
+  const [showCityErrors, setShowCityErrors] = useState(false);
+  const [cityFormError, setCityFormError] = useState<string | null>(null);
+  // A city created after this form opened still gets a row (unavailable, no custom price) without disturbing edits.
+  const rowsWithAllCities = useMemo(() => {
+    const filled: CityRows = { ...cityRows };
+    for (const c of cities) if (!filled[c.id]) filled[c.id] = { available: false, mrp: "", offerPrice: "" };
+    return filled;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cityIdsKey stands in for `cities`
+  }, [cityRows, cityIdsKey]);
 
   useEffect(() => {
     if (!categorySlug) return;
@@ -1081,19 +1130,31 @@ function ServiceForm({
       className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:grid-cols-2"
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({
-          slug,
-          productId,
-          serviceTypeId,
-          name,
-          shortDescription,
-          description,
-          mrp: Number(mrp),
-          offerPrice: Number(offerPrice),
-          featured,
-          isMostBooked,
-          sortOrder: Number(sortOrder) || 0,
-        });
+        const errors = validateRows(rowsWithAllCities);
+        if (Object.keys(errors).length > 0) {
+          setShowCityErrors(true);
+          setCityFormError(
+            `Fix the city-wise prices before saving (${Object.keys(errors).length} ${Object.keys(errors).length === 1 ? "city has" : "cities have"} a problem).`
+          );
+          return;
+        }
+        setCityFormError(null);
+        onSubmit(
+          {
+            slug,
+            productId,
+            serviceTypeId,
+            name,
+            shortDescription,
+            description,
+            mrp: Number(mrp),
+            offerPrice: Number(offerPrice),
+            featured,
+            isMostBooked,
+            sortOrder: Number(sortOrder) || 0,
+          },
+          diffRows(initialCityRows, rowsWithAllCities)
+        );
       }}
     >
       {!initial && (
@@ -1180,6 +1241,19 @@ function ServiceForm({
           Most booked (homepage "New & Noteworthy")
         </label>
       </div>
+      <ServiceCityPricingEditor
+        cities={cities}
+        rows={rowsWithAllCities}
+        onChange={setCityRows}
+        baseMrp={mrp}
+        baseOfferPrice={offerPrice}
+        showErrors={showCityErrors}
+      />
+      {cityFormError && (
+        <p role="alert" className="text-sm font-medium text-red-600 sm:col-span-2">
+          {cityFormError}
+        </p>
+      )}
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" size="md" disabled={saving}>
           {initial ? "Save changes" : "Create service (goes to approval queue)"}
@@ -1233,6 +1307,7 @@ function CityAvailabilityEditor({
   return (
     <div>
       <h3 className="text-sm font-semibold text-neutral-900">City availability</h3>
+      <p className="mt-0.5 text-xs text-neutral-500">Prices per city are set in <strong>Edit → City-wise Pricing</strong>.</p>
       {error && <p className="mt-1 text-xs font-medium text-red-600">{error}</p>}
       <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
         {cities.map((c) => (
