@@ -71,7 +71,13 @@ import { DIRECT_BACKEND_BASE_URL } from "@/lib/server/backend-url";
 
 export const dynamic = "force-dynamic";
 
-const HOP_BY_HOP_REQUEST_HEADERS = new Set(["host", "connection", "content-length", "accept-encoding"]);
+// `origin`/`referer` are browser-supplied, describe the browser->Vercel hop (this site's own
+// domain: growthnova.co.in, www., the *.vercel.app URL, previews...), and mean nothing to the
+// backend on the server-to-server hop. Forwarding them made the backend's CORS allow-list
+// (`CORS_ALLOWED_ORIGINS`) reject every non-GET call from any domain not on that list with a
+// 500 -- browsers add `Origin` on POST/PUT/PATCH/DELETE (not on same-origin GET). Dropping them
+// makes this hop look like any other server-to-server call (no Origin), which the backend allows.
+const HOP_BY_HOP_REQUEST_HEADERS = new Set(["host", "connection", "content-length", "accept-encoding", "origin", "referer"]);
 
 async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
   const search = req.nextUrl.search;
