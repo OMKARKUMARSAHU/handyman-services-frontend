@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { mediaUrlSchema } from "../../shared/mediaUrl";
 
 export const citySlugParamsSchema = z.object({ slug: z.string().min(1) });
 export const cityIdParamsSchema = z.object({ id: z.string().uuid() });
@@ -21,7 +22,7 @@ export const createCitySchema = z.object({
   isPopular: z.boolean().optional(),
   active: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
-  iconUrl: z.string().url().nullable().optional(),
+  iconUrl: mediaUrlSchema.nullable().optional(),
   iconAlt: z.string().max(255).nullable().optional(),
 });
 

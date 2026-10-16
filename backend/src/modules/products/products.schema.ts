@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { mediaUrlSchema } from "../../shared/mediaUrl";
 
 export const productSlugParamsSchema = z.object({
   categorySlug: z.string().min(1),
@@ -12,7 +13,7 @@ export const createProductSchema = z.object({
   name: z.string().min(1).max(150),
   description: z.string().min(1),
   icon: z.string().min(1).max(100),
-  image: z.string().url().nullable().optional(),
+  image: mediaUrlSchema.nullable().optional(),
   sortOrder: z.number().int().optional(),
   active: z.boolean().optional(),
 });

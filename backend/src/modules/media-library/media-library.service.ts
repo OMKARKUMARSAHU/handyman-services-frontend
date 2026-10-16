@@ -4,6 +4,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "../../config/env";
 import { getDb } from "../../database/db";
 import { ConflictError, NotFoundError } from "../../shared/errors";
+import { logger } from "../../shared/logger";
+import { s3KeyForDelete } from "../../shared/mediaUrl";
 import {
   ALLOWED_MEDIA_CONTENT_TYPES,
   buildPublicUrl,
@@ -278,7 +280,9 @@ export async function findMediaReferences(media: MediaDto): Promise<MediaReferen
  * (best-effort, same as the existing per-service image delete).
  */
 export async function deleteMedia(id: string): Promise<void> {
-  const media = await getMediaById(id);
+  const row = await getDb()<MediaRow>(TABLE).where({ id }).first();
+  if (!row) throw new NotFoundError("Media not found.");
+  const media = toMediaDto(row);
   const references = await findMediaReferences(media);
   if (references.length > 0) {
     throw new ConflictError(
@@ -291,10 +295,19 @@ export async function deleteMedia(id: string): Promise<void> {
 
   try {
     const bucket = requireBucketName();
-    const key = new URL(media.url).pathname.replace(/^\//, "");
+    // The object key is the row's own `s3_key`. It used to be re-derived from
+    // `media.url`, which is a site-relative path (new URL() throws on it) and,
+    // even when absolute, has a `/api/v1/media/file/` prefix that is not part of
+    // the key -- so the S3 object was never actually deleted.
+    const key = s3KeyForDelete(row);
+    if (!key) throw new Error("Unexpected media key shape; skipping S3 delete.");
     await getS3Client().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
-  } catch {
+  } catch (err) {
     // Best-effort: the MySQL row (source of truth for the library) is
-    // already gone; a leftover S3 object is a cleanup-job concern.
+    // already gone and nothing references the object any more, so a failed
+    // S3 delete leaves only an unreferenced orphan object -- never a row
+    // pointing at a missing file. Log it (without a stack-leaking response)
+    // so orphans are visible instead of silently ignored.
+    logger.warn({ err, mediaId: id, s3Key: row.s3_key }, "media_s3_delete_failed");
   }
 }
