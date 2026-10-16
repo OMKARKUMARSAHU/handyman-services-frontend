@@ -64,8 +64,54 @@ const inputClasses =
   "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
 const labelClasses = "mb-1 block text-xs font-medium text-neutral-700";
 
+/**
+ * Backend validation failures arrive as `{ message: "The request failed
+ * validation.", details: [{ path: "image", message: "Invalid url" }] }`.
+ * The bare message alone hides WHICH field failed, so this reads `details`
+ * and returns both a per-field map (shown beside the inputs) and readable
+ * "Label: message" lines (appended to the banner). Labels name the field the
+ * admin actually sees in the form, not the raw API key.
+ */
+const VALIDATION_FIELD_LABELS: Record<string, string> = {
+  categoryId: "Category",
+  name: "Name",
+  slug: "Slug",
+  description: "Description",
+  icon: "Icon key",
+  image: "Photo",
+  sortOrder: "Sort order",
+  active: "Active",
+};
+
+function readValidationDetails(details: unknown): { fieldErrors: Record<string, string>; lines: string[] } {
+  const fieldErrors: Record<string, string> = {};
+  const lines: string[] = [];
+  if (Array.isArray(details)) {
+    for (const d of details) {
+      if (!d || typeof d !== "object") continue;
+      const { path, message } = d as { path?: unknown; message?: unknown };
+      if (typeof message !== "string") continue;
+      const root = String(path ?? "").split(".")[0] ?? "";
+      if (root && !fieldErrors[root]) fieldErrors[root] = message;
+      const label = VALIDATION_FIELD_LABELS[root] ?? root;
+      lines.push(label ? `${label}: ${message}` : message);
+    }
+  }
+  return { fieldErrors, lines };
+}
+
 function errorMessage(err: unknown, fallback: string): string {
-  return err instanceof AuthApiError ? err.message : fallback;
+  if (!(err instanceof AuthApiError)) return fallback;
+  const { lines } = readValidationDetails(err.details);
+  return lines.length > 0 ? `${err.message} ${lines.join(" · ")}` : err.message;
+}
+
+function fieldErrorsOf(err: unknown): Record<string, string> {
+  return err instanceof AuthApiError ? readValidationDetails(err.details).fieldErrors : {};
+}
+
+function FieldError({ message }: { message?: string }) {
+  return message ? <p className="mt-1 text-xs font-medium text-red-600">{message}</p> : null;
 }
 
 function Card({ children }: { children: React.ReactNode }) {
@@ -492,6 +538,7 @@ function ProductsManager() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<AdminProduct | null>(null);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     listCategoriesAdmin()
@@ -522,6 +569,7 @@ function ProductsManager() {
   async function handleSubmit(input: ProductInput) {
     setSaving(true);
     setError(null);
+    setFieldErrors({});
     try {
       if (editing) await updateProduct(editing.id, input);
       else await createProduct(input);
@@ -530,6 +578,7 @@ function ProductsManager() {
       await load(categorySlug);
     } catch (err) {
       setError(errorMessage(err, "Could not save this product."));
+      setFieldErrors(fieldErrorsOf(err));
     } finally {
       setSaving(false);
     }
@@ -573,9 +622,11 @@ function ProductsManager() {
           categoryId={activeCategory.id}
           initial={editing}
           saving={saving}
+          fieldErrors={fieldErrors}
           onCancel={() => {
             setShowForm(false);
             setEditing(null);
+            setFieldErrors({});
           }}
           onSubmit={handleSubmit}
         />
@@ -630,12 +681,14 @@ function ProductForm({
   categoryId,
   initial,
   saving,
+  fieldErrors,
   onCancel,
   onSubmit,
 }: {
   categoryId: string;
   initial: AdminProduct | null;
   saving: boolean;
+  fieldErrors: Record<string, string>;
   onCancel: () => void;
   onSubmit: (input: ProductInput) => void;
 }) {
@@ -655,21 +708,33 @@ function ProductForm({
     >
       <div>
         <label className={labelClasses}>Product/appliance name</label>
-        <input className={inputClasses} value={name} onChange={(e) => setName(e.target.value)} required />
+        <input className={inputClasses} value={name} onChange={(e) => setName(e.target.value)} required maxLength={150} />
+        <FieldError message={fieldErrors.name} />
       </div>
       <div>
         <label className={labelClasses}>Slug</label>
-        <input className={inputClasses} value={slug} onChange={(e) => setSlug(e.target.value)} required pattern="[a-z0-9-]+" />
+        <input className={inputClasses} value={slug} onChange={(e) => setSlug(e.target.value)} required pattern="[a-z0-9-]+" maxLength={120} />
+        <FieldError message={fieldErrors.slug} />
       </div>
       <div className="sm:col-span-2">
         <label className={labelClasses}>Description</label>
         <textarea className={inputClasses} value={description} onChange={(e) => setDescription(e.target.value)} required rows={2} />
+        <FieldError message={fieldErrors.description} />
       </div>
       <div>
         <label className={labelClasses}>Icon key</label>
-        <input className={inputClasses} value={icon} onChange={(e) => setIcon(e.target.value)} required />
+        <input className={inputClasses} value={icon} onChange={(e) => setIcon(e.target.value)} required maxLength={100} />
+        <FieldError message={fieldErrors.icon} />
       </div>
-      <MediaPickerField label="Product photo (optional — falls back to the icon above)" accept="image" value={image} onChange={setImage} />
+      <div className="sm:col-span-2">
+        <MediaPickerField label="Product photo (optional — falls back to the icon above)" accept="image" value={image} onChange={setImage} />
+        <FieldError message={fieldErrors.image ?? fieldErrors.categoryId} />
+        {fieldErrors.image === "Invalid url" && (
+          <p className="mt-1 text-xs text-neutral-600">
+            Media Library photos can&apos;t be saved on products yet (the backend rejects their address format). Remove the photo to save the product with its icon.
+          </p>
+        )}
+      </div>
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" size="md" disabled={saving}>
           {initial ? "Save changes" : "Create product"}
