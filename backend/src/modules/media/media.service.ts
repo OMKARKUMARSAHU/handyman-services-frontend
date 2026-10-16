@@ -57,6 +57,13 @@ export function getS3Client(): S3Client {
   if (!s3Client) {
     s3Client = new S3Client({
       region: env.S3_REGION,
+      // UPLOAD FIX: SDK v3 >= 3.729 defaults to checksum "WHEN_SUPPORTED", which
+      // bakes `x-amz-checksum-crc32=<CRC32 of an EMPTY body>` and
+      // `x-amz-sdk-checksum-algorithm=CRC32` into every presigned PUT URL. The
+      // real file is only chosen later in the browser, so S3 compares the
+      // uploaded bytes against the empty-body checksum and rejects the upload
+      // (BadDigest). "WHEN_REQUIRED" keeps presigned URLs free of checksums.
+      requestChecksumCalculation: "WHEN_REQUIRED",
       ...(env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY
         ? { credentials: { accessKeyId: env.AWS_ACCESS_KEY_ID, secretAccessKey: env.AWS_SECRET_ACCESS_KEY } }
         : {}),
