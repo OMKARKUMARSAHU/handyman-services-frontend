@@ -45,6 +45,65 @@ function parseMoney(value: string): number | null {
   return Number.isFinite(n) ? n : NaN;
 }
 
+// Mirrors the backend rules in backend/src/modules/shop/shop.schema.ts (the backend stays the source of
+// truth and still validates everything; these only give the admin the reason BEFORE a round trip).
+const SKU_PATTERN = /^[A-Za-z0-9._-]+$/;
+const SLUG_PATTERN = /^[a-z0-9-]+$/;
+const MAX_MONEY = 9_999_999.99;
+const hasAtMostTwoDecimals = (n: number) => Math.abs(Math.round(n * 100) - n * 100) < 1e-6;
+
+/** Backend field path (first segment) -> the key this form's inline errors use. */
+const FIELD_KEY_ALIASES: Record<string, string> = { stockQuantity: "stock", lowStockThreshold: "lowStock" };
+const FIELD_LABELS: Record<string, string> = {
+  categoryId: "Category",
+  name: "Name",
+  slug: "URL slug",
+  sku: "SKU",
+  shortDescription: "Short description",
+  description: "Description",
+  price: "Price",
+  mrp: "MRP",
+  stockQuantity: "Stock",
+  lowStockThreshold: "Low-stock threshold",
+  specifications: "Specifications",
+  compatibleModels: "Compatible models",
+  deliveryInfo: "Delivery info",
+  returnInfo: "Return info",
+  seoTitle: "SEO title",
+  seoDescription: "SEO description",
+  images: "Images",
+  videos: "Videos",
+  cities: "City availability",
+};
+
+/**
+ * The backend's validation envelope is `details: [{ path, message }]` (see errorHandler.ts). The form used to
+ * read only a `{ fieldErrors }` object that the backend never sends, so the real reason was dropped and the admin
+ * saw just "The request failed validation." Handles both shapes; never throws on an unexpected one.
+ */
+function readValidationDetails(details: unknown): { fieldErrors: Record<string, string>; lines: string[] } {
+  const fieldErrors: Record<string, string> = {};
+  const lines: string[] = [];
+  const add = (path: string, message: string) => {
+    const root = path.split(".")[0] ?? "";
+    const key = FIELD_KEY_ALIASES[root] ?? root;
+    if (key && !fieldErrors[key]) fieldErrors[key] = message;
+    const label = FIELD_LABELS[root] ?? root;
+    lines.push(label ? `${label}: ${message}` : message);
+  };
+  if (Array.isArray(details)) {
+    for (const d of details) {
+      if (d && typeof d === "object" && typeof (d as { message?: unknown }).message === "string") {
+        add(String((d as { path?: unknown }).path ?? ""), (d as { message: string }).message);
+      }
+    }
+  } else if (details && typeof details === "object") {
+    const fe = (details as { fieldErrors?: Record<string, string[]> }).fieldErrors;
+    if (fe) for (const [k, v] of Object.entries(fe)) if (v?.[0]) add(k, v[0]);
+  }
+  return { fieldErrors, lines };
+}
+
 /**
  * Product create/edit form. Core fields are saved with create/update; images
  * and videos are replaced via their own endpoints afterwards (both pick from
@@ -160,21 +219,38 @@ export function AdminShopProductForm({
     const lowN = Number(lowStock);
     if (!name.trim()) errs.name = "Name is required.";
     if (!sku.trim()) errs.sku = "SKU is required.";
+    else if (!SKU_PATTERN.test(sku.trim())) errs.sku = "SKU may contain letters, numbers, dots, dashes and underscores only (no spaces).";
+    if (slug.trim() && !SLUG_PATTERN.test(slug.trim())) errs.slug = "Slug may contain lowercase letters, numbers and hyphens only (no spaces).";
     if (!categoryId) errs.categoryId = "Choose a category.";
     if (priceN === null || Number.isNaN(priceN) || priceN <= 0) errs.price = "Enter a price greater than 0.";
+    else if (priceN > MAX_MONEY) errs.price = "Price is too large.";
+    else if (!hasAtMostTwoDecimals(priceN)) errs.price = "Use at most 2 decimal places.";
     if (mrpN !== null && (Number.isNaN(mrpN) || mrpN <= 0)) errs.mrp = "Enter a valid MRP or leave it blank.";
+    else if (mrpN !== null && mrpN > MAX_MONEY) errs.mrp = "MRP is too large.";
+    else if (mrpN !== null && !hasAtMostTwoDecimals(mrpN)) errs.mrp = "Use at most 2 decimal places.";
     if (mrpN !== null && !Number.isNaN(mrpN) && priceN !== null && !Number.isNaN(priceN) && mrpN < priceN) errs.mrp = "MRP cannot be lower than the price.";
-    if (!Number.isInteger(stockN) || stockN < 0) errs.stock = "Stock must be a whole number, 0 or more.";
-    if (!Number.isInteger(lowN) || lowN < 0) errs.lowStock = "Threshold must be a whole number, 0 or more.";
+    if (!Number.isInteger(stockN) || stockN < 0 || stockN > 1_000_000) errs.stock = "Stock must be a whole number from 0 to 1,000,000.";
+    if (!Number.isInteger(lowN) || lowN < 0 || lowN > 100_000) errs.lowStock = "Threshold must be a whole number from 0 to 100,000.";
     const badCity = cityRows?.find((r) => {
       const t = r.priceOverride.trim();
       if (!r.available || t === "") return false;
       const n = Number(t);
-      return !Number.isFinite(n) || n <= 0;
+      return !Number.isFinite(n) || n <= 0 || n > MAX_MONEY || !hasAtMostTwoDecimals(n);
     });
-    if (badCity) errs.cityPrice = `Enter a valid price for ${badCity.name} (greater than 0) or leave it blank.`;
+    if (badCity) errs.cityPrice = `Enter a valid price for ${badCity.name} (greater than 0, at most 2 decimal places) or leave it blank.`;
+    const filledSpecs = specs.filter((s) => s.label.trim() && s.value.trim());
+    if (filledSpecs.length > 40) errs.specifications = "At most 40 specifications.";
+    else if (filledSpecs.some((s) => s.label.trim().length > 120 || s.value.trim().length > 500))
+      errs.specifications = "A specification label can be up to 120 characters and a value up to 500.";
+    const modelList = models.split("\n").map((m) => m.trim()).filter(Boolean);
+    if (modelList.length > 100 || modelList.some((m) => m.length > 120)) errs.compatibleModels = "Up to 100 compatible models, each up to 120 characters.";
+    if (images.some((i) => i.altText.trim().length > 255)) errs.images = "Image alt text can be up to 255 characters.";
+    if (videos.some((v) => v.title.trim().length > 255 || (v.kind === "youtube" && v.youtubeUrl.length > 500))) errs.videos = "Video titles can be up to 255 characters and links up to 500.";
     setFieldErrors(errs);
-    if (Object.keys(errs).length > 0) return null;
+    if (Object.keys(errs).length > 0) {
+      setError(`Please fix the following before saving — ${Object.values(errs).join(" ")}`);
+      return null;
+    }
     return {
       categoryId,
       name: name.trim(),
@@ -227,13 +303,9 @@ export function AdminShopProductForm({
       onDone(productId ? "Product updated." : "Product created.");
     } catch (err) {
       if (err instanceof AuthApiError) {
-        setError(err.message);
-        const details = err.details as { fieldErrors?: Record<string, string[]> } | undefined;
-        if (details?.fieldErrors) {
-          const mapped: Record<string, string> = {};
-          for (const [k, v] of Object.entries(details.fieldErrors)) if (v?.[0]) mapped[k] = v[0];
-          setFieldErrors(mapped);
-        }
+        const { fieldErrors: mapped, lines } = readValidationDetails(err.details);
+        setError(lines.length > 0 ? `${err.message} ${lines.join(" · ")}` : err.message);
+        if (Object.keys(mapped).length > 0) setFieldErrors(mapped);
       } else {
         setError("Could not save the product.");
       }
@@ -362,6 +434,7 @@ export function AdminShopProductForm({
                 <input
                   className={`${inputClasses} min-w-[10rem] flex-1`}
                   placeholder="Alt text"
+                  maxLength={255}
                   value={img.altText}
                   onChange={(e) => setImages((rows) => rows.map((r, i) => (i === idx ? { ...r, altText: e.target.value } : r)))}
                 />
@@ -397,6 +470,7 @@ export function AdminShopProductForm({
           <input
             className={`${inputClasses} min-w-[12rem] flex-1`}
             placeholder="YouTube link (watch, share or embed URL)"
+            maxLength={500}
             value={youtubeDraft}
             onChange={(e) => setYoutubeDraft(e.target.value)}
           />
@@ -458,8 +532,8 @@ export function AdminShopProductForm({
         <div className="space-y-2">
           {specs.map((s, idx) => (
             <div key={idx} className="flex gap-2">
-              <input className={inputClasses} placeholder="Label" value={s.label} onChange={(e) => setSpecs((rows) => rows.map((r, i) => (i === idx ? { ...r, label: e.target.value } : r)))} />
-              <input className={inputClasses} placeholder="Value" value={s.value} onChange={(e) => setSpecs((rows) => rows.map((r, i) => (i === idx ? { ...r, value: e.target.value } : r)))} />
+              <input className={inputClasses} placeholder="Label" maxLength={120} value={s.label} onChange={(e) => setSpecs((rows) => rows.map((r, i) => (i === idx ? { ...r, label: e.target.value } : r)))} />
+              <input className={inputClasses} placeholder="Value" maxLength={500} value={s.value} onChange={(e) => setSpecs((rows) => rows.map((r, i) => (i === idx ? { ...r, value: e.target.value } : r)))} />
               <button type="button" aria-label="Remove row" onClick={() => setSpecs((rows) => rows.filter((_, i) => i !== idx))} className="text-red-600">
                 <Icon name="trash" className="h-4 w-4" />
               </button>
